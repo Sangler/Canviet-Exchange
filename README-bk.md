@@ -22,9 +22,9 @@ v v
 | Cache) | | |
 +-------------------+ +-------------------+
 
-NexTransfer - Money Transfer Platform
+SVN  Transfer - Money Transfer Platform
 Overview
-NexTransfer is a secure, low-cost money transfer service for remittances from the US and Canada to Vietnam, leveraging fiat payments (via Stripe) and cryptocurrency (USDC via Coinbase Commerce). Built with the MERN stack (MongoDB, Express.js, React with Next.js, Node.js), Redis for session management and caching, and JWT for robust authentication, NexTransfer offers fast, compliant transfers targeting the Vietnamese diaspora ($18B annual remittance market). Key features include an admin dashboard for transaction management and analytics, a user-friendly transfer interface, and strong security measures compliant with fintech standards.
+SVN  Transfer is a secure, low-cost money transfer service for remittances from the US and Canada to Vietnam, leveraging fiat payments (via Stripe) and cryptocurrency (USDC via Coinbase Commerce). Built with the MERN stack (MongoDB, Express.js, React with Next.js, Node.js), Redis for session management and caching, and JWT for robust authentication, SVN  Transfer offers fast, compliant transfers targeting the Vietnamese diaspora ($18B annual remittance market). Key features include an admin dashboard for transaction management and analytics, a user-friendly transfer interface, and strong security measures compliant with fintech standards.
 Features
 
 Fiat Payments: Process USD/CAD via Stripe (2.9% + $0.30 fees per transaction).
@@ -69,7 +69,7 @@ Backend Setup
 Clone the repository: git clone <repo-url>
 Navigate to backend: cd backend
 Install dependencies: npm install
-Create .env file in backend/:MONGO*URI=mongodb://localhost:27017/nextransferdb
+Create .env file in backend/:MONGO*URI=mongodb://localhost:27017/svntransferdb
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=yourstrongsecret
 REFRESH_SECRET=anothersecret

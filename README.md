@@ -1,4 +1,4 @@
-# NexTransfer - Money Transfer Platform
+# SVN Transfer - Money Transfer Platform
 
 ```
 +-------------------+ +-------------------+ +-------------------+
@@ -26,7 +26,7 @@
 ```
 
 **Summary:**  
-NexTransfer is a secure, low-cost money transfer service for remittances from the US and Canada to Vietnam, leveraging fiat payments (via Stripe) and cryptocurrency (USDC via Coinbase Commerce). Built with the MERN stack (MongoDB, Express.js, React with Next.js, Node.js), Redis for session management and caching, and JWT for robust authentication, NexTransfer offers fast, compliant transfers targeting the Vietnamese diaspora ($18B annual remittance market). Key features include an admin dashboard for transaction management and analytics, a user-friendly transfer interface, and strong security measures compliant with fintech standards.
+SVN transfer is a secure, low-cost money transfer service for remittances from the US and Canada to Vietnam, leveraging fiat payments (via Stripe) and cryptocurrency (USDC via Coinbase Commerce). Built with the MERN stack (MongoDB, Express.js, React with Next.js, Node.js), Redis for session management and caching, and JWT for robust authentication, SVN Transfer offers fast, compliant transfers targeting the Vietnamese diaspora ($18B annual remittance market). Key features include an admin dashboard for transaction management and analytics, a user-friendly transfer interface, and strong security measures compliant with fintech standards.
 
 ## Features
 
@@ -35,7 +35,7 @@ NexTransfer is a secure, low-cost money transfer service for remittances from th
 - **Admin Dashboard:** View transaction lists, analytics (powered by Recharts), and initiate transfers.
 - **User Interface:** Transfer form for fiat and crypto payments, with wallet integration (Web3.js for MetaMask).
 - **Authentication:** JWT with access tokens (15-minute expiry) and refresh tokens (7-day expiry, stored in Redis), using HttpOnly, Secure cookies.
-- **Security:** Bcrypt for password hashing, Helmet for secure headers, rate-limiting (100 requests/15min), input validation, and PII encryption in MongoDB.
+- **Security:** Argon2 for password hashing, Helmet for secure headers, rate-limiting (100 requests/15min), input validation, and PII encryption in MongoDB.
 - **Compliance:** Designed for Money Services Business (MSB) licensing with FinCEN (US), FINTRAC (Canada), and Vietnam's State Bank (SBV), supporting AML/KYC requirements and 2025 crypto regulations (e.g., GENIUS Act).
 
 ## Project Status
@@ -75,7 +75,7 @@ NexTransfer is a secure, low-cost money transfer service for remittances from th
 3. Install dependencies: `npm install`
 4. Create `.env` file in backend/:
    ```
-   MONGO_URI=mongodb://localhost:27017/nextransferdb
+   MONGO_URI=mongodb://localhost:27017/SVN
    REDIS_URL=redis://localhost:6379
    JWT_SECRET=yourstrongsecret
    REFRESH_SECRET=anothersecret

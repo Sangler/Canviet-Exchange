@@ -33,10 +33,10 @@ const AppSidebar: React.FC = () => {
         <Link href="/admin" passHref legacyBehavior>
           <CSidebarBrand as="a">
             <div className="sidebar-brand-full">
-              <strong>nexTransfer</strong>
+              <strong>SVN  Transfer</strong>
             </div>
             <div className="sidebar-brand-narrow">
-              <strong>nT</strong>
+              <strong>ST</strong>
             </div>
           </CSidebarBrand>
         </Link>

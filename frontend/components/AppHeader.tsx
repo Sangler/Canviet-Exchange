@@ -47,7 +47,7 @@ const AppHeader: React.FC = () => {
         </CHeaderNav>
         <CHeaderNav className="ms-auto ms-md-0">
           <div className="d-flex align-items-center">
-            <span className="me-3">admin@nextransfer.com</span>
+            <span className="me-3">admin@svntransfer.com</span>
             <CDropdown variant="nav-item">
               <CDropdownToggle className="py-0 pe-0" caret={false}>
                 <div className="avatar avatar-md">👤</div>

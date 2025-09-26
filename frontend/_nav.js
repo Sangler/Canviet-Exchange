@@ -31,7 +31,7 @@ const _nav = [
   },
   {
     component: CNavTitle,
-    name: 'NexTransfer',
+    name: 'SVN  Transfer',
   },
   {
     component: CNavItem,
