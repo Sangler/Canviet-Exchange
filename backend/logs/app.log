@@ -1,0 +1,26 @@
+2025-09-27T20:19:10.623Z [ERROR] MONGO_URI not set. Running without database.
+2025-09-27T20:22:10.134Z [ERROR] MONGO_URI not set. Running without database.
+2025-09-27T20:38:34.355Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"GET","path":"/api/health","status":200,"durationMs":4}
+2025-09-27T20:38:34.355Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"GET","path":"/api/health","status":200,"durationMs":4}
+2025-09-27T20:38:54.506Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"GET","path":"/api/dev/indexes","status":200,"durationMs":5}
+2025-09-27T20:38:54.507Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"GET","path":"/api/dev/indexes","status":200,"durationMs":6}
+2025-09-27T20:40:00.223Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":200,"durationMs":100}
+2025-09-27T20:40:00.223Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":200,"durationMs":100}
+2025-09-27T20:40:32.214Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"GET","path":"/api/users/me","status":200,"durationMs":7}
+2025-09-27T20:40:32.214Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"GET","path":"/api/users/me","status":200,"durationMs":7}
+2025-09-27T20:41:15.466Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"GET","path":"/api/users/me","status":401,"durationMs":1}
+2025-09-27T20:41:15.467Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"GET","path":"/api/users/me","status":401,"durationMs":3}
+2025-09-27T20:42:16.046Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"GET","path":"/api/users/me","status":200,"durationMs":6}
+2025-09-27T20:42:16.046Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"GET","path":"/api/users/me","status":200,"durationMs":6}
+2025-09-27T20:42:44.721Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/login","status":401,"durationMs":4}
+2025-09-27T20:42:44.721Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/login","status":401,"durationMs":5}
+2025-09-27T20:43:02.057Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/login","status":401,"durationMs":158}
+2025-09-27T20:43:02.057Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/login","status":401,"durationMs":158}
+2025-09-27T20:43:27.491Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/login","status":200,"durationMs":89}
+2025-09-27T20:43:27.492Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/login","status":200,"durationMs":89}
+2025-09-27T20:43:57.140Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/login","status":401,"durationMs":159}
+2025-09-27T20:43:57.140Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/login","status":401,"durationMs":159}
+2025-09-27T20:45:34.186Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":9}
+2025-09-27T20:45:34.186Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":9}
+2025-09-27T20:45:42.979Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":4}
+2025-09-27T20:45:42.979Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":5}
