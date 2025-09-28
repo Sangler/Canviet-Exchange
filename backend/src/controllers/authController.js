@@ -45,7 +45,7 @@ exports.register = async (req, res) => {
       address: address || undefined,
       passwordHash,
     })
-    const token = createToken({ sub: user.id, email: user.email })
+  const token = createToken({ sub: user.id, email: user.email, role: user.role })
     return res.json({ token, user: user.toJSON() })
   } catch (err) {
     if (err && err.code === 11000) {
@@ -87,7 +87,7 @@ exports.login = async (req, res) => {
       }
     }
 
-    const token = createToken({ sub: user.id, email: user.email })
+  const token = createToken({ sub: user.id, email: user.email, role: user.role })
     return res.json({ token, user: user.toJSON() })
   } catch (err) {
     console.error('Login error:', err)
