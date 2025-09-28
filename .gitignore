@@ -17,6 +17,9 @@ yarn-debug.log*
 yarn-error.log*
 app.log*
 
+# Backend logs
+backend/logs/
+
 # OS files
 .DS_Store
 Thumbs.db
