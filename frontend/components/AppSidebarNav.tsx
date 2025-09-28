@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import SimpleBar from 'simplebar-react';
 import 'simplebar-react/dist/simplebar.min.css';
 import { CBadge, CNavLink, CSidebarNav } from '@coreui/react';
+import { useAuth } from '../context/AuthContext';
+import { hasRequiredRole, Role } from '../lib/roles';
 
 interface NavItem {
   component: React.ElementType;
@@ -13,6 +15,7 @@ interface NavItem {
   to?: string;
   href?: string;
   items?: NavItem[];
+  roles?: Role | Role[]; // Optional: restrict visibility by role(s)
   [key: string]: any;
 }
 
@@ -22,6 +25,31 @@ interface AppSidebarNavProps {
 
 export const AppSidebarNav: React.FC<AppSidebarNavProps> = ({ items }) => {
   const router = useRouter();
+  const { user } = useAuth();
+  const userRole = user?.role;
+
+  // Recursively filter items based on roles property
+  const filterItemsByRole = (list?: NavItem[]): NavItem[] => {
+    if (!list) return [];
+    const result: NavItem[] = [];
+    for (const item of list) {
+      const allowed = hasRequiredRole(userRole, item.roles);
+      if (!allowed) continue;
+      if (item.items && item.items.length > 0) {
+        const children = filterItemsByRole(item.items);
+        if (children.length > 0) {
+          result.push({ ...item, items: children });
+        } else if (!item.items) {
+          result.push(item);
+        }
+      } else {
+        result.push(item);
+      }
+    }
+    return result;
+  };
+
+  const filteredItems = filterItemsByRole(items);
 
   const navLink = (name?: string, icon?: React.ReactNode, badge?: { color: string; text: string }, indent = false) => {
     return (
@@ -85,8 +113,8 @@ export const AppSidebarNav: React.FC<AppSidebarNavProps> = ({ items }) => {
 
   return (
     <CSidebarNav as={SimpleBar}>
-      {items &&
-        items.map((item, index) => (item.items ? navGroup(item, index) : navItem(item, index)))}
+      {filteredItems &&
+        filteredItems.map((item, index) => (item.items ? navGroup(item, index) : navItem(item, index)))}
     </CSidebarNav>
   );
 };

@@ -1,9 +1,20 @@
 import React from "react";
+import { AppContent, AppSidebar, AppFooter, AppHeader } from "../components";
+import RequireAuth from "../components/RequireAuth";
 
-export default function Home() {
+export default function Dashboard() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-  <h1 className="text-3xl font-bold">SVN  Transfer User Frontend</h1>
-    </main>
+    <RequireAuth>
+      <div>
+        <AppSidebar />
+        <div className="wrapper d-flex flex-column min-vh-100">
+          <AppHeader />
+          <div className="body flex-grow-1">
+            <AppContent />
+          </div>
+          <AppFooter />
+        </div>
+      </div>
+    </RequireAuth>
   );
 }

@@ -9,8 +9,8 @@ const nextConfig = {
       : 'http://localhost:5000';
     return [
       {
-        source: '/mainpage',
-        destination: `${backend}/mainpage`,
+        source: '/api/:path*',
+        destination: `${backend}/api/:path*`,
       },
     ];
   },

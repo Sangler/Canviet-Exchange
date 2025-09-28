@@ -32,8 +32,27 @@ export default function RegisterPage() {
     if (!validate()) return;
     try {
       setLoading(true);
-      // TODO: Call backend register endpoint, e.g., POST /api/auth/register
-      await new Promise((r) => setTimeout(r, 900));
+      // Call backend register endpoint
+      const [firstName, ...rest] = name.trim().split(' ');
+      const lastName = rest.join(' ').trim() || firstName || 'user';
+      const payload = {
+        email,
+        password,
+        firstName: rest.length > 0 ? firstName : '',
+        lastName,
+        phone,
+      };
+      const resp = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data?.message || 'Registration failed');
+      }
+      // const data = await resp.json(); // contains { token, user }
       setSuccess(true);
       await new Promise((r) => setTimeout(r, 900));
       void router.push('/login');

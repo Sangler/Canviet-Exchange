@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '../context/AuthContext';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   CContainer,
@@ -28,6 +29,7 @@ const AppHeader: React.FC = () => {
   const dispatch = useDispatch();
   const sidebarShow = useSelector((state: any) => state.sidebarShow);
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
+  const { user, logout } = useAuth();
 
   return (
     <CHeader position="sticky" className="mb-4 p-0">
@@ -40,14 +42,15 @@ const AppHeader: React.FC = () => {
         </CHeaderToggler>
         <CHeaderNav className="d-none d-md-flex">
           <CNavItem>
-            <CNavLink href="/admin">
+            <CNavLink href="/">
               Dashboard
             </CNavLink>
           </CNavItem>
         </CHeaderNav>
+        {/* TODO: load information user from auth context */}
         <CHeaderNav className="ms-auto ms-md-0">
           <div className="d-flex align-items-center">
-            <span className="me-3">admin@svntransfer.com</span>
+            <span className="me-3">{user?.email ?? 'user@svntransfer.com'}</span>
             <CDropdown variant="nav-item">
               <CDropdownToggle className="py-0 pe-0" caret={false}>
                 <div className="avatar avatar-md">👤</div>
@@ -61,7 +64,7 @@ const AppHeader: React.FC = () => {
                   <CIcon icon={cilEnvelopeOpen} className="me-2" />
                   Tasks
                 </CDropdownItem>
-                <CDropdownItem>
+                <CDropdownItem onClick={() => logout()}>
                   <CIcon icon={cilList} className="me-2" />
                   Logout
                 </CDropdownItem>

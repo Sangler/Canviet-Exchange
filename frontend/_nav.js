@@ -22,7 +22,7 @@ const _nav = [
   {
     component: CNavItem,
     name: 'Dashboard',
-    to: '/admin',
+    to: '/',
     icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
     badge: {
       color: 'info',
@@ -31,30 +31,32 @@ const _nav = [
   },
   {
     component: CNavTitle,
-    name: 'SVN  Transfer',
+    name: 'Transfer',
   },
   {
     component: CNavItem,
     name: 'Transfers',
-    to: '/admin/transfers',
+    to: '/transfers',
     icon: <CIcon icon={cilCreditCard} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: 'Users',
-    to: '/admin/users',
+    to: '/users',
+    roles: "admin",
     icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: 'Analytics',
-    to: '/admin/analytics',
+    to: '/analytics',
+    roles: "admin",
     icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: 'Settings',
-    to: '/admin/settings',
+    to: '/settings',
     icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
   },
   {
@@ -64,13 +66,14 @@ const _nav = [
   {
     component: CNavItem,
     name: 'Colors',
-    to: '/admin/colors',
+    to: '/colors',
     icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: 'Typography',
-    to: '/admin/typography',
+    to: '/typography',
+    roles: "admin",
     icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
   },
   {
@@ -80,50 +83,54 @@ const _nav = [
   {
     component: CNavGroup,
     name: 'Base',
-    to: '/admin/base',
+    to: '/base',
+    roles: "admin",
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
     items: [
       {
         component: CNavItem,
         name: 'Cards',
-        to: '/admin/base/cards',
+        to: '/base/cards',
       },
       {
         component: CNavItem,
         name: 'Tables',
-        to: '/admin/base/tables',
+        to: '/base/tables',
       },
     ],
   },
   {
     component: CNavGroup,
     name: 'Buttons',
-    to: '/admin/buttons',
+    to: '/buttons',
+    roles: "admin",
     icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
     items: [
       {
         component: CNavItem,
         name: 'Buttons',
-        to: '/admin/buttons/buttons',
+        to: '/buttons/buttons',
       },
     ],
   },
   {
     component: CNavGroup,
     name: 'Forms',
+    roles: "admin",
     icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
     items: [
       {
         component: CNavItem,
         name: 'Form Control',
-        to: '/admin/forms/form-control',
+        to: '/forms/form-control',
       },
     ],
   },
   {
     component: CNavItem,
     name: 'Charts',
-    to: '/admin/charts',
+    to: '/charts',
+    roles: "admin",
     icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
   },
   {
@@ -134,31 +141,33 @@ const _nav = [
       {
         component: CNavItem,
         name: 'CoreUI Free',
-        to: '/admin/icons/coreui-icons',
+        to: '/icons/coreui-icons',
       },
     ],
   },
   {
     component: CNavGroup,
     name: 'Notifications',
+    roles: "admin",
     icon: <CIcon icon={cilBell} customClassName="nav-icon" />,
     items: [
       {
         component: CNavItem,
         name: 'Alerts',
-        to: '/admin/notifications/alerts',
+        to: '/notifications/alerts',
       },
       {
         component: CNavItem,
         name: 'Badges',
-        to: '/admin/notifications/badges',
+        to: '/notifications/badges',
       },
     ],
   },
   {
     component: CNavItem,
     name: 'Widgets',
-    to: '/admin/widgets',
+    to: '/widgets',
+    roles: "admin",
     icon: <CIcon icon={cilCalculator} customClassName="nav-icon" />,
     badge: {
       color: 'info',
