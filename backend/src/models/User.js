@@ -26,6 +26,8 @@ const userSchema = new mongoose.Schema({
     street: { type: String, lowercase: true },
     postalCode: { type: String, lowercase: true },
     city: { type: String, lowercase: true },
+    longitude: { type: Number },
+    latitude: { type: Number }
   },
   passwordHash: { type: String, required: true },
   emailVerified: {

@@ -81,7 +81,7 @@ Content-Type: application/json
 ```
 Notes
 - Required: email, password, lastName
-- Optional: firstName, phone, dateOfBirth, address
+- Optional: firstName, phone, dateOfBirth, address (Require before user use service)
 - Uniqueness: email unique; phone unique and sparse (multiple docs can omit phone)
 
 Response
