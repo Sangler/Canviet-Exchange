@@ -15,11 +15,13 @@ const userSchema = new mongoose.Schema({
   },
   firstName: {
     type: String,
-    lowercase: true
+    required: true,
+    default: ''
   },
   lastName: {
     type: String,
-    required: true
+    required: true,
+    default: ''
   },
   dateOfBirth: { type: Date, default: Date.now },
   address: {

@@ -17,7 +17,7 @@ const commonOptions = {
   standardHeaders: true, // RateLimit-* headers
   legacyHeaders: false,
   skipSuccessfulRequests: false,
-  handler: (req, res /*, next*/) => {
+  handler: (req, res) => {
     res.status(429).json({ message: 'Too many requests, please try again later.' })
   },
   onLimitReached,
@@ -26,7 +26,7 @@ const commonOptions = {
 // Stricter for login to slow brute force
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: Number(process.env.RATE_LOGIN_MAX || 10),
+  max: parseInt(process.env.RATE_LOGIN_MAX || 10),
   keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown',
   message: 'Too many login attempts, please try again later.',
   ...commonOptions,
@@ -36,7 +36,7 @@ const loginLimiter = rateLimit({
 // Registration limiter
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: Number(process.env.RATE_REGISTER_MAX || 20),
+  max: parseInt(process.env.RATE_REGISTER_MAX || 20),
   keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown',
   message: 'Too many registration attempts, please try again later.',
   ...commonOptions,
