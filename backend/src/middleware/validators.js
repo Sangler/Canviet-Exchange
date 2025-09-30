@@ -19,7 +19,7 @@ const firstNameRule = body('firstName')
   .matches(/^[A-Za-z][A-Za-z .'-]{0,49}$/).withMessage("firstName can contain letters, spaces, periods, apostrophes, and hyphens")
 
 const lastNameRule = body('lastName')
-  .exists({ checkFalsy: true }).withMessage('lastName is required')
+  .optional({ nullable: true })
   .isString().withMessage('lastName must be a string')
   .trim()
   .isLength({ min: 1, max: 50 }).withMessage('lastName must be between 1 and 50 characters')
