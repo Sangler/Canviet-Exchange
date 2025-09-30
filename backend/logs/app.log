@@ -86,3 +86,11 @@
 2025-09-30T01:54:02.569Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":304,"durationMs":3}
 2025-09-30T01:54:22.614Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":304,"durationMs":2}
 2025-09-30T01:54:22.616Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":304,"durationMs":3}
+2025-09-30T18:44:57.767Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":175}
+2025-09-30T18:44:57.773Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":178}
+2025-09-30T19:00:03.614Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":209}
+2025-09-30T19:00:03.618Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":213}
+2025-09-30T19:21:31.280Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":143}
+2025-09-30T19:21:31.281Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":146}
+2025-09-30T19:35:38.475Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":124}
+2025-09-30T19:35:38.473Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":122}

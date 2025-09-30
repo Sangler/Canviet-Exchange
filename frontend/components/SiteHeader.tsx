@@ -26,8 +26,6 @@ export default function SiteHeader() {
         </button>
 
         <ul className={`nav-links ${open ? 'open' : ''}`}>
-          <li><Link href="/" className="link">Mainpage</Link></li>
-          <li><Link href="/register" className="link">Register</Link></li>
           <li className="lang-switch">
             <a href={`${currentBase}?lng=en`} hrefLang="en" className="link">EN</a>
             <a href={`${currentBase}?lng=vi`} hrefLang="vi" className="link">VI</a>

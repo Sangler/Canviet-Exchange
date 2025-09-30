@@ -30,14 +30,20 @@ const AppSidebar: React.FC = () => {
       }}
     >
       <CSidebarHeader className="border-bottom">
-        <Link href="/admin" passHref legacyBehavior>
-          <CSidebarBrand as="a">
-            <div className="sidebar-brand-full">
-              <strong>SVN  Transfer</strong>
+        <Link href="/" passHref legacyBehavior>
+          <CSidebarBrand as="a" style={{ textDecoration: 'none' }}>
+            <div className="sidebar-brand-full" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <img
+                src={process.env.NEXT_PUBLIC_LOGO_URL || '/logo.png'}
+                alt="SVN Transfer logo"
+                style={{ height: 28, width: 'auto' }}
+                onError={(e: any) => {
+                  try { (e.currentTarget as HTMLImageElement).style.display = 'none'; } catch {}
+                }}
+              />
+              <strong style={{ textDecoration: 'none' }}>SVN  Transfer</strong>
             </div>
-            <div className="sidebar-brand-narrow">
-              <strong>ST</strong>
-            </div>
+
           </CSidebarBrand>
         </Link>
         <CCloseButton

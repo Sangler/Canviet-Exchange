@@ -73,7 +73,7 @@ export default function SiteFooter() {
       <button id="backToTop" className={`back-to-top ${showTop ? 'show' : ''}`} onClick={backToTop} aria-label="Back to Top">↑ Back to Top</button>
 
       <style jsx>{`
-        .site-footer { background: #0b1220; color: #cbd5e1; margin-top: 32px; border-top: 1px solid #111827; }
+        .site-footer { background: #0b1220; color: #cbd5e1; border-top: 1px solid #111827; }
         .footer-content { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
         .footer-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
         @media (min-width: 768px) { .footer-grid { grid-template-columns: repeat(4, 1fr); } }
