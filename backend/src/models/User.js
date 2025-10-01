@@ -15,13 +15,11 @@ const userSchema = new mongoose.Schema({
   },
   firstName: {
     type: String,
-    required: true,
-    default: ''
+    required: true
   },
   lastName: {
     type: String,
-    required: true,
-    default: ''
+    required: true
   },
   dateOfBirth: { type: Date, default: Date.now },
   address: {
