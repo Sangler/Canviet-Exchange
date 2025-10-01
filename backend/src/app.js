@@ -30,60 +30,6 @@ app.use(cors({
 app.use('/api/auth', authRoutes)
 app.use('/api/users', usersRoutes)
 
-// Health and liveness endpoints
-function mongoStateName(state) {
-  switch (state) {
-    case 0: return 'disconnected'
-    case 1: return 'connected'
-    case 2: return 'connecting'
-    case 3: return 'disconnecting'
-    default: return 'unknown'
-  }
-}
-
-app.get('/api/health', (req, res) => {
-  const readyState = mongoose.connection.readyState
-  const payload = {
-    ok: true,
-    service: name || 'backend',
-    version,
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-    db: {
-      connected: readyState === 1,
-      state: mongoStateName(readyState),
-      readyState,
-    },
-  }
-  res.json(payload)
-})
-
-// Lightweight liveness endpoints
-app.get('/healthz', (_req, res) => res.status(200).send('ok'))
-app.get('/api/healthz', (_req, res) => res.status(200).send('ok'))
-
-// Dev-only endpoint to check indexes and DB state
-if ((process.env.NODE_ENV || 'development') !== 'production') {
-  app.get('/api/dev/indexes', async (_req, res) => {
-    try {
-      const readyState = mongoose.connection.readyState
-      const userIndexes = await User.collection.indexes().catch(() => [])
-      res.json({
-        ok: true,
-        db: {
-          connected: readyState === 1,
-          state: mongoStateName(readyState),
-          readyState,
-        },
-        userIndexes,
-      })
-    } catch (e) {
-      logger.error('Failed to read indexes', e)
-      res.status(500).json({ ok: false, message: 'Failed to read indexes' })
-    }
-  })
-}
-
 ;(async () => {
   try {
     const requireDb = (process.env.DB_REQUIRED || 'false').toLowerCase() === 'true'
