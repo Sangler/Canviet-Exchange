@@ -24,3 +24,11 @@
 2025-09-27T20:45:34.186Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":9}
 2025-09-27T20:45:42.979Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":4}
 2025-09-27T20:45:42.979Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":5}
+2025-10-01T03:22:18.715Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":200,"durationMs":157}
+2025-10-01T03:22:18.715Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":200,"durationMs":157}
+2025-10-01T03:22:29.109Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":9}
+2025-10-01T03:22:29.108Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":8}
+2025-10-01T03:22:33.005Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":7}
+2025-10-01T03:22:33.005Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":7}
+2025-10-01T03:22:38.692Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":200,"durationMs":86}
+2025-10-01T03:22:38.692Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":200,"durationMs":87}

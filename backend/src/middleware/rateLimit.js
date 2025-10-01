@@ -8,8 +8,8 @@ function getClientIp(req) {
 function buildLimiter(name, { windowMs, max }) {
   return rateLimit({
     windowMs,
-    // express-rate-limit v7 still accepts `max`; some docs refer to `limit`.
-    // Using `max` here to match installed version; adjust if needed.
+    // express-rate-limit v7 uses `max` as the correct parameter (not `limit`).
+    // Using `max` here as required by the installed version.
     max,
     standardHeaders: true,
     legacyHeaders: false,
