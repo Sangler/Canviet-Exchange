@@ -7,7 +7,7 @@ export default function Navbar() {
       <div className="space-x-4">
         <Link href="/">Home</Link>
         <Link href="/transfer">Transfer</Link>
-        <Link href="/admin">Admin</Link>
+
       </div>
     </nav>
   );

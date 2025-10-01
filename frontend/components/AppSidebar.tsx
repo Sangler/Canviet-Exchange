@@ -30,7 +30,7 @@ const AppSidebar: React.FC = () => {
       }}
     >
       <CSidebarHeader className="border-bottom">
-        <Link href="/" passHref legacyBehavior>
+  <Link href="/" passHref legacyBehavior>
           <CSidebarBrand as="a" style={{ textDecoration: 'none' }}>
             <div className="sidebar-brand-full" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <img
