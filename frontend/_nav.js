@@ -15,6 +15,7 @@ import {
   cilUser,
   cilCreditCard,
   cilSettings,
+  cilHistory
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -35,9 +36,17 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Transfers',
+    name: 'Send Money',
     to: '/transfers',
     icon: <CIcon icon={cilCreditCard} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'History Transaction',
+    to: '/transfers-history',
+    // visible to users only (not admin)
+    roles: 'user',
+    icon: <CIcon icon={cilHistory} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,

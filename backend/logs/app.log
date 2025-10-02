@@ -24,3 +24,69 @@
 2025-09-27T20:45:34.186Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":9}
 2025-09-27T20:45:42.979Z [INFO] HTTP {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":4}
 2025-09-27T20:45:42.979Z [WARN] HTTP closed {"ip":"::ffff:127.0.0.1","method":"POST","path":"/api/auth/register","status":409,"durationMs":5}
+2025-10-02T03:18:45.569Z [ERROR] MONGO_URI not set. Running without database.
+2025-10-02T03:20:57.541Z [ERROR] MONGO_URI not set. Running without database.
+2025-10-02T03:37:35.133Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":244}
+2025-10-02T03:37:35.141Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":254}
+2025-10-02T03:41:50.614Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":302}
+2025-10-02T03:41:50.616Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":304}
+2025-10-02T03:45:05.210Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":289}
+2025-10-02T03:45:05.212Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":290}
+2025-10-02T03:45:57.418Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":282}
+2025-10-02T03:45:57.420Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":284}
+2025-10-02T03:46:53.260Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/register","status":200,"durationMs":185}
+2025-10-02T03:46:53.261Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/register","status":200,"durationMs":187}
+2025-10-02T03:47:01.821Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":153}
+2025-10-02T03:47:01.823Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":200,"durationMs":155}
+2025-10-02T03:47:25.367Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":6}
+2025-10-02T03:47:25.372Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":10}
+2025-10-02T03:58:08.633Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":4}
+2025-10-02T03:58:08.635Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":8}
+2025-10-02T04:05:01.242Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":6}
+2025-10-02T04:05:01.244Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":8}
+2025-10-02T04:08:54.373Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":4}
+2025-10-02T04:08:54.375Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":7}
+2025-10-02T04:08:58.983Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:08:58.986Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":6}
+2025-10-02T04:09:46.077Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:09:46.082Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":6}
+2025-10-02T04:10:52.802Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:10:52.803Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":3}
+2025-10-02T04:12:46.120Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:12:46.127Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":8}
+2025-10-02T04:17:46.232Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":3}
+2025-10-02T04:17:46.233Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":5}
+2025-10-02T04:17:47.894Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:17:47.896Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":4}
+2025-10-02T04:17:50.360Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":3}
+2025-10-02T04:17:50.357Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":1}
+2025-10-02T04:22:57.718Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:22:57.719Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":4}
+2025-10-02T04:26:04.998Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":1}
+2025-10-02T04:26:04.999Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":3}
+2025-10-02T04:28:48.213Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":5}
+2025-10-02T04:28:48.216Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":7}
+2025-10-02T04:30:51.420Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:30:51.422Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":4}
+2025-10-02T04:30:55.893Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:30:55.895Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":3}
+2025-10-02T04:33:10.117Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:33:10.121Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":7}
+2025-10-02T04:33:12.069Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:33:12.071Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":3}
+2025-10-02T04:36:35.159Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":1}
+2025-10-02T04:36:35.165Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":6}
+2025-10-02T04:36:37.490Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:36:37.492Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":3}
+2025-10-02T04:37:28.619Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:37:28.620Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":3}
+2025-10-02T04:37:30.134Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":2}
+2025-10-02T04:37:30.137Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":3}
+2025-10-02T04:41:00.382Z [INFO] HTTP {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":1}
+2025-10-02T04:41:00.384Z [WARN] HTTP closed {"ip":"::1","method":"GET","path":"/api/requests","status":404,"durationMs":3}
+2025-10-02T04:43:14.408Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":11}
+2025-10-02T04:43:14.407Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":10}
+2025-10-02T04:44:09.277Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":277}
+2025-10-02T04:44:09.280Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":279}
+2025-10-02T04:44:39.069Z [INFO] HTTP {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":347}
+2025-10-02T04:44:39.072Z [WARN] HTTP closed {"ip":"::1","method":"POST","path":"/api/auth/login","status":401,"durationMs":351}

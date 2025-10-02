@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import RequireAuth from "../components/RequireAuth";
+import AppSidebar from "../components/AppSidebar";
+import AppHeader from "../components/AppHeader";
+import AppFooter from "../components/AppFooter";
 
 export default function Transfer() {
   const [amount, setAmount] = useState("");
@@ -7,7 +10,13 @@ export default function Transfer() {
   const [method, setMethod] = useState("fiat");
 
   return (
-    <RequireAuth>
+        <RequireAuth>
+      <div>
+        <AppSidebar />
+        <div className="wrapper d-flex flex-column min-vh-100">
+          <AppHeader />
+          <div className="body flex-grow-1">
+          
       <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
         <h2 className="text-2xl font-bold mb-4">Send Money</h2>
         <form>
@@ -45,6 +54,11 @@ export default function Transfer() {
           </button>
         </form>
       </div>
+    </div>
+          <AppFooter />
+        </div>
+      </div>
     </RequireAuth>
+
   );
 }
