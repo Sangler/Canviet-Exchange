@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -17,12 +17,15 @@ const AppSidebar: React.FC = () => {
   const dispatch = useDispatch();
   const unfoldable = useSelector((state: any) => state.sidebarUnfoldable);
   const sidebarShow = useSelector((state: any) => state.sidebarShow);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <CSidebar
       className="border-end"
       colorScheme="dark"
       position="fixed"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       unfoldable={unfoldable}
       visible={sidebarShow}
       onVisibleChange={(visible: boolean) => {
@@ -41,7 +44,9 @@ const AppSidebar: React.FC = () => {
                   try { (e.currentTarget as HTMLImageElement).style.display = 'none'; } catch {}
                 }}
               />
-              <strong style={{ textDecoration: 'none' }}>SVN  Transfer</strong>
+              {sidebarShow && (!unfoldable || isHovered) ? (
+                <strong style={{ textDecoration: 'none' }}>SVN  Transfer</strong>
+              ) : null}
             </div>
 
           </CSidebarBrand>
