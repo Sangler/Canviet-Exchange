@@ -6,6 +6,7 @@ const helmet = require('helmet')
 const mongoose = require('mongoose')
 const authRoutes = require('./routes/auth')
 const usersRoutes = require('./routes/users')
+const adminRoutes = require('./routes/admin')
 const User = require('./models/User')
 const { connectMongo } = require('./db/mongoose')
 const { version, name } = require('../package.json')
@@ -29,6 +30,7 @@ app.use(cors({
 
 app.use('/api/auth', authRoutes)
 app.use('/api/users', usersRoutes)
+app.use('/api/admin', adminRoutes)
 
 // Health and liveness endpoints
 function mongoStateName(state) {

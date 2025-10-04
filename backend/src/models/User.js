@@ -27,14 +27,13 @@ const userSchema = new mongoose.Schema({
     street: { type: String, lowercase: true },
     postalCode: { type: String, lowercase: true },
     city: { type: String, lowercase: true },
-    longitude: { type: Number },
-    latitude: { type: Number }
+    country: { type: String, lowercase: true }
   },
   passwordHash: { type: String, required: true },
   emailVerified: {
     type: Boolean,
     default: false
-  },  
+  }, 
   phoneVerified: {
     type: Boolean,
     default: false
@@ -61,3 +60,5 @@ userSchema.set('toJSON', {
 })
 
 module.exports = mongoose.model('User', userSchema)
+
+
