@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -17,12 +17,15 @@ const AppSidebar: React.FC = () => {
   const dispatch = useDispatch();
   const unfoldable = useSelector((state: any) => state.sidebarUnfoldable);
   const sidebarShow = useSelector((state: any) => state.sidebarShow);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <CSidebar
       className="border-end"
       colorScheme="dark"
       position="fixed"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       unfoldable={unfoldable}
       visible={sidebarShow}
       onVisibleChange={(visible: boolean) => {
@@ -30,14 +33,22 @@ const AppSidebar: React.FC = () => {
       }}
     >
       <CSidebarHeader className="border-bottom">
-        <Link href="/admin" passHref legacyBehavior>
-          <CSidebarBrand as="a">
-            <div className="sidebar-brand-full">
-              <strong>SVN  Transfer</strong>
+  <Link href="/" passHref legacyBehavior>
+          <CSidebarBrand as="a" style={{ textDecoration: 'none' }}>
+            <div className="sidebar-brand-full" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <img
+                src={process.env.NEXT_PUBLIC_LOGO_URL || '/logo.png'}
+                alt="CanViet Exchange logo"
+                style={{ height: 40, width: 'auto' }}
+                onError={(e: any) => {
+                  try { (e.currentTarget as HTMLImageElement).style.display = 'none'; } catch {}
+                }}
+              />
+              {sidebarShow && (!unfoldable || isHovered) ? (
+                <strong style={{ textDecoration: 'none' }}>CanViet Exchange</strong>
+              ) : null}
             </div>
-            <div className="sidebar-brand-narrow">
-              <strong>ST</strong>
-            </div>
+
           </CSidebarBrand>
         </Link>
         <CCloseButton

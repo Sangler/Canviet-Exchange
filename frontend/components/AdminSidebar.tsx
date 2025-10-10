@@ -20,35 +20,6 @@ export default function AdminSidebar() {
           <span className="mr-3">📝</span>
           Typography
         </Link>
-        <div className="text-gray-400 text-xs uppercase tracking-wider mt-6 mb-2 px-3">Components</div>
-        <Link href="/admin/base" className="flex items-center py-2 px-3 rounded hover:bg-gray-700 text-gray-300">
-          <span className="mr-3">📦</span>
-          Base
-        </Link>
-        <Link href="/admin/buttons" className="flex items-center py-2 px-3 rounded hover:bg-gray-700 text-gray-300">
-          <span className="mr-3">🔘</span>
-          Buttons
-        </Link>
-        <Link href="/admin/forms" className="flex items-center py-2 px-3 rounded hover:bg-gray-700 text-gray-300">
-          <span className="mr-3">📋</span>
-          Forms
-        </Link>
-        <Link href="/admin/charts" className="flex items-center py-2 px-3 rounded hover:bg-gray-700 text-gray-300">
-          <span className="mr-3">📈</span>
-          Charts
-        </Link>
-        <Link href="/admin/icons" className="flex items-center py-2 px-3 rounded hover:bg-gray-700 text-gray-300">
-          <span className="mr-3">⭐</span>
-          Icons
-        </Link>
-        <Link href="/admin/notifications" className="flex items-center py-2 px-3 rounded hover:bg-gray-700 text-gray-300">
-          <span className="mr-3">🔔</span>
-          Notifications
-        </Link>
-        <Link href="/admin/widgets" className="flex items-center py-2 px-3 rounded hover:bg-gray-700 text-gray-300">
-          <span className="mr-3">🧩</span>
-          Widgets
-        </Link>
         <div className="text-gray-400 text-xs uppercase tracking-wider mt-6 mb-2 px-3">Extras</div>
         <Link href="/admin/pages" className="flex items-center py-2 px-3 rounded hover:bg-gray-700 text-gray-300">
           <span className="mr-3">📄</span>

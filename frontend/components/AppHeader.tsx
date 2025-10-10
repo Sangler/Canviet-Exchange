@@ -50,7 +50,7 @@ const AppHeader: React.FC = () => {
         {/* TODO: load information user from auth context */}
         <CHeaderNav className="ms-auto ms-md-0">
           <div className="d-flex align-items-center">
-            <span className="me-3">{user?.email ?? 'user@svntransfer.com'}</span>
+            <span className="me-3">{user?.email ?? 'user@canviet-exchange.com'}</span>
             <CDropdown variant="nav-item">
               <CDropdownToggle className="py-0 pe-0" caret={false}>
                 <div className="avatar avatar-md">👤</div>

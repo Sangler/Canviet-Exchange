@@ -62,11 +62,15 @@ export default function LoginPage() {
     try {
       setLoading(true);
       // Real API call to backend
-      const resp = await fetch("/api/auth/login", {
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+      const body: any = { password };
+      if (method === 'email') body.email = email;
+      else body.phone = phone;
+      const resp = await fetch(`${base}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(body),
       });
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
@@ -74,6 +78,7 @@ export default function LoginPage() {
       }
       const data = await resp.json();
       const token: string | undefined = data?.token;
+      const userFromLogin = data?.user;
       if (token) {
         // Save in Web Storage: sessionStorage (default) or localStorage when Remember Me is checked
         setAuthToken(token, { persistent: remember });
@@ -90,7 +95,7 @@ export default function LoginPage() {
       }
 
       setSuccess(true);
-      // Redirect back to intended page if provided via ?next=, else to index
+      // Compute intended next page
       const nextParam = Array.isArray(router.query.next)
         ? router.query.next[0]
         : router.query.next;
@@ -98,7 +103,27 @@ export default function LoginPage() {
         typeof nextParam === "string" && nextParam.startsWith("/")
           ? nextParam
           : "/";
-      void router.push(target);
+
+      // If email is not verified, go straight to /verify-email with the intended target
+      let emailVerified: boolean | undefined = userFromLogin?.emailVerified;
+      try {
+        if (emailVerified === undefined && token) {
+          const meResp = await fetch(`${base}/api/users/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
+          });
+          const me = await meResp.json().catch(() => ({} as any));
+          emailVerified = !!me?.user?.emailVerified;
+        }
+      } catch {
+        // ignore and proceed to target
+      }
+
+      if (emailVerified === false) {
+        void router.push(`/verify-email?next=${encodeURIComponent(target)}`);
+      } else {
+        void router.push(target);
+      }
     } finally {
       setLoading(false);
     }

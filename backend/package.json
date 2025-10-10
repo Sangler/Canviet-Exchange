@@ -1,11 +1,12 @@
 {
-  "name": "svn-transfer-backend",
+  "name": "canviet-exchange-backend",
   "version": "0.1.0",
   "private": true,
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "verify:smtp": "node src/scripts/verifySmtp.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -17,9 +18,10 @@
     "express-validator": "^7.0.0",
     "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.0",
-    "mongoose": "^7.6.1"
+    "mongoose": "^7.6.1",
+    "nodemailer": "^7.0.9"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "nodemon": "^3.1.10"
   }
 }

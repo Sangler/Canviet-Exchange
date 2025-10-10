@@ -10,7 +10,7 @@ app.use(cors());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
 app.get("/", (req, res) => {
-  res.send("SVN Transfer Backend API");
+  res.send("CanViet Exchange Backend API");
 });
 
 const PORT = process.env.PORT || 5000;
