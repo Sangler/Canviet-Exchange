@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const auth = require('../middleware/auth')
 const adminController = require('../controllers/adminController')
+const requireEmailVerified = require('../middleware/requireEmailVerified')
 
 // simple admin checker
 function requireAdmin(req, res, next) {
@@ -11,6 +12,6 @@ function requireAdmin(req, res, next) {
   } catch (e) { return res.status(403).json({ message: 'Forbidden' }) }
 }
 
-router.get('/users', auth, requireAdmin, adminController.listUsers)
+router.get('/users', auth, requireEmailVerified, requireAdmin, adminController.listUsers)
 
 module.exports = router

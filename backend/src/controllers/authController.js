@@ -62,10 +62,12 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body || {}
-    if (!email || !password) return res.status(400).json({ message: 'Email and password required' })
+    const { email, phone, password } = req.body || {}
+    if ((!email && !phone) || !password) return res.status(400).json({ message: 'Email/phone and password required' })
 
-    const user = await User.findOne({ email: email.toLowerCase() })
+    let user = null
+    if (email) user = await User.findOne({ email: email.toLowerCase() })
+    if (!user && phone) user = await User.findOne({ phone })
     if (!user) return res.status(401).json({ message: 'Invalid credentials' })
 
     // First try with pepper (if configured), then fall back to legacy compare

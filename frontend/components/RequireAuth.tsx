@@ -13,8 +13,10 @@ interface RequireAuthProps {
 const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
   const router = useRouter();
   const [allowed, setAllowed] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(true);
 
   useEffect(() => {
+    if (!router.isReady) return;
     // Avoid running during SSR
     if (typeof window === 'undefined') return;
 
@@ -42,7 +44,40 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
     setAllowed(true);
   }, [router, roles]);
 
-  if (!allowed)
+  // After auth, fetch profile to ensure email is verified; if not, redirect to /verify-email
+  useEffect(() => {
+    const run = async () => {
+      if (!router.isReady) return;
+      if (!isAuthenticated()) return; // handled above
+      // avoid redirect loop if already on verify-email
+      if (router.pathname === '/verify-email' || router.asPath.startsWith('/verify-email')) { setCheckingEmail(false); return; }
+      try {
+        const token = getAuthToken();
+        const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+        const resp = await fetch(`${base}/api/users/me`, {
+          headers: { Authorization: token ? `Bearer ${token}` : '' },
+          credentials: 'include',
+        });
+        if (!resp.ok) throw new Error('Failed to load profile');
+        const data = await resp.json();
+        const emailVerified: boolean = !!data?.user?.emailVerified;
+        if (!emailVerified) {
+          const next = encodeURIComponent(router.asPath);
+          // Fire-and-forget to avoid AbortError console noise on in-flight navigations
+          void router.replace(`/verify-email?next=${next}`).catch(() => {});
+          setCheckingEmail(false);
+          return;
+        }
+      } catch (e) {
+        // If profile fails, keep user allowed; backend will re-check on actions
+      } finally {
+        setCheckingEmail(false);
+      }
+    };
+    run();
+  }, [router]);
+
+  if (!allowed || checkingEmail)
     return (
       <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
         <CSpinner color="primary" />

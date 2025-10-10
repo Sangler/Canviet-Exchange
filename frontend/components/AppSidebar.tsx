@@ -38,14 +38,14 @@ const AppSidebar: React.FC = () => {
             <div className="sidebar-brand-full" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <img
                 src={process.env.NEXT_PUBLIC_LOGO_URL || '/logo.png'}
-                alt="SVN Transfer logo"
-                style={{ height: 28, width: 'auto' }}
+                alt="CanViet Exchange logo"
+                style={{ height: 40, width: 'auto' }}
                 onError={(e: any) => {
                   try { (e.currentTarget as HTMLImageElement).style.display = 'none'; } catch {}
                 }}
               />
               {sidebarShow && (!unfoldable || isHovered) ? (
-                <strong style={{ textDecoration: 'none' }}>SVN  Transfer</strong>
+                <strong style={{ textDecoration: 'none' }}>CanViet Exchange</strong>
               ) : null}
             </div>
 

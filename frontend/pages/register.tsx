@@ -22,8 +22,8 @@ export default function RegisterPage() {
     if (!lastName) next.lastName = 'Last name is required';
     if (!email) next.email = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'Enter a valid email';
-    if (!phone) next.phone = 'Phone number is required';
-    else if (!/^\+?[0-9\s\-()]{7,}$/.test(phone)) next.phone = 'Enter a valid phone number';
+    // Phone field is currently hidden; only validate if user has entered a value
+    if (phone && !/^\+?[0-9\s\-()]{7,}$/.test(phone)) next.phone = 'Enter a valid phone number';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -48,13 +48,15 @@ export default function RegisterPage() {
     if (!validateStep2()) return;
     setLoading(true);
     try {
-      const payload = {
+      const payload: any = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
-        phone: phone.trim(),
         password,
       };
+      if (phone && phone.trim()) {
+        payload.phone = phone.trim();
+      }
       const resp = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,8 +68,17 @@ export default function RegisterPage() {
         throw new Error(data?.message || 'Registration failed');
       }
       setSuccess(true);
-      await new Promise((r) => setTimeout(r, 900));
-      void router.push('/login');
+      // Request email OTP immediately and move to verify-email
+      try {
+        const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+        await fetch(`${base}/api/otp/email/request`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim() }),
+        }).catch(() => {});
+      } catch {}
+      await new Promise((r) => setTimeout(r, 400));
+      void router.push(`/verify-email?next=/login`);
     } catch (err: any) {
       setErrors({ ...(errors || {}), password: err?.message || String(err) });
     } finally {
@@ -115,12 +126,12 @@ export default function RegisterPage() {
                   <span className="input-border" />
                   <span className="error-message">{errors.email}</span>
                 </div>
-                <div className={`input-group ${errors.phone ? 'has-error' : ''}`}>
+                {/* <div className={`input-group ${errors.phone ? 'has-error' : ''}`}>
                   <input type="tel" id="phone" placeholder=" " required value={phone} onChange={(e) => setPhone(e.target.value)} />
                   <label htmlFor="phone">Phone number</label>
                   <span className="input-border" />
                   <span className="error-message">{errors.phone}</span>
-                </div>
+                </div> */}
                 <button type="submit" className={`submit-btn ${loading ? 'loading' : ''}`} disabled={loading}>
                   <span className="btn-text">{loading ? 'Next…' : 'Create New Account'}</span>
                   <div className="btn-loader" aria-hidden>
@@ -182,7 +193,7 @@ export default function RegisterPage() {
           {success && (
             <div className="success-message" role="status" aria-live="polite">
               <h3>Account created!</h3>
-              <p>Redirecting to login…</p>
+              <p>Redirecting to verify your email…</p>
             </div>
           )}
         </div>

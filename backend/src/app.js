@@ -7,6 +7,9 @@ const mongoose = require('mongoose')
 const authRoutes = require('./routes/auth')
 const usersRoutes = require('./routes/users')
 const adminRoutes = require('./routes/admin')
+const otpRoutes = require('./routes/otp')
+const transfersRoutes = require('./routes/transfers')
+const https = require('https')
 const User = require('./models/User')
 const { connectMongo } = require('./db/mongoose')
 const { version, name } = require('../package.json')
@@ -31,6 +34,69 @@ app.use(cors({
 app.use('/api/auth', authRoutes)
 app.use('/api/users', usersRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/otp', otpRoutes)
+app.use('/api/transfers', transfersRoutes)
+
+// Lightweight passthrough for CAD->VND rate using open.er-api.com (primary) with fallback to exchangerate.host
+app.get('/api/fx/cad-vnd', async (_req, res) => {
+  const primaryUrl = 'https://open.er-api.com/v6/latest/CAD';
+  const fallbackUrl = 'https://api.exchangerate.host/latest?base=CAD&symbols=VND';
+
+  function fetchJson(url) {
+    return new Promise((resolve, reject) => {
+      https.get(url, (r) => {
+        if (r.statusCode && r.statusCode >= 400) {
+          return reject(new Error('Status ' + r.statusCode));
+        }
+        let data = '';
+        r.on('data', chunk => data += chunk);
+        r.on('end', () => {
+          try {
+            const json = JSON.parse(data);
+            resolve(json);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }).on('error', reject);
+    });
+  }
+
+  try {
+    let rate = null; let source = null; let fetchedAt = new Date().toISOString();
+    try {
+      const j = await fetchJson(primaryUrl);
+      // Open ER API success structure: result === 'success'
+      if (j && j.rates && typeof j.rates.VND === 'number') {
+        rate = j.rates.VND;
+        source = 'open.er-api.com';
+        fetchedAt = j.time_last_update_utc || fetchedAt;
+      }
+    } catch (e) {
+      // swallow, will attempt fallback
+    }
+
+    if (rate === null) {
+      try {
+        const j2 = await fetchJson(fallbackUrl);
+        if (j2 && j2.rates && typeof j2.rates.VND === 'number') {
+          rate = j2.rates.VND;
+          source = 'exchangerate.host';
+        }
+      } catch (e) {
+        // ignore, handled below if still null
+      }
+    }
+
+    if (rate === null) {
+      return res.status(502).json({ ok: false, message: 'Rate not available' });
+    }
+
+    return res.json({ ok: true, pair: 'CAD_VND', rate, fetchedAt, source });
+  } catch (e) {
+    return res.status(500).json({ ok: false, message: 'Internal error' });
+  }
+});
 
 // Health and liveness endpoints
 function mongoStateName(state) {
@@ -63,6 +129,20 @@ app.get('/api/health', (req, res) => {
 // Lightweight liveness endpoints
 app.get('/healthz', (_req, res) => res.status(200).send('ok'))
 app.get('/api/healthz', (_req, res) => res.status(200).send('ok'))
+
+// Dev-only SMTP verification endpoint
+if ((process.env.NODE_ENV || 'development') !== 'production') {
+  app.get('/api/dev/smtp-verify', async (_req, res) => {
+    try {
+      const { createTransport } = require('./services/email')
+      const transporter = createTransport()
+      const ok = await transporter.verify()
+      res.json({ ok: !!ok, user: process.env.EMAIL_USER || process.env.emailUser, host: process.env.EMAIL_HOST || process.env.emailHost, port: Number(process.env.EMAIL_PORT || process.env.emailPort || 465) })
+    } catch (e) {
+      res.status(500).json({ ok: false, error: String(e && e.message ? e.message : e) })
+    }
+  })
+}
 
 // Dev-only endpoint to check indexes and DB state
 if ((process.env.NODE_ENV || 'development') !== 'production') {

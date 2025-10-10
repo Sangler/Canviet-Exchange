@@ -6,7 +6,7 @@ const AppFooter: React.FC = () => {
     <CFooter className="px-4">
       <div>
         <a href="#" target="_blank" rel="noopener noreferrer">
-          SVN  Transfer
+          CanViet Exchange
         </a>
         <span className="ms-1">&copy; 2025 Money Transfer Platform.</span>
       </div>

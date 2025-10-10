@@ -2,6 +2,8 @@ const mongoose = require('mongoose')
 
 const userSchema = new mongoose.Schema({
   avatarUrl: { type: String },
+  KYCStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+  KyCDocumentUrl: { type: String },
   email: {
     type: String,
     required: true,
