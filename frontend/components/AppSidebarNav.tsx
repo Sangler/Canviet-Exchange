@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import SimpleBar from 'simplebar-react';
 import 'simplebar-react/dist/simplebar.min.css';
-import { CBadge, CNavLink, CSidebarNav } from '@coreui/react';
+import { CNavLink, CSidebarNav } from '@coreui/react';
 import { useAuth } from '../context/AuthContext';
 import { hasRequiredRole, Role } from '../lib/roles';
 
@@ -62,11 +62,6 @@ export const AppSidebarNav: React.FC<AppSidebarNavProps> = ({ items }) => {
               </span>
             )}
         {name && name}
-        {badge && (
-          <CBadge color={badge.color} className="ms-auto" size="sm">
-            {badge.text}
-          </CBadge>
-        )}
       </>
     );
   };

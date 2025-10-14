@@ -32,14 +32,23 @@ const AppHeader: React.FC = () => {
   const { user, logout } = useAuth();
 
   return (
-    <CHeader position="sticky" className="mb-4 p-0">
-      <CContainer className="border-bottom px-4" fluid>
+    <CHeader position="sticky" className="p-0">
+      <CContainer className="border-bottom px-4 d-flex align-items-center" fluid>
         <CHeaderToggler
           onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
           style={{ marginInlineStart: '-14px' }}
         >
           <CIcon icon={cilMenu} size="lg" />
         </CHeaderToggler>
+        <div className="d-flex align-items-center ms-3">
+          <img
+            className="flag"
+            src="/flags/Flag_of_Vietnam.png"
+            alt="Vietnam"
+            title="Vietnam"
+            style={{ width: 30, height: 'auto' }}
+          />
+        </div>
         <CHeaderNav className="d-none d-md-flex">
           <CNavItem>
             <CNavLink href="/">
@@ -48,7 +57,7 @@ const AppHeader: React.FC = () => {
           </CNavItem>
         </CHeaderNav>
         {/* TODO: load information user from auth context */}
-        <CHeaderNav className="ms-auto ms-md-0">
+  <CHeaderNav className="ms-auto ms-md-0 d-flex align-items-center">
           <div className="d-flex align-items-center">
             <span className="me-3">{user?.email ?? 'user@canviet-exchange.com'}</span>
             <CDropdown variant="nav-item">

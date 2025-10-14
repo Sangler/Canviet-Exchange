@@ -4,6 +4,7 @@ const userSchema = new mongoose.Schema({
   avatarUrl: { type: String },
   KYCStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
   KyCDocumentUrl: { type: String },
+  IDNumber: { type: String },
   email: {
     type: String,
     required: true,
@@ -24,18 +25,22 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  preferredName: { type: String },
   dateOfBirth: { type: Date, default: Date.now },
   address: {
     street: { type: String, lowercase: true },
     postalCode: { type: String, lowercase: true },
     city: { type: String, lowercase: true },
+    state: { type: String, lowercase: true },
     country: { type: String, lowercase: true }
   },
+  employmentStatus: { type: String },
   passwordHash: { type: String, required: true },
   emailVerified: {
     type: Boolean,
     default: false
   }, 
+
   phoneVerified: {
     type: Boolean,
     default: false
@@ -60,6 +65,12 @@ userSchema.set('toJSON', {
     return ret
   },
 })
+
+// Keep updatedAt in sync
+userSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
+});
 
 module.exports = mongoose.model('User', userSchema)
 

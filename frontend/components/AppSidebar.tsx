@@ -39,13 +39,12 @@ const AppSidebar: React.FC = () => {
               <img
                 src={process.env.NEXT_PUBLIC_LOGO_URL || '/logo.png'}
                 alt="CanViet Exchange logo"
-                style={{ height: 40, width: 'auto' }}
                 onError={(e: any) => {
                   try { (e.currentTarget as HTMLImageElement).style.display = 'none'; } catch {}
                 }}
               />
               {sidebarShow && (!unfoldable || isHovered) ? (
-                <strong style={{ textDecoration: 'none' }}>CanViet Exchange</strong>
+                <strong style={{ textDecoration: 'none' }}>CanViet<br/>Exchange</strong>
               ) : null}
             </div>
 

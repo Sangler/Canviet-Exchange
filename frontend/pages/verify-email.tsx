@@ -15,6 +15,13 @@ export default function VerifyEmailPage() {
   const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
   useEffect(() => {
+    // Prefill from query if provided (e.g., redirect from /register)
+    const qEmail = (router.query.email as string) || '';
+    if (qEmail) {
+      setEmail(qEmail);
+      setEmailLocked(true);
+    }
+
     // Load current user email from /api/users/me
     const run = async () => {
       try {
@@ -28,7 +35,7 @@ export default function VerifyEmailPage() {
       } catch {}
     };
     run();
-  }, [base]);
+  }, [base, router.query.email]);
 
   const request = async () => {
     setLoading(true);

@@ -77,8 +77,9 @@ export default function RegisterPage() {
           body: JSON.stringify({ email: email.trim() }),
         }).catch(() => {});
       } catch {}
-      await new Promise((r) => setTimeout(r, 400));
-      void router.push(`/verify-email?next=/login`);
+  await new Promise((r) => setTimeout(r, 400));
+  const encEmail = encodeURIComponent(email.trim());
+  void router.push(`/verify-email?next=/login&email=${encEmail}`);
     } catch (err: any) {
       setErrors({ ...(errors || {}), password: err?.message || String(err) });
     } finally {

@@ -24,6 +24,22 @@ body {
   margin-left: 3px;
 }
 
+// Responsive logo sizing for the sidebar brand
+.sidebar-brand-full img {
+  height: 64px;
+  width: auto;
+}
+
+// md breakpoint ~ 768px
+@media (min-width: 768px) {
+  .sidebar-brand-full img { height: 72px; }
+}
+
+// xl breakpoint ~ 1200px
+@media (min-width: 1200px) {
+  .sidebar-brand-full img { height: 76px; }
+}
+
 .sidebar-header {
   .nav-underline-border {
     --cui-nav-underline-border-link-padding-x: 1rem;
