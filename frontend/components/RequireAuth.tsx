@@ -53,8 +53,7 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
       if (router.pathname === '/verify-email' || router.asPath.startsWith('/verify-email')) { setCheckingEmail(false); return; }
       try {
         const token = getAuthToken();
-        const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-        const resp = await fetch(`${base}/api/users/me`, {
+        const resp = await fetch(`/api/users/me`, {
           headers: { Authorization: token ? `Bearer ${token}` : '' },
         });
         if (resp.status === 401) {

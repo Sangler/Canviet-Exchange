@@ -30,13 +30,12 @@ export default function PersonalInfoPage() {
   const [province, setProvince] = useState('');
   const [employmentStatus, setEmploymentStatus] = useState('');
   const [saving, setSaving] = useState(false);
-  const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
   useEffect(() => {
     (async () => {
       try {
         const token = getAuthToken();
-          const resp = await fetch(`${base}/api/users/me`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
+          const resp = await fetch(`/api/users/me`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
         if (resp.status === 401) {
           // Token invalid/expired: force re-auth
           await logout('/login?next=/personal-info');
@@ -68,7 +67,7 @@ export default function PersonalInfoPage() {
         setLoading(false);
       }
     })();
-  }, [base]);
+  }, []);
 
   const months = [
     'January','February','March','April','May','June','July','August','September','October','November','December'

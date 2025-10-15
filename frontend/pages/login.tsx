@@ -62,14 +62,13 @@ export default function LoginPage() {
     try {
       setLoading(true);
       // Real API call to backend
-      const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+  // Use same-origin proxy to avoid CORS issues across LAN IP
       const body: any = { password };
       if (method === 'email') body.email = email;
       else body.phone = phone;
-      const resp = await fetch(`${base}/api/auth/login`, {
+      const resp = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
@@ -108,7 +107,7 @@ export default function LoginPage() {
       let emailVerified: boolean | undefined = userFromLogin?.emailVerified;
       try {
         if (emailVerified === undefined && token) {
-          const meResp = await fetch(`${base}/api/users/me`, {
+          const meResp = await fetch(`/api/users/me`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           const me = await meResp.json().catch(() => ({} as any));

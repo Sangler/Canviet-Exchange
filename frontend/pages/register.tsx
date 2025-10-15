@@ -57,10 +57,10 @@ export default function RegisterPage() {
       if (phone && phone.trim()) {
         payload.phone = phone.trim();
       }
+      // Use same-origin proxy for backend calls
       const resp = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(payload),
       });
       if (!resp.ok) {
@@ -70,8 +70,7 @@ export default function RegisterPage() {
       setSuccess(true);
       // Request email OTP immediately and move to verify-email
       try {
-        const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-        await fetch(`${base}/api/otp/email/request`, {
+        await fetch(`/api/otp/email/request`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: email.trim() }),
