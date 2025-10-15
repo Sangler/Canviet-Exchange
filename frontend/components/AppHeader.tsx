@@ -34,25 +34,28 @@ const AppHeader: React.FC = () => {
   return (
     <CHeader position="sticky" className="p-0">
       <CContainer className="border-bottom px-4 d-flex align-items-center" fluid>
+        
         <CHeaderToggler
           onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
           style={{ marginInlineStart: '-14px' }}
         >
           <CIcon icon={cilMenu} size="lg" />
+
         </CHeaderToggler>
-        <div className="d-flex align-items-center ms-3">
-          <img
-            className="flag"
-            src="/flags/Flag_of_Vietnam.png"
-            alt="Vietnam"
-            title="Vietnam"
-            style={{ width: 30, height: 'auto' }}
-          />
-        </div>
+        EN | VI
+        
+
         <CHeaderNav className="d-none d-md-flex">
           <CNavItem>
             <CNavLink href="/">
-              Dashboard
+
+              <div className="d-flex align-items-center ms-3">
+          <CDropdown variant="nav-item">
+            <CDropdownToggle className="py-0" caret={false}>
+              <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />
+            </CDropdownToggle>
+          </CDropdown>
+        </div>
             </CNavLink>
           </CNavItem>
         </CHeaderNav>

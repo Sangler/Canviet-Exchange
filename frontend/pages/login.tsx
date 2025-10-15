@@ -110,7 +110,6 @@ export default function LoginPage() {
         if (emailVerified === undefined && token) {
           const meResp = await fetch(`${base}/api/users/me`, {
             headers: { Authorization: `Bearer ${token}` },
-            credentials: 'include',
           });
           const me = await meResp.json().catch(() => ({} as any));
           emailVerified = !!me?.user?.emailVerified;
@@ -149,26 +148,14 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>Modern SaaS Login</title>
+        <title>CanVIet Exchange Service Login</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <div className="login-container">
         <div className="login-card">
           <div className="login-header">
             <div className="logo" aria-hidden>
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 32 32"
-                fill="none"
-                aria-hidden
-              >
-                <rect width="32" height="32" rx="6" fill="#635BFF" />
-                <path
-                  d="M8 12h16v2H8v-2zm0 4h16v2H8v-2zm0 4h10v2H8v-2z"
-                  fill="white"
-                />
-              </svg>
+              <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
             </div>
             <h1>Sign in to Dashboard</h1>
             <p>Welcome! Please sign in to continue</p>
@@ -457,10 +444,17 @@ export default function LoginPage() {
           }
           .logo {
             display: inline-flex;
-            padding: 10px;
+            padding: 0;
             border-radius: 12px;
-            background: rgba(99, 91, 255, 0.12);
-            box-shadow: inset 0 0 0 1px rgba(99, 91, 255, 0.25);
+            background: transparent;
+            box-shadow: none;
+          }
+          .logo-img { width: auto; height: 165px; display: block; object-fit: contain; }
+          @media (max-width: 992px) { /* tablets */
+            .logo-img { height: 140px; }
+          }
+          @media (max-width: 640px) { /* phones */
+            .logo-img { height: 120px; }
           }
           .login-header h1 {
             margin: 10px 0 6px;

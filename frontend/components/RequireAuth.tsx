@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { getAuthToken, isAuthenticated, parseJwt } from '../lib/auth';
+import { getAuthToken, isAuthenticated, parseJwt, logout } from '../lib/auth';
 import { CSpinner } from '@coreui/react';
 
 interface RequireAuthProps {
@@ -56,8 +56,13 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
         const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
         const resp = await fetch(`${base}/api/users/me`, {
           headers: { Authorization: token ? `Bearer ${token}` : '' },
-          credentials: 'include',
         });
+        if (resp.status === 401) {
+          const next = encodeURIComponent(router.asPath);
+          await logout(`/login?next=${next}`);
+          setCheckingEmail(false);
+          return;
+        }
         if (!resp.ok) throw new Error('Failed to load profile');
         const data = await resp.json();
         const emailVerified: boolean = !!data?.user?.emailVerified;

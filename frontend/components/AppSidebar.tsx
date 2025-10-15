@@ -36,13 +36,11 @@ const AppSidebar: React.FC = () => {
   <Link href="/" passHref legacyBehavior>
           <CSidebarBrand as="a" style={{ textDecoration: 'none' }}>
             <div className="sidebar-brand-full" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img
-                src={process.env.NEXT_PUBLIC_LOGO_URL || '/logo.png'}
-                alt="CanViet Exchange logo"
-                onError={(e: any) => {
-                  try { (e.currentTarget as HTMLImageElement).style.display = 'none'; } catch {}
-                }}
-              />
+          <img src={'/logo2.png'}  alt="CanViet Exchange logo"
+                  onError={(e: any) => {
+                    try { (e.currentTarget as HTMLImageElement).style.display = 'none'; } catch {}
+                  }}
+                />
               {sidebarShow && (!unfoldable || isHovered) ? (
                 <strong style={{ textDecoration: 'none' }}>CanViet<br/>Exchange</strong>
               ) : null}

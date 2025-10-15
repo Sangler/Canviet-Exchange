@@ -122,6 +122,7 @@ export default function Transfer() {
                   <img className="flag" src="/flags/Flag_of_Vietnam.png" alt="Vietnam" title="Vietnam" />
                   {' '}with transparent rates and fast delivery.
                 </p>
+
                 <div className="intro-cta">
                   <a href="#exchange" className="btn primary">Get Started</a>
                 </div>
