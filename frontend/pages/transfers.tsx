@@ -204,7 +204,7 @@ export default function Transfer() {
                             id="amountFrom"
                             name="amountFrom"
                             placeholder="Enter amount"
-                            min={100}
+                            min={50}
                             max={10000}
                             step="0.01"
                             required

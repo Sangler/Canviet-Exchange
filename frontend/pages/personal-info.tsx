@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useColorModes } from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilSun, cilMoon } from '@coreui/icons';
 import Head from 'next/head';
 import RequireAuth from '../components/RequireAuth';
 import { getAuthToken, logout } from '../lib/auth';
@@ -11,6 +14,7 @@ interface MeResponse {
 }
 
 export default function PersonalInfoPage() {
+  const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<MeResponse['user'] | null>(null);
@@ -32,6 +36,14 @@ export default function PersonalInfoPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    // Restore saved theme with light as default fallback
+    try {
+      const savedMode = localStorage.getItem('theme.mode');
+      if (savedMode === 'dark' || savedMode === 'light') setColorMode(savedMode as 'dark' | 'light');
+      else setColorMode('light');
+    } catch {
+      setColorMode('light');
+    }
     (async () => {
       try {
         const token = getAuthToken();
@@ -58,7 +70,7 @@ export default function PersonalInfoPage() {
         if (u.dateOfBirth) {
           const d = new Date(u.dateOfBirth);
             setDobDay(String(d.getUTCDate()).padStart(2,'0'));
-            setDobMonth(String(d.getUTCMonth()+1));
+            setDobMonth(String(d.getUTCMonth()+1).padStart(2,'0'));
             setDobYear(String(d.getUTCFullYear()));
         }
       } catch (e: any) {
@@ -69,15 +81,49 @@ export default function PersonalInfoPage() {
     })();
   }, []);
 
-  const months = [
-    'January','February','March','April','May','June','July','August','September','October','November','December'
-  ];
+  // Persist theme choice
+  useEffect(() => {
+    try { localStorage.setItem('theme.mode', colorMode || 'light'); } catch {}
+  }, [colorMode]);
 
-  function onSubmit(e: React.FormEvent) {
+  const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Currently just local UI; backend update endpoint not defined yet.
-    setSaving(true);
-    setTimeout(()=> setSaving(false), 800);
+    try {
+      setSaving(true);
+      // Build payload
+      const day = parseInt(dobDay, 10);
+      const month = parseInt(dobMonth, 10);
+      const year = parseInt(dobYear, 10);
+      const dobIso = !isNaN(day) && !isNaN(month) && !isNaN(year)
+        ? new Date(Date.UTC(year, month - 1, day)).toISOString()
+        : undefined;
+      const payload: any = {
+        dateOfBirth: dobIso,
+        address: {
+          street,
+          postalCode,
+          city,
+          country,
+        },
+        employmentStatus,
+      };
+      const token = getAuthToken();
+      const resp = await fetch(`/api/users/profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
+        body: JSON.stringify(payload),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || !data?.ok) throw new Error(data?.message || 'Failed to save profile');
+      // On success, redirect to transfers
+      window.location.href = '/transfers';
+    } catch (err: any) {
+      setError(err?.message || 'Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -90,6 +136,27 @@ export default function PersonalInfoPage() {
         </Head>
         <div className="auth-container" style={{ paddingTop: 40, paddingBottom: 60 }}>
           <div className="auth-card pi-card-centered" style={{ width: '100%', maxWidth: 900 }}>
+          <a href="/transfers" className="back-btn" aria-label="Back to transfers" title="Back">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </a>
+          <div className="top-right" aria-label="Controls">
+            <span className="lang-switch">
+              <a href="?lang=en">EN</a>
+              <span aria-hidden>|</span>
+              <a href="?lang=vi">VI</a>
+            </span>
+            <button
+              type="button"
+              className="mode-btn"
+              onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}
+              aria-label={`Toggle ${colorMode === 'dark' ? 'light' : 'dark'} mode`}
+              title="Toggle color mode"
+            >
+              <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />
+            </button>
+          </div>
           <form className="pi-form" onSubmit={onSubmit} noValidate>
             <div className="auth-header pi-header" style={{ marginBottom: 6 }}>
               <div className="logo" aria-hidden>
@@ -141,7 +208,7 @@ export default function PersonalInfoPage() {
                       <label htmlFor="dobMonth">Month</label>
                       <select id="dobMonth" className="themed" value={dobMonth} onChange={(e)=> setDobMonth(e.target.value)}>
                         <option value="" disabled>Select month</option>
-                        {months.map((m,i)=> <option key={m} value={String(i+1)}>{m}</option>)}
+                        {months.map((m)=> <option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
                     <div className="field-group">
@@ -216,6 +283,14 @@ export default function PersonalInfoPage() {
           :global(html, body, #__next) { height: 100%; }
           .auth-container { min-height: 100vh; display: grid; place-items: center; background: radial-gradient(1200px 400px at 50% -10%, rgba(91,141,239,.12), transparent), linear-gradient(180deg, #0b1020 0%, #0e1530 100%); padding: 24px; }
           .auth-card { width: 100%; max-width: 900px; background: rgba(16,23,42,0.92); border: 1px solid #1b2440; color: #e6edf7; border-radius: 16px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); position: relative; overflow: hidden; }
+          .back-btn { position:absolute; top:12px; left:12px; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; color:#a9bed3; border:1px solid #1b2440; background:#0f1730; border-radius:10px; text-decoration:none; }
+          .back-btn:hover { color:#e6edf7; background:#131d3a; }
+          .top-right { position:absolute; top:12px; right:12px; display:flex; align-items:center; gap:10px; }
+          .lang-switch { display:inline-flex; align-items:center; gap:8px; color:#a9bed3; }
+          .lang-switch a { color:#cfe0ff; text-decoration:none; }
+          .lang-switch a:hover { text-decoration:underline; }
+          .mode-btn { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; color:#a9bed3; border:1px solid #1b2440; background:#0f1730; border-radius:10px; }
+          .mode-btn:hover { color:#e6edf7; background:#131d3a; }
           .auth-header { text-align: center; margin-bottom: 18px; }
           h2 { font-size: 14px; font-weight: 600; margin: 26px 0 14px; letter-spacing: .25px; color:#d9e7f5; }
           .pi-section { padding-bottom: 8px; }
@@ -224,7 +299,12 @@ export default function PersonalInfoPage() {
           .field-group { display:flex; flex-direction:column; margin-bottom:18px; }
           .field-group label { font-size:12px; font-weight:600; margin-bottom:6px; color:#c7d9ed; }
           .grid-1 { display:grid; grid-template-columns:1fr; gap:4px; }
-          .dob-grid { display:grid; grid-template-columns: 90px 1fr 120px; gap:16px; }
+          .dob-grid { display:grid; grid-template-columns: 90px 1fr 120px; gap:16px; align-items: start; }
+          /* Allow grid items to shrink within columns (Safari/iOS needs this) */
+          .dob-grid > .field-group { min-width: 0; }
+          /* Make inputs/selects fill their column safely */
+          .dob-grid .themed { width: 100%; box-sizing: border-box; max-width: 100%; }
+          .dob-grid select.themed { width: 100%; max-width: 100%; }
           .phone-row { display:flex; gap:12px; }
           .phone-row .code { width:120px; }
           .phone-row .phone { flex:1; }
@@ -237,16 +317,37 @@ export default function PersonalInfoPage() {
           .themed:focus { outline:none; border-color:#00B3A4; box-shadow:0 0 0 3px rgba(0,179,164,0.25); }
           select.themed { padding-right:36px; }
           .pi-header { text-align:center; }
-          .pi-title { font-size:26px; margin:10px 0 4px; background: linear-gradient(90deg,#e6f7ff,#c7fff5); -webkit-background-clip:text; color:transparent; font-weight:700; letter-spacing:.5px; }
-          .pi-sub { margin:0; font-size:14px; color:#a9bed3; }
+          .pi-title { font-size:26px; margin:10px 0 4px; background: linear-gradient(90deg,#e6f7ff,#c7fff5); -webkit-background-clip:text; color:transparent; font-weight:700; letter-spacing:.5px; opacity:0; transform: translateY(6px); animation: fadeUp 520ms cubic-bezier(.21,.72,.25,1) 120ms forwards; will-change: transform, opacity; }
+          .pi-sub { margin:0; font-size:14px; color:#a9bed3; opacity:0; transform: translateY(6px); animation: fadeUp 520ms cubic-bezier(.21,.72,.25,1) 220ms forwards; will-change: transform, opacity; }
           .pi-card-centered { display:flex; flex-direction:column; }
           .logo { display: inline-flex; padding: 0; border-radius: 12px; background: transparent; box-shadow: none; }
-          .logo-img { width: auto; height: 165px; display: block; object-fit: contain; }
+          .logo-img { width: auto; height: 165px; display: block; object-fit: contain; opacity: 0; transform: translateY(8px) scale(.96); animation: logoPop 560ms cubic-bezier(.18,.89,.32,1.28) 20ms forwards; will-change: transform, opacity; }
           @media (max-width: 992px) { /* tablets */
             .logo-img { height: 140px; }
           }
           @media (max-width: 640px) { /* phones */
-            .logo-img { height: 120px; }
+            .logo-img { height: 100px; }
+            /* Make DOB fields compact on phones and give Month more space */
+            .dob-grid { grid-template-columns: 1fr 1.5fr 1fr; gap: 8px; }
+            .dob-grid .field-group label { font-size: 11px; }
+            .dob-grid .themed { padding: 12px 12px; font-size: 14px; width: 100%; max-width: 100%; }
+            /* Keep extra right padding for native iOS select arrow to avoid clipping */
+            .dob-grid select.themed { padding: 12px 32px 12px 12px; font-size: 14px;  }
+            /* Center numeric values for compact fields */
+            #dobDay.themed, #dobYear.themed { text-align: center; }
+          }
+          @keyframes logoPop {
+            0% { opacity: 0; transform: translateY(8px) scale(0.96); }
+            60% { opacity: 1; transform: translateY(0) scale(1.02); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          /* Respect reduced-motion preferences */
+          @media (prefers-reduced-motion: reduce) {
+            .logo-img, .pi-title, .pi-sub { animation: none !important; opacity: 1 !important; transform: none !important; }
           }
           @media (max-width:720px){ .dob-grid{ grid-template-columns:repeat(3,1fr); } }
         `}</style>

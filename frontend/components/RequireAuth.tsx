@@ -65,6 +65,14 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
         if (!resp.ok) throw new Error('Failed to load profile');
         const data = await resp.json();
         const emailVerified: boolean = !!data?.user?.emailVerified;
+        const role: string | undefined = data?.user?.role;
+        const profileComplete: boolean = !!data?.complete;
+        // Enforce profile completeness ONLY for regular users
+        if (role === 'user' && !profileComplete && router.pathname !== '/personal-info') {
+          void router.replace(`/personal-info`).catch(() => {});
+          setCheckingEmail(false);
+          return;
+        }
         if (!emailVerified) {
           const next = encodeURIComponent(router.asPath);
           // Fire-and-forget to avoid AbortError console noise on in-flight navigations

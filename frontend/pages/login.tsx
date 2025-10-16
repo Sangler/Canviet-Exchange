@@ -33,7 +33,7 @@ export default function LoginPage() {
       const target =
         typeof nextParam === "string" && nextParam.startsWith("/")
           ? nextParam
-          : "/";
+          : "/transfers";
       void router.replace(target);
     }
   }, [authLoading, token, user, router, router.query.next]);
@@ -101,7 +101,7 @@ export default function LoginPage() {
       const target =
         typeof nextParam === "string" && nextParam.startsWith("/")
           ? nextParam
-          : "/";
+          : "/transfers";
 
       // If email is not verified, go straight to /verify-email with the intended target
       let emailVerified: boolean | undefined = userFromLogin?.emailVerified;
@@ -120,7 +120,23 @@ export default function LoginPage() {
       if (emailVerified === false) {
         void router.push(`/verify-email?next=${encodeURIComponent(target)}`);
       } else {
-        void router.push(target);
+        // Check profile completeness before final redirect
+        let profileComplete = false;
+        let role: string | undefined = userFromLogin?.role;
+        try {
+          if (token) {
+            const meResp2 = await fetch(`/api/users/me`, { headers: { Authorization: `Bearer ${token}` } });
+            const me2 = await meResp2.json().catch(() => ({} as any));
+            profileComplete = !!me2?.complete;
+            role = role ?? me2?.user?.role;
+          }
+        } catch {}
+        // Enforce completeness ONLY for 'user' role
+        if (role === 'user' && !profileComplete) {
+          void router.push('/personal-info');
+        } else {
+          void router.push(target);
+        }
       }
     } finally {
       setLoading(false);

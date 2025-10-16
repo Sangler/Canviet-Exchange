@@ -20,19 +20,22 @@ import {
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
 const _nav = [
-  // Dashboard now visible only to admin users
   {
     component: CNavItem,
     name: 'Dashboard',
     to: '/',
-    roles: 'admin',
     icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+    roles: 'admin',
+    badge: {
+      color: 'info',
+      text: 'NEW',
+    },
   },
-  // Personal Info page for regular users
   {
     component: CNavItem,
-    name: 'Personal Info',
+    name: 'Personal Details',
     to: '/personal-info',
+    // visible to users only
     roles: 'user',
     icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
   },
@@ -67,23 +70,7 @@ const _nav = [
     to: '/settings',
     icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
   },
-  {
-    component: CNavTitle,
-    name: 'Theme',
-  },
-  {
-    component: CNavItem,
-    name: 'Colors',
-    to: '/colors',
-    icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Typography',
-    to: '/typography',
-    roles: "admin",
-    icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
-  },
+  
 
   // Components section removed per request
 ]

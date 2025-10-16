@@ -8,7 +8,7 @@ exports.me = async (req, res) => {
     const user = await User.findById(userId)
     if (!user) return res.status(404).json({ message: 'User not found' })
 
-    return res.json({ user: user.toJSON() })
+    return res.json({ user: user.toJSON(), complete: isProfileComplete(user) })
   } catch (err) {
     console.error('Users.me error:', err)
     return res.status(500).json({ message: 'Internal server error' })
@@ -36,66 +36,52 @@ exports.setPhone = async (req, res) => {
   }
 }
 
-exports.updateMe = async (req, res) => {
+// Helper to determine if the user's profile is complete
+function isProfileComplete(u) {
+  if (!u) return false
+  if (!u.dateOfBirth) return false
+  const addr = u.address || {}
+  const hasAddr = addr.street && addr.postalCode && addr.city && addr.country
+  if (!hasAddr) return false
+  if (!u.employmentStatus) return false
+  return true
+}
+
+exports.updateProfile = async (req, res) => {
   try {
     const userId = req.auth?.sub
     if (!userId) return res.status(401).json({ message: 'Unauthorized' })
 
-    const {
-      firstName,
-      lastName,
-      preferredName,
-      dateOfBirth,
-      phone,
-      address,
-      employmentStatus,
-      country,
-      state,
-      city,
-      postalCode,
-      street,
-    } = req.body || {}
+    const { dateOfBirth, address, employmentStatus } = req.body || {}
+
+    // Basic validation for required fields
+    if (!dateOfBirth) return res.status(400).json({ message: 'dateOfBirth is required' })
+    if (!address || !address.street || !address.postalCode || !address.city || !address.country) {
+      return res.status(400).json({ message: 'Complete address is required' })
+    }
+    if (!employmentStatus) return res.status(400).json({ message: 'employmentStatus is required' })
+
+    // Parse date
+    const dob = new Date(dateOfBirth)
+    if (isNaN(dob.getTime())) return res.status(400).json({ message: 'Invalid dateOfBirth' })
 
     const user = await User.findById(userId)
     if (!user) return res.status(404).json({ message: 'User not found' })
 
-    if (typeof firstName === 'string' && firstName.trim()) user.firstName = firstName.trim()
-    if (typeof lastName === 'string' && lastName.trim()) user.lastName = lastName.trim()
-    if (typeof preferredName === 'string') user.preferredName = preferredName.trim()
-    if (typeof employmentStatus === 'string') user.employmentStatus = employmentStatus.trim()
-
-    // dateOfBirth can be ISO string or yyyy-mm-dd; validate parsable
-    if (dateOfBirth) {
-      const d = new Date(dateOfBirth)
-      if (!isNaN(d.getTime())) user.dateOfBirth = d
+    user.dateOfBirth = dob
+    user.address = {
+      street: String(address.street || ''),
+      postalCode: String(address.postalCode || ''),
+      city: String(address.city || ''),
+      country: String(address.country || ''),
     }
-
-    // Phone uniqueness check if changed
-    if (typeof phone === 'string') {
-      const trimmed = phone.trim()
-      if (trimmed && trimmed !== user.phone) {
-        const exists = await User.findOne({ phone: trimmed, _id: { $ne: userId } })
-        if (exists) return res.status(409).json({ message: 'Phone already in use' })
-        user.phone = trimmed
-        user.phoneVerified = false
-      }
-    }
-
-    // Address: accept nested address or flat fields
-    const addr = address || {}
-    const nextAddress = {
-      street: typeof (addr.street ?? street) === 'string' ? String(addr.street ?? street).trim() : user.address?.street,
-      city: typeof (addr.city ?? city) === 'string' ? String(addr.city ?? city).trim() : user.address?.city,
-      state: typeof (addr.state ?? state) === 'string' ? String(addr.state ?? state).trim() : user.address?.state,
-      postalCode: typeof (addr.postalCode ?? postalCode) === 'string' ? String(addr.postalCode ?? postalCode).trim() : user.address?.postalCode,
-      country: typeof (addr.country ?? country) === 'string' ? String(addr.country ?? country).trim() : user.address?.country,
-    }
-    user.address = { ...user.address, ...nextAddress }
+    user.employmentStatus = String(employmentStatus)
+    user.updatedAt = new Date()
 
     await user.save()
-    return res.json({ ok: true, user: user.toJSON() })
+    return res.json({ ok: true, complete: isProfileComplete(user), user: user.toJSON() })
   } catch (err) {
-    console.error('Users.updateMe error:', err)
+    console.error('Users.updateProfile error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
