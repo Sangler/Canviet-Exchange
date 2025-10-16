@@ -23,9 +23,7 @@ export default function PersonalInfoPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [preferredName, setPreferredName] = useState('');
-  const [dobDay, setDobDay] = useState('');
-  const [dobMonth, setDobMonth] = useState('');
-  const [dobYear, setDobYear] = useState('');
+  const [dob, setDob] = useState(''); // YYYY-MM-DD
   const [phone, setPhone] = useState('');
   const [phoneCountryCode, setPhoneCountryCode] = useState('+1');
   const [street, setStreet] = useState('');
@@ -66,12 +64,13 @@ export default function PersonalInfoPage() {
         setCity(addr.city || '');
         setPostalCode(addr.postalCode || '');
         setCountry(addr.country || 'Canada');
-        // DOB split
+        // DOB parse to YYYY-MM-DD
         if (u.dateOfBirth) {
           const d = new Date(u.dateOfBirth);
-            setDobDay(String(d.getUTCDate()).padStart(2,'0'));
-            setDobMonth(String(d.getUTCMonth()+1).padStart(2,'0'));
-            setDobYear(String(d.getUTCFullYear()));
+          const yyyy = String(d.getUTCFullYear());
+          const mm = String(d.getUTCMonth()+1).padStart(2,'0');
+          const dd = String(d.getUTCDate()).padStart(2,'0');
+          setDob(`${yyyy}-${mm}-${dd}`);
         }
       } catch (e: any) {
         setError(e?.message || 'Failed to load profile');
@@ -86,19 +85,21 @@ export default function PersonalInfoPage() {
     try { localStorage.setItem('theme.mode', colorMode || 'light'); } catch {}
   }, [colorMode]);
 
-  const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+  const months: string[] = [];
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
       setSaving(true);
       // Build payload
-      const day = parseInt(dobDay, 10);
-      const month = parseInt(dobMonth, 10);
-      const year = parseInt(dobYear, 10);
-      const dobIso = !isNaN(day) && !isNaN(month) && !isNaN(year)
-        ? new Date(Date.UTC(year, month - 1, day)).toISOString()
-        : undefined;
+      let dobIso: string | undefined = undefined;
+      if (dob) {
+        // Construct ISO at UTC midnight to avoid TZ drift
+        const [yyyy, mm, dd] = dob.split('-').map((s)=> parseInt(s, 10));
+        if (!isNaN(yyyy) && !isNaN(mm) && !isNaN(dd)) {
+          dobIso = new Date(Date.UTC(yyyy, mm - 1, dd)).toISOString();
+        }
+      }
       const payload: any = {
         dateOfBirth: dobIso,
         address: {
@@ -199,22 +200,22 @@ export default function PersonalInfoPage() {
 
                 <section className="pi-section">
                   <h2>Date of birth</h2>
-                  <div className="dob-grid">
-                    <div className="field-group">
-                      <label htmlFor="dobDay">Day</label>
-                      <input id="dobDay" className="themed" inputMode="numeric" maxLength={2} value={dobDay} onChange={(e)=> setDobDay(e.target.value.replace(/[^0-9]/g,''))} />
-                    </div>
-                    <div className="field-group">
-                      <label htmlFor="dobMonth">Month</label>
-                      <select id="dobMonth" className="themed" value={dobMonth} onChange={(e)=> setDobMonth(e.target.value)}>
-                        <option value="" disabled>Select month</option>
-                        {months.map((m)=> <option key={m} value={m}>{m}</option>)}
-                      </select>
-                    </div>
-                    <div className="field-group">
-                      <label htmlFor="dobYear">Year</label>
-                      <input id="dobYear" className="themed" inputMode="numeric" maxLength={4} value={dobYear} onChange={(e)=> setDobYear(e.target.value.replace(/[^0-9]/g,''))} />
-                    </div>
+                  <div className="field-group">
+                    <label htmlFor="dob">Date of birth</label>
+                    <input
+                      id="dob"
+                      type="date"
+                      className="themed"
+                      value={dob}
+                      onChange={(e)=> setDob(e.target.value)}
+                      onFocus={(e) => {
+                        // Call the HTMLInputElement.showPicker() when available (Chrome/Chromium based browsers)
+                        try { (e.target as HTMLInputElement & { showPicker?: () => void }).showPicker?.(); } catch { /* ignore */ }
+                      }}
+                      onClick={(e) => {
+                        try { (e.target as HTMLInputElement & { showPicker?: () => void }).showPicker?.(); } catch { /* ignore */ }
+                      }}
+                    />
                   </div>
                 </section>
 
@@ -299,12 +300,9 @@ export default function PersonalInfoPage() {
           .field-group { display:flex; flex-direction:column; margin-bottom:18px; }
           .field-group label { font-size:12px; font-weight:600; margin-bottom:6px; color:#c7d9ed; }
           .grid-1 { display:grid; grid-template-columns:1fr; gap:4px; }
-          .dob-grid { display:grid; grid-template-columns: 90px 1fr 120px; gap:16px; align-items: start; }
-          /* Allow grid items to shrink within columns (Safari/iOS needs this) */
-          .dob-grid > .field-group { min-width: 0; }
-          /* Make inputs/selects fill their column safely */
-          .dob-grid .themed { width: 100%; box-sizing: border-box; max-width: 100%; }
-          .dob-grid select.themed { width: 100%; max-width: 100%; }
+          /* Date input tweaks */
+          input[type="date"].themed { appearance: none; -webkit-appearance: none; }
+          input[type="date"].themed::-webkit-calendar-picker-indicator { cursor: pointer; }
           .phone-row { display:flex; gap:12px; }
           .phone-row .code { width:120px; }
           .phone-row .phone { flex:1; }
@@ -327,14 +325,8 @@ export default function PersonalInfoPage() {
           }
           @media (max-width: 640px) { /* phones */
             .logo-img { height: 100px; }
-            /* Make DOB fields compact on phones and give Month more space */
-            .dob-grid { grid-template-columns: 1fr 1.5fr 1fr; gap: 8px; }
-            .dob-grid .field-group label { font-size: 11px; }
-            .dob-grid .themed { padding: 12px 12px; font-size: 14px; width: 100%; max-width: 100%; }
-            /* Keep extra right padding for native iOS select arrow to avoid clipping */
-            .dob-grid select.themed { padding: 12px 32px 12px 12px; font-size: 14px;  }
-            /* Center numeric values for compact fields */
-            #dobDay.themed, #dobYear.themed { text-align: center; }
+            /* Make date input comfortable on phones */
+            input[type="date"].themed { padding: 12px 12px; font-size: 14px; }
           }
           @keyframes logoPop {
             0% { opacity: 0; transform: translateY(8px) scale(0.96); }
