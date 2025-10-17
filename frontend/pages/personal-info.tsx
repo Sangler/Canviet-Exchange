@@ -308,7 +308,22 @@ export default function PersonalInfoPage() {
           .phone-row .phone { flex:1; }
           .link-btn { margin-top:10px; background:none; border:0; color:#baf3ed; font-weight:500; padding:0; cursor:pointer; text-decoration:underline; }
           .link-btn:hover { color:#e6edf7; }
-          .actions { margin-top:32px; text-align:right; }
+          .actions { margin-top:32px; text-align:center; }
+          .submit-btn { 
+            display:inline-flex; align-items:center; justify-content:center; gap:10px;
+            padding:12px 18px; min-width:160px;
+            background: linear-gradient(135deg, #00B3A4, #06b6d4);
+            color:#ffffff; border:0; border-radius:12px; cursor:pointer;
+            font-weight:700; letter-spacing:.4px;
+            box-shadow: 0 10px 24px rgba(0,179,164,0.25);
+            transition: transform .15s ease, box-shadow .15s ease, filter .15s ease, opacity .15s ease;
+          }
+          .submit-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 14px 30px rgba(0,179,164,0.35); }
+          .submit-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,179,164,0.35), 0 10px 24px rgba(0,179,164,0.25); }
+          .submit-btn:disabled { opacity:.75; cursor:not-allowed; }
+          .submit-btn .btn-loader { display:none; }
+          .submit-btn.loading .btn-loader { display:inline-flex; }
+          .submit-btn.loading .btn-text { opacity:.9; }
           .alert.error { background:rgba(255,0,0,0.08); color:#ffb3b3; padding:14px 16px; border:1px solid rgba(255,0,0,0.25); border-radius:12px; margin-bottom:16px; }
           .loading { font-size:14px; color:#9fb3c8; }
           .themed { background:#0b1326; border:1px solid #203058; color:#f2f8ff; border-radius:12px; padding:14px 14px; font-size:14px; }

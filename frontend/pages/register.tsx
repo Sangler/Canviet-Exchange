@@ -68,16 +68,10 @@ export default function RegisterPage() {
         throw new Error(data?.message || 'Registration failed');
       }
       setSuccess(true);
-      // Request email OTP immediately and move to verify-email
-      try {
-        await fetch(`/api/otp/email/request`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim() }),
-        }).catch(() => {});
-      } catch {}
-      await new Promise((r) => setTimeout(r, 400));
-      void router.push(`/verify-email?next=/login`);
+      // Do NOT auto-send email OTP; redirect to verify-email with prefilled email
+      try { localStorage.setItem('pending_verify_email', email.trim()); } catch {}
+      await new Promise((r) => setTimeout(r, 250));
+      void router.push(`/verify-email?email=${encodeURIComponent(email.trim())}&next=/login`);
     } catch (err: any) {
       setErrors({ ...(errors || {}), password: err?.message || String(err) });
     } finally {

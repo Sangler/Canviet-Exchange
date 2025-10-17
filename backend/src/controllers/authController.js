@@ -47,6 +47,8 @@ exports.register = async (req, res) => {
       passwordHash,
     })
   const token = createToken({ sub: user.id, email: user.email, role: user.role })
+    // Store pending email in session for verification flow
+    try { if (req.session) req.session.verifyEmail = emailLower } catch {}
     return res.json({ token, user: user.toJSON() })
   } catch (err) {
     if (err && err.code === 11000) {

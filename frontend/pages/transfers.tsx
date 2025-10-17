@@ -9,6 +9,9 @@ import { cilArrowCircleLeft } from '@coreui/icons';
 
 export default function Transfer() {
   const { user } = useAuth();
+  // Fee rules
+  const FEE_CAD = 1.5;
+  const FEE_THRESHOLD = 1000;
   // Live CAD->VND rate handling
   const [rate, setRate] = useState<number | null>(null);
   const [prevRate, setPrevRate] = useState<number | null>(null);
@@ -21,7 +24,7 @@ export default function Transfer() {
       if (manual) setRateLoading(true);
       setRateError(null);
       // Prefer direct ExchangeRate-API fetch; fallback to backend endpoint if needed
-      const apiKey = process.env.NEXT_PUBLIC_EXCHANGE_API_KEY || 'd81887bddb49a53767ca1cf9';
+      const apiKey = process.env.NEXT_PUBLIC_EXCHANGE_API_KEY || '';
       let nextRate: number | null = null;
       let fetchedAt: string | null = null;
 
@@ -98,6 +101,7 @@ export default function Transfer() {
   useEffect(() => {
     const val = parseFloat(amountFrom);
     if (!isNaN(val) && rate) {
+      // Do NOT apply fee in Step 2. Show gross VND based on full amount.
       setAmountTo(new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(val * rate));
     } else {
       setAmountTo('');
@@ -131,6 +135,7 @@ export default function Transfer() {
 
   const isCard = transferMethod === 'debit' || transferMethod === 'credit';
   const isBank = transferMethod === 'e-transfer' || transferMethod === 'wire';
+  const rateStr = typeof rate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate) : null;
 
   return (
     <RequireAuth>
@@ -225,6 +230,7 @@ export default function Transfer() {
                     <form id="moneyExchangeForm" onSubmit={onCalcSubmit}>
                       <div className="form-group">
                         <label htmlFor="amountFrom">YOU SEND:</label>
+                          {rateStr && (<span className="label-inline-info">1 CAD = {rateStr} VND</span>)}
                         <div className="currency-input" role="group" aria-label="You send amount in CAD">
                           <input
                             type="number"
@@ -247,7 +253,9 @@ export default function Transfer() {
                       </div>
                       <hr />
                       <div className="form-group">
-                        <label htmlFor="amountTo">THEY RECEIVE:</label>
+                        <label htmlFor="amountTo">
+                          THEY RECEIVE:
+                        </label>
                         <div className="currency-input" role="group" aria-label="They receive amount in VND">
                           <input
                             type="text"
@@ -266,6 +274,24 @@ export default function Transfer() {
                           </div>
                         </div>
                       </div>
+                      {/* Put the transfer fee span here */}
+                      {/* Fee not applied here; only calculated/shown at Review (Step 4) */}
+                      {/* Upsell hint to reach threshold (with mini fee label) */}
+                      {(() => {
+                        const val = parseFloat(amountFrom);
+                        if (isNaN(val) || val <= 0 || val >= FEE_THRESHOLD) return null;
+                        return (
+                          <>
+                            <div className="fee-mini" role="note">Transfer fee: <strong>${FEE_CAD.toFixed(2)}</strong> CAD</div>
+                            <div className="upsell-row" role="note" aria-live="polite">
+                              <div className="upsell-text">
+                                Tip: Send <strong>${FEE_THRESHOLD.toLocaleString()}</strong> CAD to enjoy no transfer fee.
+                              </div>
+                              <button type="button" className="upsell-btn" onClick={() => setAmountFrom(String(FEE_THRESHOLD))}>GET GOOD RATE</button>
+                            </div>
+                          </>
+                        );
+                      })()}
                       <button type="submit" className="btn primary w-full">Confirm send</button>
                     </form>
                   </section>
@@ -484,7 +510,35 @@ export default function Transfer() {
                     <div className="review-grid">
                       <div><strong>Email:</strong> {user?.email || '-'}</div>
                       <div><strong>Amount:</strong> {amountFrom || '0'} CAD</div>
-                      <div><strong>They receive:</strong> {amountTo || '0'} VND</div>
+                      {(() => {
+                        const val = parseFloat(amountFrom);
+                        const fee = !isNaN(val) && val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0;
+                        const isApplied = fee === 0; // As requested, show "Applied" when fee is 0.00
+                        return (
+                          <div
+                            className="fee-review"
+                            title={isApplied ? `No fee applied at $${FEE_THRESHOLD.toLocaleString()}+` : `Fee charged: $${fee.toFixed(2)} CAD`}
+                          >
+                            <span className="fee-label">Fee</span>
+
+                            <span className={`fee-amount ${isApplied ? 'zero' : 'value'}`}>${fee.toFixed(2)} CAD</span>
+                            <span className={`fee-badge ${isApplied ? 'applied' : 'charged'}`}>
+                              {isApplied ? 'Applied' : 'Charged'}
+                            </span>
+                            <span className="fee-note">{`No fee at $${FEE_THRESHOLD.toLocaleString()} CAD`}</span>
+                          </div>
+                        );
+                      })()}
+                      {(() => {
+                        const val = parseFloat(amountFrom);
+                        if (!isNaN(val) && typeof rate === 'number') {
+                          const fee = val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0;
+                          const net = Math.max(val - fee, 0);
+                          const vnd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(net * rate);
+                          return <div><strong>They receive:</strong> {vnd} VND</div>;
+                        }
+                        return <div><strong>They receive:</strong> {amountTo || '0'} VND</div>;
+                      })()}
                       <div><strong>Method:</strong> {transferMethod}</div>
                     </div>
                     <div className="review-actions">
@@ -577,7 +631,7 @@ export default function Transfer() {
         .mini-btn:disabled { opacity:.5; cursor:wait; }
         .error { color:#b91c1c; font-weight:500; }
         .form-group { display:flex; flex-direction:column; gap:6px; }
-        label { font-size:13px; font-weight:600; color:#334155; letter-spacing:.4px; text-transform:uppercase; }
+  label { font-size:13px; font-weight:600; color:#334155; letter-spacing:.4px; text-transform:uppercase; display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
         select { font:inherit; padding:12px 14px; border:1px solid #cbd5e1; background:#f8fafc; border-radius:10px; transition:border-color .18s, background .18s, box-shadow .18s; }
         input { font:inherit; padding:12px 14px; border:none; background:#f8fafc; border-radius:10px; transition: background .18s; }
         .radio-group { display:flex; gap:14px; flex-wrap:wrap; }
@@ -608,6 +662,23 @@ export default function Transfer() {
         .review-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:10px 0 14px; }
         .review-actions { display:flex; gap:12px; align-items:center; }
         .step-actions { max-width:860px; margin: -16px auto 36px; padding:0 4px; }
+  .label-inline-info { margin-left:8px; font-weight:600; font-size:12px; color:#64748b; white-space:nowrap; }
+  .fee-row { display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#64748b; margin:6px 2px 0; }
+  .fee-row .waived { text-decoration: line-through; opacity:.75; }
+  .fee-row .fee-free { font-weight:700; color:#16a34a; }
+  .fee-mini { margin-top:6px; font-size:12px; color:#334155; }
+    /* Review fee styling */
+    .fee-review { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 8px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; }
+    .fee-label { font-weight:700; color:#334155; }
+    .fee-badge { padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; letter-spacing:.3px; border:1px solid; }
+    .fee-badge.applied { background:#dcfce7; color:#166534; border-color:#22c55e; }
+    .fee-badge.charged { background:#fef3c7; color:#92400e; border-color:#f59e0b; }
+    .fee-amount { font-weight:800; color:#0f172a; }
+    .fee-amount.zero { text-decoration:line-through; opacity:.7; }
+    .fee-note { font-size:12px; color:#64748b; }
+  .upsell-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:6px; padding:8px 10px; border:1px dashed #cbd5e1; background:#f8fafc; border-radius:8px; font-size:12px; color:#334155; }
+  .upsell-btn { background:transparent; border:1px solid #cbd5e1; padding:6px 10px; border-radius:8px; font-weight:700; cursor:pointer; color:#0f172a; }
+  .upsell-btn:hover { background:#e2e8f0; }
         select:focus { outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 2px rgba(var(--accent-rgb),.15); }
         input:focus { outline:none; border:none; background:#fff; box-shadow:none; }
         input[disabled], select[disabled] { opacity:.8; cursor:not-allowed; }
@@ -664,6 +735,19 @@ export default function Transfer() {
           .feature p { color:#cbd5e1; }
           blockquote { color:#cbd5e1; }
           .intro-lead { color:#cbd5e1; }
+          .label-inline-info { color:#94a3b8; }
+          .fee-row { color:#94a3b8; }
+          .fee-row .fee-free { color:#4ade80; }
+          .fee-mini { color:#cbd5e1; }
+           .fee-review { background:#1e293b; border-color:#334155; }
+           .fee-label { color:#cbd5e1; }
+           .fee-badge.applied { background:#0f3a1e; color:#86efac; border-color:#22c55e; }
+           .fee-badge.charged { background:#3a2f1a; color:#f5d27b; border-color:#b98b2a; }
+           .fee-amount { color:#e2e8f0; }
+           .fee-note { color:#94a3b8; }
+          .upsell-row { background:#1e293b; border-color:#334155; color:#e2e8f0; }
+          .upsell-btn { border-color:#475569; color:#e2e8f0; }
+          .upsell-btn:hover { background:#24324a; }
         }
         @media (max-width:880px) { .introduction { padding:52px 20px 36px; } .main-content { padding:46px 18px 36px; } }
         @media (max-width:580px) { 

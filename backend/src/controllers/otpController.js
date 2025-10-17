@@ -39,9 +39,10 @@ function maskDestination(value) {
 
 exports.requestEmailOtp = async (req, res) => {
   try {
-    const { email } = req.body || {};
+    const { email: emailBody } = req.body || {};
+    const email = (emailBody || req.session?.verifyEmail || '').toLowerCase();
     if (!email) return res.status(400).json({ ok:false, message:'Email required' });
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ ok:false, message:'User not found' });
     if (user.emailVerified) return res.json({ ok:true, message:'Already verified' });
 
@@ -50,7 +51,7 @@ exports.requestEmailOtp = async (req, res) => {
 
     // Send verification email (Nodemailer)
     try {
-      await sendOtpEmail(user.email, code);
+  await sendOtpEmail(user.email, code);
       return res.json({ ok:true, message:'OTP sent', destination: maskDestination(user.email), expiresIn: OTP_TTL_SECONDS, otpToken });
     } catch (err) {
       console.error('Failed to send verification email:', err?.message || err);
@@ -69,9 +70,10 @@ exports.requestEmailOtp = async (req, res) => {
 
 exports.verifyEmailOtp = async (req, res) => {
   try {
-    const { email, code, otpToken } = req.body || {};
-    if (!email || !code || !otpToken) return res.status(400).json({ ok:false, message:'Email, code and otpToken required' });
-    const user = await User.findOne({ email: email.toLowerCase() });
+  const { email: emailBody, code, otpToken } = req.body || {};
+  const email = (emailBody || req.session?.verifyEmail || '').toLowerCase();
+  if (!email || !code || !otpToken) return res.status(400).json({ ok:false, message:'Email, code and otpToken required' });
+  const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ ok:false, message:'User not found' });
     if (user.emailVerified) return res.json({ ok:true, message:'Already verified' });
     let decoded;
@@ -86,8 +88,10 @@ exports.verifyEmailOtp = async (req, res) => {
     const valid = decoded.chash === otpHash(code);
     if (!valid) return res.status(401).json({ ok:false, message:'Invalid code' });
 
-    user.emailVerified = true;
+  user.emailVerified = true;
     await user.save();
+  // Clear pending email in session on success
+  try { if (req.session) delete req.session.verifyEmail } catch {}
     return res.json({ ok:true, message:'Email verified' });
   } catch (e) {
     console.error('verifyEmailOtp error', e);

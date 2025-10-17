@@ -12,39 +12,44 @@ export default function VerifyEmailPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [statusType, setStatusType] = useState<'success' | 'error' | null>(null);
   const [loading, setLoading] = useState(false);
-  const [cooldownSeconds, setCooldownSeconds] = useState(0); // resend cooldown
-  const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
   useEffect(() => {
-    // Prefill from query if provided (e.g., redirect from /register)
+    // Prefill email: priority order => query param -> localStorage -> authenticated user
     const qEmail = (router.query.email as string) || '';
     if (qEmail) {
       setEmail(qEmail);
       setEmailLocked(true);
+      try { localStorage.setItem('pending_verify_email', qEmail); } catch {}
+      return;
     }
-
-    // Load current user email from /api/users/me
-    const run = async () => {
+    try {
+      const stored = localStorage.getItem('pending_verify_email');
+      if (stored) {
+        setEmail(stored);
+        setEmailLocked(true);
+        return;
+      }
+    } catch {}
+    // Fallback to authenticated user's email
+    (async () => {
       try {
         const token = getAuthToken();
-        const resp = await fetch(`${base}/api/users/me`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
+        const resp = await fetch(`/api/users/me`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
         const data = await resp.json();
         if (data?.user?.email) {
           setEmail(data.user.email);
-          setEmailLocked(true); // lock email to the authenticated user's address
+          setEmailLocked(true);
         }
       } catch {}
-    };
-    run();
-  }, [base, router.query.email]);
+    })();
+  }, [router.query.email]);
 
   const request = async () => {
-    if (cooldownSeconds > 0) return; // ignore clicks during cooldown
     setLoading(true);
     setStatus(null);
     setStatusType(null);
     try {
-      const resp = await fetch(`${base}/api/otp/email/request`, {
+      const resp = await fetch(`/api/otp/email/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -54,14 +59,6 @@ export default function VerifyEmailPage() {
       setOtpToken(data.otpToken);
       setStatus('Code sent to your email');
       setStatusType('success');
-      // Start 60s cooldown
-      setCooldownSeconds(60);
-      const interval = setInterval(() => {
-        setCooldownSeconds((s) => {
-          if (s <= 1) { clearInterval(interval); return 0; }
-          return s - 1;
-        });
-      }, 1000);
     } catch (e: any) {
       setStatus(e?.message || 'Failed to request code');
       setStatusType('error');
@@ -75,14 +72,15 @@ export default function VerifyEmailPage() {
     setStatus(null);
     setStatusType(null);
     try {
-      const resp = await fetch(`${base}/api/otp/email/verify`, {
+      const resp = await fetch(`/api/otp/email/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code, otpToken }),
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data?.message || 'Verification failed');
-      const next = (router.query.next as string) || '/';
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data?.message || 'Verification failed');
+  try { localStorage.removeItem('pending_verify_email'); } catch {}
+  const next = (router.query.next as string) || '/';
       await router.replace(next);
     } catch (e: any) {
       setStatus(e?.message || 'Verification failed');
@@ -108,7 +106,7 @@ export default function VerifyEmailPage() {
               </svg>
             </div>
             <h1>Verify your email</h1>
-            <p>Click "Send code" to receive your 6-digit verification code</p>
+            <p>We will send a 6‑digit code to your inbox</p>
           </div>
 
           <div className="auth-form" role="form" aria-label="Verify email">
@@ -125,14 +123,8 @@ export default function VerifyEmailPage() {
               <label htmlFor="email">Email address</label>
               <span className="input-border" />
             </div>
-            <button className={`submit-btn ${loading ? 'loading' : ''}`} onClick={request} disabled={loading || !email || cooldownSeconds > 0}>
-              <span className="btn-text">
-                {loading
-                  ? 'Sending…'
-                  : cooldownSeconds > 0
-                    ? `Resend in ${cooldownSeconds}s`
-                    : (otpToken ? 'Resend code' : 'Send code')}
-              </span>
+            <button className={`submit-btn ${loading ? 'loading' : ''}`} onClick={request} disabled={loading || !email}>
+              <span className="btn-text">{loading ? 'Sending…' : 'Send code'}</span>
               <div className="btn-loader" aria-hidden>
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                   <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />
@@ -142,34 +134,31 @@ export default function VerifyEmailPage() {
                 </svg>
               </div>
             </button>
-            {otpToken && (
-              <>
-                <div className="input-group">
-                  <input
-                    id="code"
-                    placeholder=" "
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                  />
-                  <label htmlFor="code">6-digit code</label>
-                  <span className="input-border" />
-                </div>
-                <button className={`submit-btn ${loading ? 'loading' : ''}`} onClick={verify} disabled={loading || !code || !otpToken}>
-                  <span className="btn-text">{loading ? 'Verifying…' : 'Verify'}</span>
-                  <div className="btn-loader" aria-hidden>
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />
-                      <path d="M16 9a7 7 0 01-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <animateTransform attributeName="transform" type="rotate" dur="1s" values="0 9 9;360 9 9" repeatCount="indefinite" />
-                      </path>
-                    </svg>
-                  </div>
-                </button>
-              </>
-            )}
+
+            <div className="input-group">
+              <input
+                id="code"
+                placeholder=" "
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+              />
+              <label htmlFor="code">6-digit code</label>
+              <span className="input-border" />
+            </div>
+            <button className={`submit-btn ${loading ? 'loading' : ''}`} onClick={verify} disabled={loading || !code || !otpToken}>
+              <span className="btn-text">{loading ? 'Verifying…' : 'Verify'}</span>
+              <div className="btn-loader" aria-hidden>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                  <path d="M16 9a7 7 0 01-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <animateTransform attributeName="transform" type="rotate" dur="1s" values="0 9 9;360 9 9" repeatCount="indefinite" />
+                  </path>
+                </svg>
+              </div>
+            </button>
 
             {status && (
               <div className={`status ${statusType || 'success'}`} role="status" aria-live="polite">{status}</div>

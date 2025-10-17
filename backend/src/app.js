@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const cookieParser = require('cookie-parser')
+const session = require('express-session')
 const cors = require('cors')
 const helmet = require('helmet')
 const mongoose = require('mongoose')
@@ -9,6 +10,7 @@ const usersRoutes = require('./routes/users')
 const adminRoutes = require('./routes/admin')
 const otpRoutes = require('./routes/otp')
 const transfersRoutes = require('./routes/transfers')
+const sessionRoutes = require('./routes/session')
 const https = require('https')
 const User = require('./models/User')
 const { connectMongo } = require('./db/mongoose')
@@ -22,6 +24,19 @@ const PORT = process.env.PORT || 5000
 app.use(helmet())
 app.use(express.json())
 app.use(cookieParser())
+// Server-side session for short-lived data (e.g., pending verification email)
+app.use(session({
+  name: 'sid',
+  secret: process.env.SESSION_SECRET || (process.env.JWT_SECRET || 'change-me'),
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: (process.env.NODE_ENV || 'development') === 'production',
+    maxAge: 10 * 60 * 1000,
+  },
+}))
 // If behind a reverse proxy (e.g., Vercel, Nginx), this allows req.ip and x-forwarded-for to be trusted
 app.set('trust proxy', true)
 // Request logging with IPs
@@ -36,6 +51,7 @@ app.use('/api/users', usersRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/otp', otpRoutes)
 app.use('/api/transfers', transfersRoutes)
+app.use('/api/session', sessionRoutes)
 
 // Lightweight passthrough for CAD->VND rate using open.er-api.com (primary) with fallback to exchangerate.host
 app.get('/api/fx/cad-vnd', async (_req, res) => {
@@ -110,9 +126,7 @@ if ((process.env.NODE_ENV || 'development') !== 'production') {
       res.status(500).json({ ok: false, error: String(e && e.message ? e.message : e) })
     }
   })
-}
-
-;(async () => {
+};(async () => {
   try {
     const requireDb = (process.env.DB_REQUIRED || 'false').toLowerCase() === 'true'
     const mongoUri = process.env.MONGO_URI
