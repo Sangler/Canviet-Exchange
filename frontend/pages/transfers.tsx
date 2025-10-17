@@ -20,16 +20,43 @@ export default function Transfer() {
     try {
       if (manual) setRateLoading(true);
       setRateError(null);
-      const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-      const resp = await fetch(`${base}/api/fx/cad-vnd`);
-      if (!resp.ok) throw new Error('Rate fetch failed');
-      const json = await resp.json();
-      if (json?.ok && typeof json.rate === 'number') {
+      // Prefer direct ExchangeRate-API fetch; fallback to backend endpoint if needed
+      const apiKey = process.env.NEXT_PUBLIC_EXCHANGE_API_KEY || 'd81887bddb49a53767ca1cf9';
+      let nextRate: number | null = null;
+      let fetchedAt: string | null = null;
+
+      try {
+        const url = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/CAD`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Exchange API HTTP error');
+        const data = await resp.json();
+        // We expect { result: 'success', conversion_rates: { VND: number }, time_last_update_utc: string }
+        if (data?.result === 'success' && typeof data?.conversion_rates?.VND === 'number') {
+          nextRate = data.conversion_rates.VND;
+          fetchedAt = data?.time_last_update_utc || null;
+        } else {
+          throw new Error('Exchange API invalid payload');
+        }
+      } catch (e) {
+        // Fallback to backend if available
+        const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+        const resp2 = await fetch(`${base}/api/fx/cad-vnd`);
+        if (!resp2.ok) throw new Error('Rate fetch failed');
+        const json2 = await resp2.json();
+        if (json2?.ok && typeof json2.rate === 'number') {
+          nextRate = json2.rate;
+          fetchedAt = json2.fetchedAt || null;
+        } else {
+          throw new Error('Invalid payload');
+        }
+      }
+
+      if (typeof nextRate === 'number') {
         setPrevRate(rate);
-        setRate(json.rate);
-        setLastUpdated(json.fetchedAt || new Date().toISOString());
+        setRate(nextRate);
+        setLastUpdated(fetchedAt || new Date().toISOString());
       } else {
-        throw new Error('Invalid payload');
+        throw new Error('No rate returned');
       }
     } catch (e) {
       const msg = (e as Error).message || 'Unknown error';
@@ -283,7 +310,7 @@ export default function Transfer() {
                             <div className="form-group">
                               <label>Card number</label>
                               <div className="currency-input">
-                                <input type="text" name="cardNumber" inputMode="numeric" pattern="[0-9\s-]*" maxLength={19} placeholder="1234 - 5678 - 9012 - 3456" required />
+                                <input type="text" name="cardNumber" inputMode="numeric" pattern="[0-9\s-]*" maxLength={19} placeholder="1234 5678 9012 3456" required />
                                 <div className="currency-suffix card-brands" aria-hidden="true">
                                   <span className="brand visa">VISA</span>
                                   <span className="brand mc">MC</span>
@@ -641,6 +668,13 @@ export default function Transfer() {
         @media (max-width:880px) { .introduction { padding:52px 20px 36px; } .main-content { padding:46px 18px 36px; } }
         @media (max-width:580px) { 
           .intro-cta { flex-direction:column; align-items:stretch; }
+          /* Progress bar compaction for phones */
+          .progress { padding:6px 6px 6px 40px; min-height:40px; }
+          .steps { gap:10px; }
+          .step .label { display:none; }
+          .step .dot { width:24px; height:24px; font-size:12px; }
+          .back-btn { left:6px; }
+          .back-btn .back-icon { width:20px; height:20px; }
           /* Force all multi-column groups to stack line-by-line on small screens */
           .two-col, .two-col.wire, .two-col.single { grid-template-columns:1fr !important; }
         }
