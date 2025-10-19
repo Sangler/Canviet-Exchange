@@ -41,9 +41,8 @@ export default function Transfer() {
           throw new Error('Exchange API invalid payload');
         }
       } catch (e) {
-        // Fallback to backend if available
-        const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-        const resp2 = await fetch(`${base}/api/fx/cad-vnd`);
+        // Same-origin fallback works over LAN/IP and in production
+        const resp2 = await fetch(`/api/fx/cad-vnd`);
         if (!resp2.ok) throw new Error('Rate fetch failed');
         const json2 = await resp2.json();
         if (json2?.ok && typeof json2.rate === 'number') {
@@ -109,7 +108,11 @@ export default function Transfer() {
   }, [amountFrom, rate]);
 
   function formatNumberInput(e: React.ChangeEvent<HTMLInputElement>) {
-    setAmountFrom(e.target.value);
+    // Normalize mobile input: support commas as decimal, strip invalid chars, keep single dot
+    const raw = e.target.value || '';
+    const normalized = raw.replace(/,/g, '.');
+    const cleaned = normalized.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+    setAmountFrom(cleaned);
   }
 
   async function onCalcSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -243,6 +246,8 @@ export default function Transfer() {
                             required
                             value={amountFrom}
                             onChange={formatNumberInput}
+                            onInput={formatNumberInput}
+                            inputMode="decimal"
                             aria-label="You send"
                           />
                           <div className="currency-suffix" aria-hidden="true">
@@ -279,7 +284,8 @@ export default function Transfer() {
                       {/* Upsell hint to reach threshold (with mini fee label) */}
                       {(() => {
                         const val = parseFloat(amountFrom);
-                        if (isNaN(val) || val <= 0 || val >= FEE_THRESHOLD) return null;
+                        // Show by default, hide only when amount >= threshold
+                        if (!isNaN(val) && val >= FEE_THRESHOLD) return null;
                         return (
                           <>
                             <div className="fee-mini" role="note">Transfer fee: <strong>${FEE_CAD.toFixed(2)}</strong> CAD</div>
