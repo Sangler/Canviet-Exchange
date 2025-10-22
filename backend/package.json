@@ -19,7 +19,8 @@
     "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.6.1",
-    "nodemailer": "^7.0.9"
+    "nodemailer": "^7.0.9",
+    "redis": "^4.6.13"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
