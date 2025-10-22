@@ -2,10 +2,10 @@ const nodemailer = require('nodemailer');
 
 function createTransport() {
   // Read standard uppercase vars, with fallback to lowercase variants present in .env
-  const host = process.env.EMAIL_HOST || process.env.emailHost;
-  const port = Number(process.env.EMAIL_PORT || process.env.emailPort || 465);
-  const user = process.env.EMAIL_USER || process.env.emailUser;
-  const pass = process.env.EMAIL_PASS || process.env.emailPass;
+  const host = process.env.EMAIL_HOST;
+  const port = Number(process.env.EMAIL_PORT || 456);
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
   if (!host || !user || !pass) {
     throw new Error('EMAIL_HOST/EMAIL_USER/EMAIL_PASS must be set');
   }

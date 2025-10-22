@@ -9,7 +9,7 @@ const usersRoutes = require('./routes/users')
 const adminRoutes = require('./routes/admin')
 const otpRoutes = require('./routes/otp')
 const transfersRoutes = require('./routes/transfers')
-const https = require('https')
+const fxRoutes = require('./routes/fx')
 const User = require('./models/User')
 const { connectMongo } = require('./db/mongoose')
 const { version, name } = require('../package.json')
@@ -36,67 +36,7 @@ app.use('/api/users', usersRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/otp', otpRoutes)
 app.use('/api/transfers', transfersRoutes)
-
-// Lightweight passthrough for CAD->VND rate using open.er-api.com (primary) with fallback to exchangerate.host
-app.get('/api/fx/cad-vnd', async (_req, res) => {
-  const primaryUrl = 'https://open.er-api.com/v6/latest/CAD';
-  const fallbackUrl = 'https://api.exchangerate.host/latest?base=CAD&symbols=VND';
-
-  function fetchJson(url) {
-    return new Promise((resolve, reject) => {
-      https.get(url, (r) => {
-        if (r.statusCode && r.statusCode >= 400) {
-          return reject(new Error('Status ' + r.statusCode));
-        }
-        let data = '';
-        r.on('data', chunk => data += chunk);
-        r.on('end', () => {
-          try {
-            const json = JSON.parse(data);
-            resolve(json);
-          } catch (e) {
-            reject(e);
-          }
-        });
-      }).on('error', reject);
-    });
-  }
-
-  try {
-    let rate = null; let source = null; let fetchedAt = new Date().toISOString();
-    try {
-      const j = await fetchJson(primaryUrl);
-      // Open ER API success structure: result === 'success'
-      if (j && j.rates && typeof j.rates.VND === 'number') {
-        rate = j.rates.VND;
-        source = 'open.er-api.com';
-        fetchedAt = j.time_last_update_utc || fetchedAt;
-      }
-    } catch (e) {
-      // swallow, will attempt fallback
-    }
-
-    if (rate === null) {
-      try {
-        const j2 = await fetchJson(fallbackUrl);
-        if (j2 && j2.rates && typeof j2.rates.VND === 'number') {
-          rate = j2.rates.VND;
-          source = 'exchangerate.host';
-        }
-      } catch (e) {
-        // ignore, handled below if still null
-      }
-    }
-
-    if (rate === null) {
-      return res.status(502).json({ ok: false, message: 'Rate not available' });
-    }
-
-    return res.json({ ok: true, pair: 'CAD_VND', rate, fetchedAt, source });
-  } catch (e) {
-    return res.status(500).json({ ok: false, message: 'Internal error' });
-  }
-});
+app.use('/api/fx', fxRoutes)
 
 // Dev-only SMTP verification endpoint
 if ((process.env.NODE_ENV || 'development') !== 'production') {

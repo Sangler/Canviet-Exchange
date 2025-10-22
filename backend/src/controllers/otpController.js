@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendOtpEmail } = require('../services/email');
+const { issueOtp, verifyOtp } = require('../services/otp');
 
 const OTP_LENGTH = Number(process.env.OTP_LENGTH || 6);
 const OTP_TTL_SECONDS = Number(process.env.OTP_TTL_SECONDS || 300); // 5 min default
@@ -37,6 +38,7 @@ function maskDestination(value) {
   return value.slice(0,2) + '***' + value.slice(-2);
 }
 
+// Redis-backed flow: Email OTP (issue)
 exports.requestEmailOtp = async (req, res) => {
   try {
     const { email } = req.body || {};
@@ -45,52 +47,99 @@ exports.requestEmailOtp = async (req, res) => {
     if (!user) return res.status(404).json({ ok:false, message:'User not found' });
     if (user.emailVerified) return res.json({ ok:true, message:'Already verified' });
 
-  const code = generateNumericOtp(OTP_LENGTH);
-  const otpToken = createOtpToken(user.id, 'email', code);
-
-    // Send verification email (Nodemailer)
+    const { code, ttl } = await issueOtp(user.id, 'email-verify', OTP_LENGTH);
     try {
       await sendOtpEmail(user.email, code);
-      return res.json({ ok:true, message:'OTP sent', destination: maskDestination(user.email), expiresIn: OTP_TTL_SECONDS, otpToken });
+      return res.json({ ok:true, message:'OTP sent', destination: maskDestination(user.email), expiresIn: ttl });
     } catch (err) {
-      console.error('Failed to send verification email:', err?.message || err);
       const devSkip = (process.env.EMAIL_DEV_MODE || 'false').toLowerCase() === 'true';
       if (devSkip) {
-        console.warn('[OTP][EMAIL] EMAIL_DEV_MODE=true, skipping email send and returning OTP token for development');
-        return res.json({ ok:true, message:'OTP generated (email skipped in dev mode)', destination: maskDestination(user.email), expiresIn: OTP_TTL_SECONDS, otpToken, devMode: true });
+        return res.json({ ok:true, message:'OTP generated (email skipped in dev mode)', destination: maskDestination(user.email), expiresIn: ttl, devMode: true, code });
       }
       return res.status(500).json({ ok:false, message:'Failed to send verification email' });
     }
   } catch (e) {
-    console.error('requestEmailOtp error', e);
+    console.error('requestEmailOtp2 error', e);
     return res.status(500).json({ ok:false, message:'Internal error' });
   }
 };
 
+// Redis-backed flow: Email OTP (verify)
 exports.verifyEmailOtp = async (req, res) => {
   try {
-    const { email, code, otpToken } = req.body || {};
-    if (!email || !code || !otpToken) return res.status(400).json({ ok:false, message:'Email, code and otpToken required' });
+    const { email, code } = req.body || {};
+    if (!email || !code) return res.status(400).json({ ok:false, message:'Email and code required' });
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(404).json({ ok:false, message:'User not found' });
     if (user.emailVerified) return res.json({ ok:true, message:'Already verified' });
-    let decoded;
-    try {
-      decoded = jwt.verify(otpToken, OTP_JWT_SECRET);
-    } catch (e) {
-      return res.status(401).json({ ok:false, message:'Invalid or expired otpToken' });
-    }
-    if (decoded.sub !== String(user.id) || decoded.channel !== 'email') {
-      return res.status(400).json({ ok:false, message:'Token does not match user/channel' });
-    }
-    const valid = decoded.chash === otpHash(code);
-    if (!valid) return res.status(401).json({ ok:false, message:'Invalid code' });
 
+    const result = await verifyOtp(user.id, 'email-verify', String(code));
+    if (!result.ok) {
+      const map = {
+        'expired-or-missing': 410,
+        'too-many-attempts': 429,
+        invalid: 401,
+        'concurrent-update': 409,
+      };
+      return res.status(map[result.reason] || 400).json({ ok:false, message: result.reason });
+    }
     user.emailVerified = true;
     await user.save();
     return res.json({ ok:true, message:'Email verified' });
   } catch (e) {
     console.error('verifyEmailOtp error', e);
+    return res.status(500).json({ ok:false, message:'Internal error' });
+  }
+};
+
+// Redis-backed flow: Phone OTP (issue)
+exports.requestPhoneOtp2 = async (req, res) => {
+  try {
+    const { phone } = req.body || {};
+    if (!phone) return res.status(400).json({ ok:false, message:'Phone required' });
+    const user = await User.findOne({ phone });
+    if (!user) return res.status(404).json({ ok:false, message:'User not found' });
+    if (user.phoneVerified) return res.json({ ok:true, message:'Already verified' });
+
+    const { code, ttl } = await issueOtp(user.id, 'phone-verify', OTP_LENGTH);
+    // TODO: integrate SMS provider; for now log in dev
+    const devSkip = (process.env.SMS_DEV_MODE || 'true').toLowerCase() === 'true';
+    if (devSkip) {
+      console.log('[OTP][PHONE][DEV] Code for', user.phone, '=>', code);
+      return res.json({ ok:true, message:'OTP generated (SMS skipped in dev mode)', destination: maskDestination(user.phone), expiresIn: ttl, devMode: true });
+    }
+    // send via SMS provider here
+    return res.json({ ok:true, message:'OTP sent', destination: maskDestination(user.phone), expiresIn: ttl });
+  } catch (e) {
+    console.error('requestPhoneOtp2 error', e);
+    return res.status(500).json({ ok:false, message:'Internal error' });
+  }
+};
+
+// Redis-backed flow: Phone OTP (verify)
+exports.verifyPhoneOtp2 = async (req, res) => {
+  try {
+    const { phone, code } = req.body || {};
+    if (!phone || !code) return res.status(400).json({ ok:false, message:'Phone and code required' });
+    const user = await User.findOne({ phone });
+    if (!user) return res.status(404).json({ ok:false, message:'User not found' });
+    if (user.phoneVerified) return res.json({ ok:true, message:'Already verified' });
+
+    const result = await verifyOtp(user.id, 'phone-verify', String(code));
+    if (!result.ok) {
+      const map = {
+        'expired-or-missing': 410,
+        'too-many-attempts': 429,
+        invalid: 401,
+        'concurrent-update': 409,
+      };
+      return res.status(map[result.reason] || 400).json({ ok:false, message: result.reason });
+    }
+    user.phoneVerified = true;
+    await user.save();
+    return res.json({ ok:true, message:'Phone verified' });
+  } catch (e) {
+    console.error('verifyPhoneOtp2 error', e);
     return res.status(500).json({ ok:false, message:'Internal error' });
   }
 };
