@@ -2,7 +2,7 @@
 
 Environment variables that control MongoDB connection behavior.
 
-- MONGO_URI: MongoDB connection string (e.g. mongodb://localhost:27017/nextransfer)
+- MONGO_URI: MongoDB connection string (e.g. mongodb://localhost:27017/canvietexchange)
 - DB_REQUIRED: true|false — when true, the process exits on DB failure. Default: false
 - DB_MAX_RETRIES: number of retry attempts when connecting. Default: 5
 - DB_RETRY_DELAY_MS: initial delay between retries in ms. Exponential backoff applied. Default: 1000
@@ -22,7 +22,7 @@ On startup, the server calls `User.syncIndexes()` to ensure indexes exist and ma
 In MongoDB shell (mongosh):
 
 ```
-use nextransfer
+use canvietexchange
 db.users.getIndexes()
 ```
 

@@ -25,6 +25,7 @@ const _nav = [
     name: 'Dashboard',
     to: '/',
     icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+    roles: 'admin',
     badge: {
       color: 'info',
       text: 'NEW',
@@ -50,13 +51,6 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Users',
-    to: '/users',
-    roles: "admin",
-    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
     name: 'Analytics',
     to: '/analytics',
     roles: "admin",
@@ -68,23 +62,7 @@ const _nav = [
     to: '/settings',
     icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
   },
-  {
-    component: CNavTitle,
-    name: 'Theme',
-  },
-  {
-    component: CNavItem,
-    name: 'Colors',
-    to: '/colors',
-    icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Typography',
-    to: '/typography',
-    roles: "admin",
-    icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
-  },
+  
 
   // Components section removed per request
 ]

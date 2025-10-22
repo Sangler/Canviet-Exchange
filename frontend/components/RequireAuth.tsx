@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { getAuthToken, isAuthenticated, parseJwt } from '../lib/auth';
+import { getAuthToken, isAuthenticated, parseJwt, logout } from '../lib/auth';
 import { CSpinner } from '@coreui/react';
 
 interface RequireAuthProps {
@@ -53,14 +53,26 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
       if (router.pathname === '/verify-email' || router.asPath.startsWith('/verify-email')) { setCheckingEmail(false); return; }
       try {
         const token = getAuthToken();
-        const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-        const resp = await fetch(`${base}/api/users/me`, {
+        const resp = await fetch(`/api/users/me`, {
           headers: { Authorization: token ? `Bearer ${token}` : '' },
-          credentials: 'include',
         });
+        if (resp.status === 401) {
+          const next = encodeURIComponent(router.asPath);
+          await logout(`/login?next=${next}`);
+          setCheckingEmail(false);
+          return;
+        }
         if (!resp.ok) throw new Error('Failed to load profile');
         const data = await resp.json();
         const emailVerified: boolean = !!data?.user?.emailVerified;
+        const role: string | undefined = data?.user?.role;
+        const profileComplete: boolean = !!data?.complete;
+        // Enforce profile completeness ONLY for regular users
+        if (role === 'user' && !profileComplete && router.pathname !== '/personal-info') {
+          void router.replace(`/personal-info`).catch(() => {});
+          setCheckingEmail(false);
+          return;
+        }
         if (!emailVerified) {
           const next = encodeURIComponent(router.asPath);
           // Fire-and-forget to avoid AbortError console noise on in-flight navigations

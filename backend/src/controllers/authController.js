@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
 
+// Must match the default in middleware/auth.js to avoid invalid token verification
 const JWT_SECRET = process.env.JWT_SECRET || ''
 const ACCESS_EXPIRES = process.env.ACCESS_EXPIRES || '15m'
 const PASSWORD_PEPPER = process.env.PASSWORD_PEPPER || ''

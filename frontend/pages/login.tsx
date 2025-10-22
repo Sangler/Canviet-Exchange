@@ -33,7 +33,7 @@ export default function LoginPage() {
       const target =
         typeof nextParam === "string" && nextParam.startsWith("/")
           ? nextParam
-          : "/";
+          : "/transfers";
       void router.replace(target);
     }
   }, [authLoading, token, user, router, router.query.next]);
@@ -62,14 +62,13 @@ export default function LoginPage() {
     try {
       setLoading(true);
       // Real API call to backend
-      const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+  // Use same-origin proxy to avoid CORS issues across LAN IP
       const body: any = { password };
       if (method === 'email') body.email = email;
       else body.phone = phone;
-      const resp = await fetch(`${base}/api/auth/login`, {
+      const resp = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
@@ -102,15 +101,14 @@ export default function LoginPage() {
       const target =
         typeof nextParam === "string" && nextParam.startsWith("/")
           ? nextParam
-          : "/";
+          : "/transfers";
 
       // If email is not verified, go straight to /verify-email with the intended target
       let emailVerified: boolean | undefined = userFromLogin?.emailVerified;
       try {
         if (emailVerified === undefined && token) {
-          const meResp = await fetch(`${base}/api/users/me`, {
+          const meResp = await fetch(`/api/users/me`, {
             headers: { Authorization: `Bearer ${token}` },
-            credentials: 'include',
           });
           const me = await meResp.json().catch(() => ({} as any));
           emailVerified = !!me?.user?.emailVerified;
@@ -122,7 +120,23 @@ export default function LoginPage() {
       if (emailVerified === false) {
         void router.push(`/verify-email?next=${encodeURIComponent(target)}`);
       } else {
-        void router.push(target);
+        // Check profile completeness before final redirect
+        let profileComplete = false;
+        let role: string | undefined = userFromLogin?.role;
+        try {
+          if (token) {
+            const meResp2 = await fetch(`/api/users/me`, { headers: { Authorization: `Bearer ${token}` } });
+            const me2 = await meResp2.json().catch(() => ({} as any));
+            profileComplete = !!me2?.complete;
+            role = role ?? me2?.user?.role;
+          }
+        } catch {}
+        // Enforce completeness ONLY for 'user' role
+        if (role === 'user' && !profileComplete) {
+          void router.push('/personal-info');
+        } else {
+          void router.push(target);
+        }
       }
     } finally {
       setLoading(false);
@@ -136,8 +150,8 @@ export default function LoginPage() {
         <Head>
           <title>Redirecting…</title>
         </Head>
-        <div className="login-container">
-          <div className="login-card" role="status" aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+        <div className="min-h-screen grid place-items-center p-6 bg-[#0e1530]" style={{ background: 'radial-gradient(1200px 400px at 50% -10%, rgba(91, 141, 239, 0.12), transparent), linear-gradient(180deg, #0b1020 0%, #0e1530 100%)' }}>
+          <div className="w-full max-w-md bg-opacity-90 bg-[#10172a] border border-[#1b2440] text-[#e6edf7] rounded-2xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] relative overflow-hidden flex items-center justify-center gap-3" role="status" aria-live="polite">
             <CSpinner color="primary" />
             <span>{authLoading ? "Checking session…" : "Redirecting…"}</span>
           </div>
@@ -149,26 +163,14 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>Modern SaaS Login</title>
+        <title>CanVIet Exchange Service Login</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <div className="login-container">
         <div className="login-card">
           <div className="login-header">
             <div className="logo" aria-hidden>
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 32 32"
-                fill="none"
-                aria-hidden
-              >
-                <rect width="32" height="32" rx="6" fill="#635BFF" />
-                <path
-                  d="M8 12h16v2H8v-2zm0 4h16v2H8v-2zm0 4h10v2H8v-2z"
-                  fill="white"
-                />
-              </svg>
+              <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
             </div>
             <h1>Sign in to Dashboard</h1>
             <p>Welcome! Please sign in to continue</p>
@@ -457,10 +459,17 @@ export default function LoginPage() {
           }
           .logo {
             display: inline-flex;
-            padding: 10px;
+            padding: 0;
             border-radius: 12px;
-            background: rgba(99, 91, 255, 0.12);
-            box-shadow: inset 0 0 0 1px rgba(99, 91, 255, 0.25);
+            background: transparent;
+            box-shadow: none;
+          }
+          .logo-img { width: auto; height: 165px; display: block; object-fit: contain; }
+          @media (max-width: 992px) { /* tablets */
+            .logo-img { height: 140px; }
+          }
+          @media (max-width: 640px) { /* phones */
+            .logo-img { height: 120px; }
           }
           .login-header h1 {
             margin: 10px 0 6px;

@@ -17,11 +17,28 @@ body {
 
 .header > .container-fluid,
 .sidebar-header {
-  min-height: calc(4rem + 1px); // stylelint-disable-line function-disallowed-list
+  min-height: calc(5rem + 1px); // stylelint-disable-line function-disallowed-list
 }
 
 .sidebar-brand-full {
   margin-left: 3px;
+}
+
+// Responsive logo sizing for the sidebar brand
+.sidebar-brand-full img {
+  height: 40px;
+  width: auto;
+  padding: 5px;
+}
+
+// md breakpoint ~ 768px
+@media (min-width: 768px) {
+  .sidebar-brand-full img { height: 46px; }
+}
+
+// xl breakpoint ~ 1200px
+@media (min-width: 1200px) {
+  .sidebar-brand-full img { height: 48px; }
 }
 
 .sidebar-header {

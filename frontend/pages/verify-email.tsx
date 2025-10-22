@@ -12,30 +12,44 @@ export default function VerifyEmailPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [statusType, setStatusType] = useState<'success' | 'error' | null>(null);
   const [loading, setLoading] = useState(false);
-  const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
   useEffect(() => {
-    // Load current user email from /api/users/me
-    const run = async () => {
+    // Prefill email: priority order => query param -> localStorage -> authenticated user
+    const qEmail = (router.query.email as string) || '';
+    if (qEmail) {
+      setEmail(qEmail);
+      setEmailLocked(true);
+      try { localStorage.setItem('pending_verify_email', qEmail); } catch {}
+      return;
+    }
+    try {
+      const stored = localStorage.getItem('pending_verify_email');
+      if (stored) {
+        setEmail(stored);
+        setEmailLocked(true);
+        return;
+      }
+    } catch {}
+    // Fallback to authenticated user's email
+    (async () => {
       try {
         const token = getAuthToken();
-        const resp = await fetch(`${base}/api/users/me`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
+        const resp = await fetch(`/api/users/me`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
         const data = await resp.json();
         if (data?.user?.email) {
           setEmail(data.user.email);
-          setEmailLocked(true); // lock email to the authenticated user's address
+          setEmailLocked(true);
         }
       } catch {}
-    };
-    run();
-  }, [base]);
+    })();
+  }, [router.query.email]);
 
   const request = async () => {
     setLoading(true);
     setStatus(null);
     setStatusType(null);
     try {
-      const resp = await fetch(`${base}/api/otp/email/request`, {
+      const resp = await fetch(`/api/otp/email/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -58,14 +72,15 @@ export default function VerifyEmailPage() {
     setStatus(null);
     setStatusType(null);
     try {
-      const resp = await fetch(`${base}/api/otp/email/verify`, {
+      const resp = await fetch(`/api/otp/email/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code, otpToken }),
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data?.message || 'Verification failed');
-      const next = (router.query.next as string) || '/';
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data?.message || 'Verification failed');
+  try { localStorage.removeItem('pending_verify_email'); } catch {}
+  const next = (router.query.next as string) || '/';
       await router.replace(next);
     } catch (e: any) {
       setStatus(e?.message || 'Verification failed');
@@ -91,7 +106,7 @@ export default function VerifyEmailPage() {
               </svg>
             </div>
             <h1>Verify your email</h1>
-            <p>We sent a 6-digit code to your inbox</p>
+            <p>We will send a 6‑digit code to your inbox</p>
           </div>
 
           <div className="auth-form" role="form" aria-label="Verify email">

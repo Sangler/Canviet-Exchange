@@ -1,4 +1,4 @@
-# nexTransfer Backend
+# CanViet Exchange Backend
 
 A Node.js/Express API with MongoDB (Mongoose) for authentication and basic user management. Includes JWT auth, secure password hashing with a pepper, robust Mongo connection retries, health checks, request logging with client IPs, and development tooling for index inspection.
 
@@ -19,7 +19,7 @@ A Node.js/Express API with MongoDB (Mongoose) for authentication and basic user 
    - From this folder:
      - cp .env.example .env
    - Update .env:
-     - MONGO_URI=mongodb://localhost:27017/nextransfer (or your URI)
+     - MONGO_URI=mongodb://localhost:27017/canvietexchange (or your URI)
      - JWT_SECRET, PASSWORD_PEPPER to strong secrets
      - FRONTEND_URL=http://localhost:3000 (for CORS during local dev)
      - Optional DB_* vars (see below)
@@ -136,7 +136,7 @@ Configured via `FRONTEND_URL`. During local development, set `FRONTEND_URL=http:
 
 ## Postman
 A ready-to-use collection is included:
-- Collection: `backend/postman/nextransfer.postman_collection.json`
+- Collection: `backend/postman/canvietexchange.postman_collection.json`
 - Variables: `baseUrl` (defaults to http://localhost:5000) and `token`
 
 Quick steps
@@ -167,7 +167,7 @@ backend/
     utils/
       logger.js            # File-based logger
   postman/
-    nextransfer.postman_collection.json
+    canvietexchange.postman_collection.json
   .env.example
   DB_SETTINGS.md
   package.json

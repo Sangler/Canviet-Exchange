@@ -57,10 +57,10 @@ export default function RegisterPage() {
       if (phone && phone.trim()) {
         payload.phone = phone.trim();
       }
+      // Use same-origin proxy for backend calls
       const resp = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(payload),
       });
       if (!resp.ok) {
@@ -68,17 +68,10 @@ export default function RegisterPage() {
         throw new Error(data?.message || 'Registration failed');
       }
       setSuccess(true);
-      // Request email OTP immediately and move to verify-email
-      try {
-        const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-        await fetch(`${base}/api/otp/email/request`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim() }),
-        }).catch(() => {});
-      } catch {}
-      await new Promise((r) => setTimeout(r, 400));
-      void router.push(`/verify-email?next=/login`);
+      // Do NOT auto-send email OTP; redirect to verify-email with prefilled email
+      try { localStorage.setItem('pending_verify_email', email.trim()); } catch {}
+      await new Promise((r) => setTimeout(r, 250));
+      void router.push(`/verify-email?email=${encodeURIComponent(email.trim())}&next=/login`);
     } catch (err: any) {
       setErrors({ ...(errors || {}), password: err?.message || String(err) });
     } finally {
@@ -96,10 +89,7 @@ export default function RegisterPage() {
         <div className="auth-card">
           <div className="auth-header">
             <div className="logo" aria-hidden>
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
-                <rect width="32" height="32" rx="6" fill="#00B3A4" />
-                <path d="M9 12h14v2H9v-2zm0 4h14v2H9v-2zm0 4h9v2H9v-2z" fill="white" />
-              </svg>
+              <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
             </div>
             <h1>Create your account</h1>
             <p>Start transferring in minutes</p>
@@ -203,8 +193,16 @@ export default function RegisterPage() {
         :global(html, body, #__next) { height: 100%; }
         .auth-container { min-height: 100vh; display: grid; place-items: center; background: radial-gradient(1200px 400px at 50% -10%, rgba(91,141,239,.12), transparent), linear-gradient(180deg, #0b1020 0%, #0e1530 100%); padding: 24px; }
         .auth-card { width: 100%; max-width: 480px; background: rgba(16,23,42,0.92); border: 1px solid #1b2440; color: #e6edf7; border-radius: 16px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); position: relative; overflow: hidden; }
-        .auth-header { text-align: center; margin-bottom: 18px; }
-        .logo { display: inline-flex; padding: 10px; border-radius: 12px; background: rgba(0,179,164,0.12); box-shadow: inset 0 0 0 1px rgba(0,179,164,0.25); }
+  .auth-header { text-align: center; margin-bottom: 18px; }
+  .logo-img { width: auto; height: 165px; display: block; object-fit: contain; }
+  @media (max-width: 992px) { /* tablets */
+    .logo-img { height: 140px; }
+  }
+  @media (max-width: 640px) { /* phones */
+    .logo-img { height: 120px; }
+  }
+
+  .logo { display: inline-flex; padding: 0; border-radius: 12px; background: transparent; box-shadow: none; }
         .auth-header h1 { margin: 10px 0 6px; font-size: 22px; font-weight: 700; }
         .auth-header p { margin: 0; font-size: 14px; color: #9fb3c8; }
 

@@ -1,6 +1,6 @@
-# NexTransfer Wireframes
+# CanViet Exchange Wireframes
 
-This document provides wireframe sketches and layout descriptions for the main user flows and dashboard screens of the NexTransfer platform. These wireframes are based on the requirements in PROJECT_REQUIREMENTS.md and are designed to guide UI/UX development in Figma or similar tools.
+This document provides wireframe sketches and layout descriptions for the main user flows and dashboard screens of the CanViet Exchange platform. These wireframes are based on the requirements in PROJECT_REQUIREMENTS.md and are designed to guide UI/UX development in Figma or similar tools.
 
 ---
 
@@ -71,7 +71,7 @@ This document provides wireframe sketches and layout descriptions for the main u
 
 ```
 +-------------------------------+
-| NexTransfer Dashboard         |
+| canvietexchange Dashboard         |
 +-------------------------------+
 | Sidebar | Main Panel          |
 |---------|---------------------|
@@ -91,7 +91,7 @@ This document provides wireframe sketches and layout descriptions for the main u
 
 === Login Page ===
 +-------------------------------+
-|  NexTransfer Logo   Tagline: Fast. Low-Cost. Secure.  |
+|  canvietexchange Logo   Tagline: Fast. Low-Cost. Secure.  |
 +-------------------------------+
 |                               |
 |        [Login Card]           |
@@ -108,7 +108,7 @@ This document provides wireframe sketches and layout descriptions for the main u
 
 === User Transfer Interface ===
 +-------------------------------+
-|  NexTransfer Logo   [Profile] |
+|  canvietexchange Logo   [Profile] |
 +-------------------------------+
 | [Sidebar] | [Transfer Card]   |
 | Recent Txn| Amount: [_______] |
@@ -124,7 +124,7 @@ This document provides wireframe sketches and layout descriptions for the main u
 
 === Admin Dashboard ===
 +-------------------------------+
-|  NexTransfer Logo   [Admin]   |
+|  canvietexchange Logo   [Admin]   |
 +-------------------------------+
 | [Sidebar] | [Main Content]    |
 | Dashboard | [Transaction Table]|

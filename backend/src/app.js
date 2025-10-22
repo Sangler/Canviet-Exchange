@@ -45,14 +45,12 @@ if ((process.env.NODE_ENV || 'development') !== 'production') {
       const { createTransport } = require('./services/email')
       const transporter = createTransport()
       const ok = await transporter.verify()
-      res.json({ ok: !!ok, user: process.env.EMAIL_USER || process.env.emailUser, host: process.env.EMAIL_HOST || process.env.emailHost, port: Number(process.env.EMAIL_PORT || process.env.emailPort || 465) })
+      res.json({ ok: !!ok, user: process.env.EMAIL_USER, host: process.env.EMAIL_HOST, port: Number(process.env.EMAIL_PORT || 465) })
     } catch (e) {
       res.status(500).json({ ok: false, error: String(e && e.message ? e.message : e) })
     }
   })
-}
-
-;(async () => {
+};(async () => {
   try {
     const requireDb = (process.env.DB_REQUIRED || 'false').toLowerCase() === 'true'
     const mongoUri = process.env.MONGO_URI

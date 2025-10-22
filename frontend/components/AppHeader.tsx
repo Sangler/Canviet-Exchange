@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -23,6 +23,7 @@ import {
   cilMenu,
   cilMoon,
   cilSun,
+  cilUser,
 } from '@coreui/icons';
 
 const AppHeader: React.FC = () => {
@@ -31,24 +32,55 @@ const AppHeader: React.FC = () => {
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   const { user, logout } = useAuth();
 
+  // Persist color mode in localStorage and restore on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('theme.mode');
+      if (saved === 'dark' || saved === 'light') setColorMode(saved as 'dark' | 'light');
+      else setColorMode('light');
+    } catch {
+      setColorMode('light');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem('theme.mode', colorMode || 'light'); } catch {}
+  }, [colorMode]);
+
   return (
-    <CHeader position="sticky" className="mb-4 p-0">
-      <CContainer className="border-bottom px-4" fluid>
+    <CHeader position="sticky" className="p-0">
+      <CContainer className="border-bottom px-4 d-flex align-items-center" fluid>
+        
         <CHeaderToggler
           onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
           style={{ marginInlineStart: '-14px' }}
         >
           <CIcon icon={cilMenu} size="lg" />
+
         </CHeaderToggler>
+        <span className="ms-3" style={{ display: 'inline-flex', gap: 8 }}>
+          <a href="?lang=en" style={{ textDecoration: 'none' }}>EN</a>
+          <span aria-hidden>|</span>
+          <a href="?lang=vi" style={{ textDecoration: 'none' }}>VI</a>
+        </span>
         <CHeaderNav className="d-none d-md-flex">
           <CNavItem>
-            <CNavLink href="/">
-              Dashboard
-            </CNavLink>
+            <div className="d-flex align-items-center ms-3">
+              <button
+                type="button"
+                className="btn p-0"
+                onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}
+                aria-label={`Toggle ${colorMode === 'dark' ? 'light' : 'dark'} mode`}
+                title="Toggle color mode"
+                style={{ background: 'transparent', border: 0 }}
+              >
+                <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />
+              </button>
+            </div>
           </CNavItem>
         </CHeaderNav>
         {/* TODO: load information user from auth context */}
-        <CHeaderNav className="ms-auto ms-md-0">
+  <CHeaderNav className="ms-auto ms-md-0 d-flex align-items-center">
           <div className="d-flex align-items-center">
             <span className="me-3">{user?.email ?? 'user@canviet-exchange.com'}</span>
             <CDropdown variant="nav-item">
@@ -56,14 +88,17 @@ const AppHeader: React.FC = () => {
                 <div className="avatar avatar-md">👤</div>
               </CDropdownToggle>
               <CDropdownMenu className="pt-0 profile-dropdown">
+                <CDropdownItem href="/personal-info">
+                  <CIcon icon={cilUser} className="me-2" />
+                  Personal Details
+                </CDropdownItem>
+
+
                 <CDropdownItem>
                   <CIcon icon={cilBell} className="me-2" />
                   Messages
                 </CDropdownItem>
-                <CDropdownItem>
-                  <CIcon icon={cilEnvelopeOpen} className="me-2" />
-                  Tasks
-                </CDropdownItem>
+
                 <CDropdownItem onClick={() => logout()}>
                   <CIcon icon={cilList} className="me-2" />
                   Logout
