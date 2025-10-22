@@ -37,16 +37,22 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/otp', otpRoutes)
 app.use('/api/transfers', transfersRoutes)
 
-// Lightweight passthrough for CAD->VND rate using open.er-api.com (primary) with fallback to exchangerate.host
+// Lightweight passthrough for CAD->VND rate using exchangerate-api.com
 app.get('/api/fx/cad-vnd', async (_req, res) => {
-  const primaryUrl = 'https://open.er-api.com/v6/latest/CAD';
-  const fallbackUrl = 'https://api.exchangerate.host/latest?base=CAD&symbols=VND';
+  const apiKey = process.env.NEXT_PUBLIC_EXCHANGE_API_KEY;
+
+  if (!apiKey) {
+    logger.error('[FX] EXCHANGE_RATE_API_KEY is not set. Cannot fetch exchange rate.');
+    return res.status(503).json({ ok: false, message: 'Exchange rate service is not configured.' });
+  }
+
+  const primaryUrl = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/CAD`;
 
   function fetchJson(url) {
     return new Promise((resolve, reject) => {
       https.get(url, (r) => {
         if (r.statusCode && r.statusCode >= 400) {
-          return reject(new Error('Status ' + r.statusCode));
+          return reject(new Error(`Request failed with status ${r.statusCode}`));
         }
         let data = '';
         r.on('data', chunk => data += chunk);
@@ -63,38 +69,21 @@ app.get('/api/fx/cad-vnd', async (_req, res) => {
   }
 
   try {
-    let rate = null; let source = null; let fetchedAt = new Date().toISOString();
-    try {
-      const j = await fetchJson(primaryUrl);
-      // Open ER API success structure: result === 'success'
-      if (j && j.rates && typeof j.rates.VND === 'number') {
-        rate = j.rates.VND;
-        source = 'open.er-api.com';
-        fetchedAt = j.time_last_update_utc || fetchedAt;
-      }
-    } catch (e) {
-      // swallow, will attempt fallback
+    const j = await fetchJson(primaryUrl);
+    
+    // exchangerate-api.com success structure: result === 'success'
+    if (j && j.result === 'success' && j.conversion_rates && typeof j.conversion_rates.VND === 'number') {
+      const rate = parseFloat(j.conversion_rates.VND) + 50; // Adjust market rate
+      const source = 'exchangerate-api.com';
+      const fetchedAt = j.time_last_update_utc || new Date().toISOString();
+      return res.json({ ok: true, pair: 'CAD_VND', rate, fetchedAt, source });
+    } else {
+      // This will be caught and logged below
+      throw new Error(j['error-type'] || 'API returned an invalid response');
     }
-
-    if (rate === null) {
-      try {
-        const j2 = await fetchJson(fallbackUrl);
-        if (j2 && j2.rates && typeof j2.rates.VND === 'number') {
-          rate = j2.rates.VND;
-          source = 'exchangerate.host';
-        }
-      } catch (e) {
-        // ignore, handled below if still null
-      }
-    }
-
-    if (rate === null) {
-      return res.status(502).json({ ok: false, message: 'Rate not available' });
-    }
-
-    return res.json({ ok: true, pair: 'CAD_VND', rate, fetchedAt, source });
   } catch (e) {
-    return res.status(500).json({ ok: false, message: 'Internal error' });
+    logger.error(`[FX] Failed to fetch exchange rate from primary source: ${e.message}`);
+    return res.status(502).json({ ok: false, message: 'Exchange rate is currently unavailable.' });
   }
 });
 
@@ -105,7 +94,7 @@ if ((process.env.NODE_ENV || 'development') !== 'production') {
       const { createTransport } = require('./services/email')
       const transporter = createTransport()
       const ok = await transporter.verify()
-      res.json({ ok: !!ok, user: process.env.EMAIL_USER || process.env.emailUser, host: process.env.EMAIL_HOST || process.env.emailHost, port: Number(process.env.EMAIL_PORT || process.env.emailPort || 465) })
+      res.json({ ok: !!ok, user: process.env.EMAIL_USER, host: process.env.EMAIL_HOST, port: Number(process.env.EMAIL_PORT || 465) })
     } catch (e) {
       res.status(500).json({ ok: false, error: String(e && e.message ? e.message : e) })
     }

@@ -150,8 +150,8 @@ export default function LoginPage() {
         <Head>
           <title>Redirecting…</title>
         </Head>
-        <div className="login-container">
-          <div className="login-card" role="status" aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+        <div className="min-h-screen grid place-items-center p-6 bg-[#0e1530]" style={{ background: 'radial-gradient(1200px 400px at 50% -10%, rgba(91, 141, 239, 0.12), transparent), linear-gradient(180deg, #0b1020 0%, #0e1530 100%)' }}>
+          <div className="w-full max-w-md bg-opacity-90 bg-[#10172a] border border-[#1b2440] text-[#e6edf7] rounded-2xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] relative overflow-hidden flex items-center justify-center gap-3" role="status" aria-live="polite">
             <CSpinner color="primary" />
             <span>{authLoading ? "Checking session…" : "Redirecting…"}</span>
           </div>

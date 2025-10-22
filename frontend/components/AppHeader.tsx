@@ -23,6 +23,7 @@ import {
   cilMenu,
   cilMoon,
   cilSun,
+  cilUser,
 } from '@coreui/icons';
 
 const AppHeader: React.FC = () => {
@@ -87,14 +88,17 @@ const AppHeader: React.FC = () => {
                 <div className="avatar avatar-md">👤</div>
               </CDropdownToggle>
               <CDropdownMenu className="pt-0 profile-dropdown">
+                <CDropdownItem href="/personal-info">
+                  <CIcon icon={cilUser} className="me-2" />
+                  Personal Details
+                </CDropdownItem>
+
+
                 <CDropdownItem>
                   <CIcon icon={cilBell} className="me-2" />
                   Messages
                 </CDropdownItem>
-                <CDropdownItem>
-                  <CIcon icon={cilEnvelopeOpen} className="me-2" />
-                  Tasks
-                </CDropdownItem>
+
                 <CDropdownItem onClick={() => logout()}>
                   <CIcon icon={cilList} className="me-2" />
                   Logout

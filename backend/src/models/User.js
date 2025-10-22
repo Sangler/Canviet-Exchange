@@ -1,7 +1,6 @@
 const mongoose = require('mongoose')
 
 const userSchema = new mongoose.Schema({
-  // avatarUrl: { type: String },
   KYCStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
   KyCDocumentUrl: { type: String },
   IDNumber: { type: String },
@@ -25,14 +24,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  dateOfBirth: { type: Date, default: Date.now },
+  //User profile fields
+  dateOfBirth: { type: Date, default: null },
   address: {
     street: { type: String, lowercase: true },
     postalCode: { type: String, lowercase: true },
     city: { type: String, lowercase: true },
+    province: { type: String, lowercase: true },
     country: { type: String, lowercase: true }
   },
   employmentStatus: { type: String },
+
   passwordHash: { type: String, required: true },
   emailVerified: {
     type: Boolean,

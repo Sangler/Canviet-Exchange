@@ -32,14 +32,6 @@ const _nav = [
     },
   },
   {
-    component: CNavItem,
-    name: 'Personal Details',
-    to: '/personal-info',
-    // visible to users only
-    roles: 'user',
-    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
-  },
-  {
     component: CNavTitle,
     name: 'Transfer',
   },

@@ -589,6 +589,7 @@ export default function Transfer() {
           <AppFooter />
         </div>
       </div>
+      {/* TODO: CLEAN UP CSS IN ALL PAGES  */}
       <style jsx>{`
         .transfers-page { --accent:#2563eb; --accent-rgb:37,99,235; --bg-soft:#f1f5f9; }
         .introduction { position:relative; padding:60px 28px 40px; background:linear-gradient(135deg,#1d4ed8,#0f172a); color:#fff; overflow:hidden; }
