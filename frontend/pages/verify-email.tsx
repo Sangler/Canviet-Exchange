@@ -108,7 +108,7 @@ export default function VerifyEmailPage() {
               <label htmlFor="email">Email address</label>
               <span className="input-border" />
             </div>
-            <button className={`submit-btn ${loading ? 'loading' : ''}`} onClick={request} disabled={loading || !email}>
+            <button className={`submit-btn ${loading ? 'loading' : ''}`} onClick={request}>
               <span className="btn-text">{loading ? 'Sending…' : 'Send code'}</span>
               <div className="btn-loader" aria-hidden>
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -133,7 +133,7 @@ export default function VerifyEmailPage() {
               <label htmlFor="code">6-digit code</label>
               <span className="input-border" />
             </div>
-            <button className={`submit-btn ${loading ? 'loading' : ''}`} onClick={verify} disabled={loading || !code || !otpToken}>
+            <button className={`submit-btn ${loading ? 'loading' : ''}`} onClick={verify}>
               <span className="btn-text">{loading ? 'Verifying…' : 'Verify'}</span>
               <div className="btn-loader" aria-hidden>
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
