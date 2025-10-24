@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser')
 const cors = require('cors')
 const helmet = require('helmet')
 const mongoose = require('mongoose')
+const passport = require('./config/passport')
 const authRoutes = require('./routes/auth')
 const usersRoutes = require('./routes/users')
 const adminRoutes = require('./routes/admin')
@@ -22,6 +23,10 @@ const PORT = process.env.PORT || 5000
 app.use(helmet())
 app.use(express.json())
 app.use(cookieParser())
+
+// Passport middleware (stateless, no sessions)
+app.use(passport.initialize())
+
 // If behind a reverse proxy (e.g., Vercel, Nginx), this allows req.ip and x-forwarded-for to be trusted
 app.set('trust proxy', true)
 // Request logging with IPs
@@ -50,6 +55,15 @@ if ((process.env.NODE_ENV || 'development') !== 'production') {
       res.status(500).json({ ok: false, error: String(e && e.message ? e.message : e) })
     }
   })
+
+  app.get('/api/dev/oauth-config', (_req, res) => {
+    res.json({
+      googleConfigured: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+      callbackUrl: process.env.GOOGLE_CALLBACK_URL || '/api/auth/google/callback',
+      frontendUrl: process.env.FRONTEND_URL
+    })
+  })
+
 };(async () => {
   try {
     const requireDb = (process.env.DB_REQUIRED || 'false').toLowerCase() === 'true'

@@ -97,3 +97,23 @@ exports.login = async (req, res) => {
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
+
+exports.googleOAuth = async (req, res) => {
+  try {
+    const token = jwt.sign(
+      {
+        sub: req.user._id,
+        userId: req.user._id,
+        email: req.user.email,
+        role: req.user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.ACCESS_EXPIRES || '15m' }
+    )
+
+    return res.json({ token, user: req.user.toJSON() })
+  } catch (error) {
+    console.error('OAuth callback error:', error)
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`)
+  }
+}

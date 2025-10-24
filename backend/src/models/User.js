@@ -34,8 +34,14 @@ const userSchema = new mongoose.Schema({
     country: { type: String, lowercase: true }
   },
   employmentStatus: { type: String },
-
-  passwordHash: { type: String, required: true },
+  // Auth fields
+  passwordHash: { type: String, required: false }, // Optional for SSO users
+  googleId: { type: String, unique: true, sparse: true }, // Google OAuth ID
+  authProvider: { 
+    type: String, 
+    enum: ['local', 'google'], 
+    default: 'local' 
+  },
   emailVerified: {
     type: Boolean,
     default: false
@@ -58,6 +64,7 @@ const userSchema = new mongoose.Schema({
 // Explicit indexes to ensure uniqueness constraints are created in MongoDB
 userSchema.index({ email: 1 }, { unique: true })
 userSchema.index({ phone: 1 }, { unique: true, sparse: true })
+userSchema.index({ googleId: 1 }, { unique: true, sparse: true })
 
 userSchema.set('toJSON', {
   transform: (_doc, ret) => {
