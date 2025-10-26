@@ -12,7 +12,6 @@ const transfersRoutes = require('./routes/transfers')
 const fxRoutes = require('./routes/fx')
 const User = require('./models/User')
 const { connectMongo } = require('./db/mongoose')
-const { version, name } = require('../package.json')
 const logger = require('./utils/logger')
 const requestLogger = require('./middleware/requestLogger')
 

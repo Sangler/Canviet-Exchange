@@ -150,8 +150,8 @@ export default function LoginPage() {
         <Head>
           <title>Redirecting…</title>
         </Head>
-        <div className="min-h-screen grid place-items-center p-6 bg-[#0e1530]" style={{ background: 'radial-gradient(1200px 400px at 50% -10%, rgba(91, 141, 239, 0.12), transparent), linear-gradient(180deg, #0b1020 0%, #0e1530 100%)' }}>
-          <div className="w-full max-w-md bg-opacity-90 bg-[#10172a] border border-[#1b2440] text-[#e6edf7] rounded-2xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] relative overflow-hidden flex items-center justify-center gap-3" role="status" aria-live="polite">
+        <div className="auth-container">
+          <div className="auth-card flex-center-gap-12" role="status" aria-live="polite">
             <CSpinner color="primary" />
             <span>{authLoading ? "Checking session…" : "Redirecting…"}</span>
           </div>
@@ -166,10 +166,10 @@ export default function LoginPage() {
         <title>CanVIet Exchange Service Login</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <div className="login-container">
-        <div className="login-card">
-          <div className="login-header">
-            <div className="logo" aria-hidden>
+  <div className="auth-container bg-auth">
+    <div className="auth-card">
+          <div className="login-header auth-header">
+            <div className="logo">
               <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
             </div>
             <h1>Sign in to Dashboard</h1>
@@ -177,7 +177,7 @@ export default function LoginPage() {
           </div>
 
           <form
-            className="login-form"
+            className="login-form auth-form"
             id="loginForm"
             noValidate
             onSubmit={onSubmit}
@@ -330,7 +330,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className={`submit-btn ${loading ? "loading" : ""}`}
+              className={`submit-btn submit-btn--primary ${loading ? "loading" : ""}`}
               disabled={loading}
             >
               <span className="btn-text">
@@ -425,310 +425,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <style jsx>{`
-          :global(html, body, #__next) {
-            height: 100%;
-          }
-          .login-container {
-            min-height: 100vh;
-            display: grid;
-            place-items: center;
-            background: radial-gradient(
-                1200px 400px at 50% -10%,
-                rgba(91, 141, 239, 0.12),
-                transparent
-              ),
-              linear-gradient(180deg, #0b1020 0%, #0e1530 100%);
-            padding: 24px;
-          }
-          .login-card {
-            width: 100%;
-            max-width: 420px;
-            background: rgba(16, 23, 42, 0.9);
-            border: 1px solid #1b2440;
-            color: #e6edf7;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-            position: relative;
-            overflow: hidden;
-          }
-          .login-header {
-            text-align: center;
-            margin-bottom: 18px;
-          }
-          .logo {
-            display: inline-flex;
-            padding: 0;
-            border-radius: 12px;
-            background: transparent;
-            box-shadow: none;
-          }
-          .logo-img { width: auto; height: 165px; display: block; object-fit: contain; }
-          @media (max-width: 992px) { /* tablets */
-            .logo-img { height: 140px; }
-          }
-          @media (max-width: 640px) { /* phones */
-            .logo-img { height: 120px; }
-          }
-          .login-header h1 {
-            margin: 10px 0 6px;
-            font-size: 22px;
-            font-weight: 700;
-          }
-          .login-header p {
-            margin: 0;
-            font-size: 14px;
-            color: #9fb3c8;
-          }
-
-          .login-form {
-            display: grid;
-            gap: 14px;
-          }
-          .method-switch {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            background: #0f1730;
-            border: 1px solid #1b2440;
-            padding: 6px;
-            border-radius: 12px;
-          }
-          .method-switch .pill {
-            background: transparent;
-            color: #9fb3c8;
-            padding: 8px 10px;
-            border-radius: 8px;
-            border: 0;
-            cursor: pointer;
-          }
-          .method-switch .pill.active {
-            background: rgba(91, 141, 239, 0.15);
-            color: #e6edf7;
-            box-shadow: inset 0 0 0 1px rgba(91, 141, 239, 0.35);
-          }
-          .input-group {
-            position: relative;
-          }
-          .input-group input {
-            width: 100%;
-            background: #0b1326;
-            border: 1px solid #203058;
-            color: #e6edf7;
-            border-radius: 12px;
-            padding: 14px 44px 14px 14px;
-            outline: none;
-            transition: box-shadow 0.2s, border-color 0.2s;
-          }
-          .input-group input:focus {
-            border-color: #5b8def;
-            box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.25);
-          }
-          .input-group label {
-            position: absolute;
-            left: 12px;
-            top: 12px;
-            color: #9fb3c8;
-            padding: 0 6px;
-            background: transparent;
-            pointer-events: none;
-            transition: all 0.15s ease;
-          }
-          .input-group input:not(:placeholder-shown) + label,
-          .input-group input:focus + label {
-            top: -8px;
-            font-size: 12px;
-            background: #10172a;
-            color: #cfe0ff;
-          }
-          .input-group .password-toggle {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: transparent;
-            color: #a9bdd4;
-            border: 0;
-            padding: 6px;
-            border-radius: 8px;
-            cursor: pointer;
-          }
-          .input-group .password-toggle:hover {
-            color: #e6edf7;
-            background: rgba(255, 255, 255, 0.04);
-          }
-          .input-group .input-border {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            border-radius: 12px;
-          }
-          .input-group .error-message {
-            display: block;
-            margin-top: 6px;
-            min-height: 18px;
-            color: #ff9aa2;
-            font-size: 12px;
-          }
-          .input-group.has-error input {
-            border-color: #ff6b6b;
-          }
-
-          .form-options {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 6px;
-          }
-          .checkbox-container {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            user-select: none;
-            cursor: pointer;
-            color: #c7d3e1;
-            position: relative;
-          }
-          /* Hide native checkbox but keep it focusable and accessible */
-          .checkbox-container input {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-            pointer-events: none;
-          }
-          /* Custom square box */
-          .checkbox-container .checkmark {
-            width: 18px;
-            height: 18px;
-            border-radius: 6px;
-            border: 1px solid #2a3a6a;
-            background: #0b1326;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-          }
-          /* Check icon inside the box (hidden by default) */
-          .checkbox-container .checkmark svg {
-            opacity: 0;
-            transform: scale(0.8);
-            transition: opacity 0.15s ease, transform 0.15s ease;
-            color: #ffffff;
-          }
-          /* Checked state: colorize box and show the icon */
-          .checkbox-container input:checked + .checkmark {
-            background: #5b8def;
-            border-color: #5b8def;
-          }
-          .checkbox-container input:checked + .checkmark svg {
-            opacity: 1;
-            transform: scale(1);
-          }
-          /* Keyboard focus ring */
-          .checkbox-container input:focus-visible + .checkmark {
-            box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.35);
-          }
-          .form-links {
-            display: inline-flex;
-            gap: 12px;
-          }
-          .forgot-link {
-            color: #5b8def;
-            text-decoration: none;
-            font-size: 14px;
-          }
-          .forgot-link:hover {
-            text-decoration: underline;
-          }
-
-          .submit-btn {
-            width: 100%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: #5b8def;
-            color: white;
-            border: none;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(91, 141, 239, 0.35);
-            transition: transform 0.15s ease, box-shadow 0.15s ease,
-              opacity 0.15s ease;
-          }
-          .submit-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 14px 34px rgba(91, 141, 239, 0.45);
-          }
-          .submit-btn:disabled {
-            opacity: 0.75;
-            cursor: not-allowed;
-          }
-          .submit-btn .btn-loader {
-            display: none;
-          }
-          .submit-btn.loading .btn-loader {
-            display: inline-flex;
-          }
-
-          .divider {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 16px 0 8px;
-            color: #9fb3c8;
-            font-size: 12px;
-          }
-          .divider::before,
-          .divider::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: #1b2440;
-          }
-
-          .social-buttons {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-          }
-          .social-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: #0f1730;
-            color: #e6edf7;
-            border: 1px solid #1b2440;
-            border-radius: 12px;
-            padding: 10px;
-            cursor: pointer;
-          }
-          .social-btn:hover {
-            background: #131d3a;
-          }
-
-          /* signup-link styles removed */
-
-          .success-message {
-            position: absolute;
-            inset: 0;
-            display: grid;
-            place-items: center;
-            background: rgba(11, 16, 32, 0.8);
-            text-align: center;
-          }
-          .success-message h3 {
-            margin: 10px 0 4px;
-          }
-          .success-message p {
-            margin: 0;
-            color: #9fb3c8;
-          }
-        `}</style>
     </>
   );
 }

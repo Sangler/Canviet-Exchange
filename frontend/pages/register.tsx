@@ -85,8 +85,8 @@ export default function RegisterPage() {
         <title>Create your account</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <div className="auth-container">
-        <div className="auth-card">
+  <div className="auth-container bg-auth">
+    <div className="auth-card">
           <div className="auth-header">
             <div className="logo" aria-hidden>
               <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
@@ -122,7 +122,7 @@ export default function RegisterPage() {
                   <span className="input-border" />
                   <span className="error-message">{errors.phone}</span>
                 </div> */}
-                <button type="submit" className={`submit-btn ${loading ? 'loading' : ''}`} disabled={loading}>
+                <button type="submit" className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} disabled={loading}>
                   <span className="btn-text">{loading ? 'Next…' : 'Create New Account'}</span>
                   <div className="btn-loader" aria-hidden>
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -154,11 +154,11 @@ export default function RegisterPage() {
                   <span className="error-message">{errors.confirm}</span>
                 </div>
 
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="button" className="submit-btn" onClick={() => setStep(1)} disabled={loading}>
+                <div className="flex-gap-12">
+                  <button type="button" className="submit-btn submit-btn--accent" onClick={() => setStep(1)} disabled={loading}>
                     Back
                   </button>
-                  <button type="submit" className={`submit-btn ${loading ? 'loading' : ''}`} disabled={loading}>
+                  <button type="submit" className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} disabled={loading}>
                     <span className="btn-text">{loading ? 'Creating…' : 'Register'}</span>
                     <div className="btn-loader" aria-hidden>
                       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -188,57 +188,6 @@ export default function RegisterPage() {
           )}
         </div>
       </div>
-
-      <style jsx>{`
-        :global(html, body, #__next) { height: 100%; }
-        .auth-container { min-height: 100vh; display: grid; place-items: center; background: radial-gradient(1200px 400px at 50% -10%, rgba(91,141,239,.12), transparent), linear-gradient(180deg, #0b1020 0%, #0e1530 100%); padding: 24px; }
-        .auth-card { width: 100%; max-width: 480px; background: rgba(16,23,42,0.92); border: 1px solid #1b2440; color: #e6edf7; border-radius: 16px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); position: relative; overflow: hidden; }
-  .auth-header { text-align: center; margin-bottom: 18px; }
-  .logo-img { width: auto; height: 165px; display: block; object-fit: contain; }
-  @media (max-width: 992px) { /* tablets */
-    .logo-img { height: 140px; }
-  }
-  @media (max-width: 640px) { /* phones */
-    .logo-img { height: 120px; }
-  }
-
-  .logo { display: inline-flex; padding: 0; border-radius: 12px; background: transparent; box-shadow: none; }
-        .auth-header h1 { margin: 10px 0 6px; font-size: 22px; font-weight: 700; }
-        .auth-header p { margin: 0; font-size: 14px; color: #9fb3c8; }
-
-        .auth-form { display: grid; gap: 14px; }
-        .input-group { position: relative; }
-        .input-group input { width: 100%; background: #0b1326; border: 1px solid #203058; color: #e6edf7; border-radius: 12px; padding: 14px 44px 14px 14px; outline: none; transition: box-shadow .2s, border-color .2s; }
-        .input-group input:focus { border-color: #00B3A4; box-shadow: 0 0 0 3px rgba(0,179,164,0.25); }
-        .input-group label { position: absolute; left: 12px; top: 12px; color: #9fb3c8; padding: 0 6px; background: transparent; pointer-events: none; transition: all .15s ease; }
-        .input-group input:not(:placeholder-shown) + label,
-        .input-group input:focus + label { top: -8px; font-size: 12px; background: #10172a; color: #baf3ed; }
-        .input-group .password-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; color: #a9bdd4; border: 0; padding: 6px; border-radius: 8px; cursor: pointer; }
-        .input-group .password-toggle:hover { color: #e6edf7; background: rgba(255,255,255,0.04); }
-        .input-group .input-border { position: absolute; inset: 0; pointer-events: none; border-radius: 12px; }
-        .input-group .error-message { display: block; margin-top: 6px; min-height: 18px; color: #ff9aa2; font-size: 12px; }
-        .input-group.has-error input { border-color: #ff6b6b; }
-
-        .submit-btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: #00B3A4; color: white; border: none; padding: 12px 16px; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 30px rgba(0,179,164,0.35); transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease; }
-        .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 14px 34px rgba(0,179,164,0.45); }
-        .submit-btn:disabled { opacity: 0.75; cursor: not-allowed; }
-        .submit-btn .btn-loader { display: none; }
-        .submit-btn.loading .btn-loader { display: inline-flex; }
-
-  .divider { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; color: #9fb3c8; font-size: 12px; }
-  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #1b2440; }
-  .social-buttons { display: grid; grid-template-columns: 1fr; gap: 10px; }
-  .social-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #0f1730; color: #e6edf7; border: 1px solid #1b2440; border-radius: 12px; padding: 10px; cursor: pointer; }
-  .social-btn:hover { background: #131d3a; }
-
-        .alt-link { text-align: center; color: #9fb3c8; margin-top: 10px; font-size: 14px; }
-        .alt-link a { color: #cfe0ff; text-decoration: none; }
-        .alt-link a:hover { text-decoration: underline; }
-
-        .success-message { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(11,16,32,0.8); text-align: center; }
-        .success-message h3 { margin: 10px 0 4px; }
-        .success-message p { margin: 0; color: #9fb3c8; }
-      `}</style>
     </>
   );
 }

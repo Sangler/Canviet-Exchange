@@ -135,9 +135,9 @@ export default function PersonalInfoPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         </Head>
-        <div className="auth-container" style={{ paddingTop: 40, paddingBottom: 60 }}>
-          <div className="auth-card pi-card-centered" style={{ width: '100%', maxWidth: 900 }}>
-          <a href="/transfers" className="back-btn" aria-label="Back to transfers" title="Back">
+  <div className="auth-container bg-auth pt-10 pb-16">
+    <div className="auth-card personal-info pi-card-centered">
+          <a href="/transfers" className="back-btn page" aria-label="Back to transfers" title="Back">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -159,7 +159,7 @@ export default function PersonalInfoPage() {
             </button>
           </div>
           <form className="pi-form" onSubmit={onSubmit} noValidate>
-            <div className="auth-header pi-header" style={{ marginBottom: 6 }}>
+            <div className="auth-header pi-header">
               <div className="logo" aria-hidden>
                 <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
               </div>
@@ -263,7 +263,7 @@ export default function PersonalInfoPage() {
                 </section>
 
                 <div className="actions">
-                  <button type="submit" className={`submit-btn ${saving ? 'loading' : ''}`} disabled={saving}>
+                  <button type="submit" className={`submit-btn submit-btn--accent-gradient ${saving ? 'loading' : ''}`} disabled={saving}>
                     <span className="btn-text">{saving ? 'Saving…' : 'Save changes'}</span>
                     <div className="btn-loader" aria-hidden>
                       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -280,84 +280,6 @@ export default function PersonalInfoPage() {
           </form>
           </div>
         </div>
-        <style jsx>{`
-          :global(html, body, #__next) { height: 100%; }
-          .auth-container { min-height: 100vh; display: grid; place-items: center; background: radial-gradient(1200px 400px at 50% -10%, rgba(91,141,239,.12), transparent), linear-gradient(180deg, #0b1020 0%, #0e1530 100%); padding: 24px; }
-          .auth-card { width: 100%; max-width: 900px; background: rgba(16,23,42,0.92); border: 1px solid #1b2440; color: #e6edf7; border-radius: 16px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); position: relative; overflow: hidden; }
-          .back-btn { position:absolute; top:12px; left:12px; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; color:#a9bed3; border:1px solid #1b2440; background:#0f1730; border-radius:10px; text-decoration:none; }
-          .back-btn:hover { color:#e6edf7; background:#131d3a; }
-          .top-right { position:absolute; top:12px; right:12px; display:flex; align-items:center; gap:10px; }
-          .lang-switch { display:inline-flex; align-items:center; gap:8px; color:#a9bed3; }
-          .lang-switch a { color:#cfe0ff; text-decoration:none; }
-          .lang-switch a:hover { text-decoration:underline; }
-          .mode-btn { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; color:#a9bed3; border:1px solid #1b2440; background:#0f1730; border-radius:10px; }
-          .mode-btn:hover { color:#e6edf7; background:#131d3a; }
-          .auth-header { text-align: center; margin-bottom: 18px; }
-          h2 { font-size: 14px; font-weight: 600; margin: 26px 0 14px; letter-spacing: .25px; color:#d9e7f5; }
-          .pi-section { padding-bottom: 8px; }
-          .pi-section + .pi-section { border-top: 1px solid #1b2440; padding-top: 20px; }
-          label.field-label { display:block; font-size:12px; font-weight:600; margin-bottom:6px; letter-spacing:.5px; }
-          .field-group { display:flex; flex-direction:column; margin-bottom:18px; }
-          .field-group label { font-size:12px; font-weight:600; margin-bottom:6px; color:#c7d9ed; }
-          .grid-1 { display:grid; grid-template-columns:1fr; gap:4px; }
-          /* Date input tweaks */
-          input[type="date"].themed { appearance: none; -webkit-appearance: none; }
-          input[type="date"].themed::-webkit-calendar-picker-indicator { cursor: pointer; }
-          .phone-row { display:flex; gap:12px; }
-          .phone-row .code { width:120px; }
-          .phone-row .phone { flex:1; }
-          .link-btn { margin-top:10px; background:none; border:0; color:#baf3ed; font-weight:500; padding:0; cursor:pointer; text-decoration:underline; }
-          .link-btn:hover { color:#e6edf7; }
-          .actions { margin-top:32px; text-align:center; }
-          .submit-btn { 
-            display:inline-flex; align-items:center; justify-content:center; gap:10px;
-            padding:12px 18px; min-width:160px;
-            background: linear-gradient(135deg, #00B3A4, #06b6d4);
-            color:#ffffff; border:0; border-radius:12px; cursor:pointer;
-            font-weight:700; letter-spacing:.4px;
-            box-shadow: 0 10px 24px rgba(0,179,164,0.25);
-            transition: transform .15s ease, box-shadow .15s ease, filter .15s ease, opacity .15s ease;
-          }
-          .submit-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 14px 30px rgba(0,179,164,0.35); }
-          .submit-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,179,164,0.35), 0 10px 24px rgba(0,179,164,0.25); }
-          .submit-btn:disabled { opacity:.75; cursor:not-allowed; }
-          .submit-btn .btn-loader { display:none; }
-          .submit-btn.loading .btn-loader { display:inline-flex; }
-          .submit-btn.loading .btn-text { opacity:.9; }
-          .alert.error { background:rgba(255,0,0,0.08); color:#ffb3b3; padding:14px 16px; border:1px solid rgba(255,0,0,0.25); border-radius:12px; margin-bottom:16px; }
-          .loading { font-size:14px; color:#9fb3c8; }
-          .themed { background:#0b1326; border:1px solid #203058; color:#f2f8ff; border-radius:12px; padding:14px 14px; font-size:14px; }
-          .themed:focus { outline:none; border-color:#00B3A4; box-shadow:0 0 0 3px rgba(0,179,164,0.25); }
-          select.themed { padding-right:36px; }
-          .pi-header { text-align:center; }
-          .pi-title { font-size:26px; margin:10px 0 4px; background: linear-gradient(90deg,#e6f7ff,#c7fff5); -webkit-background-clip:text; color:transparent; font-weight:700; letter-spacing:.5px; opacity:0; transform: translateY(6px); animation: fadeUp 520ms cubic-bezier(.21,.72,.25,1) 120ms forwards; will-change: transform, opacity; }
-          .pi-sub { margin:0; font-size:14px; color:#a9bed3; opacity:0; transform: translateY(6px); animation: fadeUp 520ms cubic-bezier(.21,.72,.25,1) 220ms forwards; will-change: transform, opacity; }
-          .pi-card-centered { display:flex; flex-direction:column; }
-          .logo { display: inline-flex; padding: 0; border-radius: 12px; background: transparent; box-shadow: none; }
-          .logo-img { width: auto; height: 165px; display: block; object-fit: contain; opacity: 0; transform: translateY(8px) scale(.96); animation: logoPop 560ms cubic-bezier(.18,.89,.32,1.28) 20ms forwards; will-change: transform, opacity; }
-          @media (max-width: 992px) { /* tablets */
-            .logo-img { height: 140px; }
-          }
-          @media (max-width: 640px) { /* phones */
-            .logo-img { height: 100px; }
-            /* Make date input comfortable on phones */
-            input[type="date"].themed { padding: 12px 12px; font-size: 14px; }
-          }
-          @keyframes logoPop {
-            0% { opacity: 0; transform: translateY(8px) scale(0.96); }
-            60% { opacity: 1; transform: translateY(0) scale(1.02); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-          }
-          @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          /* Respect reduced-motion preferences */
-          @media (prefers-reduced-motion: reduce) {
-            .logo-img, .pi-title, .pi-sub { animation: none !important; opacity: 1 !important; transform: none !important; }
-          }
-          @media (max-width:720px){ .dob-grid{ grid-template-columns:repeat(3,1fr); } }
-        `}</style>
       </>
     </RequireAuth>
   );

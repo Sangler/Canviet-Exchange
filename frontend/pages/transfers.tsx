@@ -147,7 +147,7 @@ export default function Transfer() {
         <div className="wrapper d-flex flex-column min-vh-100">
           <AppHeader />
           <div className="body flex-grow-1 transfers-page">
-            <section className="introduction">
+            <section className="introduction lt-md2:!pt-[52px] lt-md2:!pb-[36px] lt-md2:!px-[20px]">
               <div className="intro-inner">
                 <h1>Fast, Secure, Friendly Transfers</h1>
                 <p className="intro-lead">
@@ -158,35 +158,35 @@ export default function Transfer() {
                   {' '}with transparent rates and fast delivery.
                 </p>
 
-                <div className="intro-cta">
+                <div className="intro-cta lt-phone:flex-col lt-phone:items-stretch">
                   <a href="#exchange" className="btn primary">Get Started</a>
                 </div>
               </div>
               <div className="intro-decor" aria-hidden />
             </section>
 
-            <main className="main-content">
+            <main className="main-content lt-md2:!pt-[46px] lt-md2:!pb-[36px] lt-md2:!px-[18px]">
               {/* Progress bar + Back */}
-              <div className="progress" role="region" aria-label="Transfer progress">
-                <button className="back-btn" onClick={() => setStep(prev => Math.max(1, prev - 1))} disabled={step <= 1}>
-                  <CIcon icon={cilArrowCircleLeft} size="xl" className="back-icon" aria-hidden="true" />
+              <div className="progress lt-phone:!py-[6px] lt-phone:!pr-[6px] lt-phone:!pl-[88px] lt-phone:!min-h-[40px]" role="region" aria-label="Transfer progress">
+                <button className="back-btn z-20 pointer-events-auto lt-phone:!left-[8px] lt-phone:!p-1" onClick={() => setStep(prev => Math.max(1, prev - 1))} disabled={step <= 1}>
+                  <CIcon icon={cilArrowCircleLeft} size="xl" className="back-icon lt-phone:!w-5 lt-phone:!h-5" aria-hidden="true" />
 
                 </button>
-                <ol className="steps" aria-label="Transfer steps">
+                <ol className="steps relative z-0 lt-phone:!gap-[8px]" aria-label="Transfer steps">
                   <li className={`step ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`}>
-                    <span className="dot">1</span>
+                    <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">1</span>
                     <span className="label">Recipient</span>
                   </li>
                   <li className={`step ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`}>
-                    <span className="dot">2</span>
+                    <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">2</span>
                     <span className="label">Amount</span>
                   </li>
                   <li className={`step ${step === 3 ? 'active' : step > 3 ? 'completed' : ''}`}>
-                    <span className="dot">3</span>
+                    <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">3</span>
                     <span className="label">Details</span>
                   </li>
                   <li className={`step ${step === 4 ? 'active' : ''}`}>
-                    <span className="dot">4</span>
+                    <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">4</span>
                     <span className="label">Review</span>
                   </li>
                 </ol>
@@ -309,30 +309,61 @@ export default function Transfer() {
                     <h2>Select payment method</h2>
 
                     <section id="card" className="card transfer-details scroll-reveal">
-                      <h3>Pay with card</h3>
-                      <form id="cardForm" onSubmit={onDetailsSubmit}>
+                      <button 
+                        type="button" 
+                        className="dropdown-header"
+                        onClick={() => {
+                          const section = document.getElementById('cardForm');
+                          section?.classList.toggle('expanded');
+                        }}
+                      >
+                        <div className="dropdown-header-content">
+                          <h3>Fast methods</h3>
+                          <div className="dropdown-header-details">
+                            <span className="delivery-info">Delivers instantly</span>
+                            {amountTo && <span className="amount-preview">VND {amountTo}</span>}
+                          </div>
+                        </div>
+                        <svg className="dropdown-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </button>
+                      
+                      <form id="cardForm" className="dropdown-content" onSubmit={onDetailsSubmit}>
                         <div className="form-group">
-                          <label>Transfer Method:</label>
                           <div className="radio-group">
-                            <label className="radio">
+                            <label className="radio payment-radio">
                               <input
                                 type="radio"
-                                name="cardMethod"
+                                name="paymentMethod"
                                 value="debit"
                                 checked={transferMethod === 'debit'}
                                 onChange={(e)=>setTransferMethod(e.target.value)}
                               />
-                              <span>Debit</span>
+                              <div className="radio-content">
+                                <svg className="payment-icon" width="32" height="24" viewBox="0 0 32 24" fill="none">
+                                  <rect x="1" y="3" width="30" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                  <rect x="1" y="7" width="30" height="4" fill="currentColor"/>
+                                </svg>
+                                <span className="payment-label">Debit card</span>
+                              </div>
                             </label>
-                            <label className="radio">
+                            <label className="radio payment-radio">
                               <input
                                 type="radio"
-                                name="cardMethod"
+                                name="paymentMethod"
                                 value="credit"
                                 checked={transferMethod === 'credit'}
                                 onChange={(e)=>setTransferMethod(e.target.value)}
                               />
-                              <span>Credit</span>
+                              <div className="radio-content">
+                                <svg className="payment-icon" width="32" height="24" viewBox="0 0 32 24" fill="none">
+                                  <rect x="1" y="3" width="30" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                  <rect x="1" y="7" width="30" height="4" fill="currentColor"/>
+                                </svg>
+                                <span className="payment-label">Credit card</span>
+                                <span className="payment-note">2% processing fee applies</span>
+                              </div>
                             </label>
                           </div>
                         </div>
@@ -350,7 +381,7 @@ export default function Transfer() {
                               </div>
                             </div>
 
-                            <div className="form-group two-col">
+                            <div className="form-group two-col lt-phone:!grid-cols-1">
                               <div>
                                 <label>Expiration date</label>
                                 <div className="expiry-group">
@@ -391,7 +422,7 @@ export default function Transfer() {
                               <label>Apartment, suite, unit, etc. (optional)</label>
                               <input type="text" name="unit" placeholder="e.g., Apt 74" />
                             </div>
-                            <div className="form-group two-col">
+                            <div className="form-group two-col lt-phone:!grid-cols-1">
                               <div>
                                 <label>City</label>
                                 <input type="text" name="city" placeholder="e.g., Vancouver" required />
@@ -401,7 +432,7 @@ export default function Transfer() {
                                 <input type="text" name="province" placeholder="e.g., BC" required />
                               </div>
                             </div>
-                            <div className="form-group two-col">
+                            <div className="form-group two-col lt-phone:!grid-cols-1">
                               <div>
                                 <label>Postal code</label>
                                 <input type="text" name="postal" placeholder="e.g., V6B 1X4" required />
@@ -417,12 +448,30 @@ export default function Transfer() {
                     </section>
 
                     <section id="bank" className="card transfer-details scroll-reveal">
-                      <h3>Transfer by Bank</h3>
-                      <form id="bankForm" onSubmit={onDetailsSubmit}>
+                      <button 
+                        type="button" 
+                        className="dropdown-header"
+                        onClick={() => {
+                          const section = document.getElementById('bankForm');
+                          section?.classList.toggle('expanded');
+                        }}
+                      >
+                        <div className="dropdown-header-content">
+                          <div className="dropdown-header-title">
+                            <span className="best-value-badge">BEST VALUE</span>
+                            <h3>Pay by bank</h3>
+                          </div>
+                          {amountTo && <span className="amount-preview">VND {amountTo}</span>}
+                        </div>
+                        <svg className="dropdown-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </button>
+                      
+                      <form id="bankForm" className="dropdown-content" onSubmit={onDetailsSubmit}>
                         <div className="form-group">
-                          <label>Transfer Method:</label>
                           <div className="radio-group">
-                            <label className="radio">
+                            <label className="radio payment-radio">
                               <input
                                 type="radio"
                                 name="bankMethod"
@@ -430,9 +479,15 @@ export default function Transfer() {
                                 checked={transferMethod === 'e-transfer'}
                                 onChange={(e)=>setTransferMethod(e.target.value)}
                               />
-                              <span>E-Transfer</span>
+                              <div className="radio-content">
+                                <svg className="payment-icon" width="32" height="24" viewBox="0 0 32 24" fill="none">
+                                  <rect x="2" y="4" width="28" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                  <path d="M6 8h8M6 12h12M6 16h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                </svg>
+                                <span className="payment-label">E-Transfer</span>
+                              </div>
                             </label>
-                            <label className="radio">
+                            <label className="radio payment-radio">
                               <input
                                 type="radio"
                                 name="bankMethod"
@@ -440,7 +495,13 @@ export default function Transfer() {
                                 checked={transferMethod === 'wire'}
                                 onChange={(e)=>setTransferMethod(e.target.value)}
                               />
-                              <span>Bank Transfer</span>
+                              <div className="radio-content">
+                                <svg className="payment-icon" width="32" height="24" viewBox="0 0 32 24" fill="none">
+                                  <rect x="2" y="4" width="28" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                  <circle cx="22" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                                </svg>
+                                <span className="payment-label">Bank Transfer</span>
+                              </div>
                             </label>
                           </div>
                         </div>
@@ -453,7 +514,7 @@ export default function Transfer() {
                             </div>
 
                             {transferMethod === 'wire' && (
-                              <div className="form-group two-col wire">
+                              <div className="form-group two-col wire lt-phone:!grid-cols-1">
                                 <div>
                                   <label>Account #</label>
                                   <input type="text" name="senderBankAccount" placeholder="e.g., 0123498765" required />
@@ -589,187 +650,6 @@ export default function Transfer() {
           <AppFooter />
         </div>
       </div>
-      {/* TODO: CLEAN UP CSS IN ALL PAGES  */}
-      <style jsx>{`
-        .transfers-page { --accent:#2563eb; --accent-rgb:37,99,235; --bg-soft:#f1f5f9; }
-        .introduction { position:relative; padding:60px 28px 40px; background:linear-gradient(135deg,#1d4ed8,#0f172a); color:#fff; overflow:hidden; }
-        .intro-inner { max-width:860px; margin:0 auto; position:relative; z-index:2; }
-        .introduction h1 { font-size:clamp(2rem,4.5vw,3.2rem); margin:0 0 16px; font-weight:700; letter-spacing:-1px; line-height:1.05; }
-        .intro-lead { font-size:clamp(1rem,1.7vw,1.25rem); max-width:560px; line-height:1.45; margin:0 0 28px; color:#e2e8f0; }
-        .intro-cta { display:flex; gap:14px; flex-wrap:wrap; }
-        .btn { --btn-bg:#fff; --btn-color:#0f172a; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; font-weight:600; padding:12px 22px; border-radius:10px; font-size:14px; transition:background .18s, color .18s, box-shadow .18s, border-color .18s; border:1px solid transparent; }
-        .btn.primary { background:rgba(255,255,255,0.12); color:#fff; border-color:rgba(255,255,255,0.25); backdrop-filter:blur(4px); }
-        .btn.primary:hover { background:#fff; color:#0f172a; }
-        .btn.ghost { background:rgba(255,255,255,0.04); color:#fff; border-color:rgba(255,255,255,0.18); }
-        .btn.ghost:hover { background:rgba(255,255,255,.18); }
-        .w-full { width:100%; }
-        .intro-decor { position:absolute; inset:0; background:radial-gradient(circle at 70% 30%,rgba(255,255,255,0.18),transparent 60%), radial-gradient(circle at 30% 70%,rgba(255,255,255,0.15),transparent 55%); opacity:.55; }
-  .main-content { padding:50px 24px 40px; background:#f8fafc; }
-  .progress { position:relative; max-width:860px; margin:0 auto 20px; padding:8px 8px; padding-left:48px; display:flex; align-items:center; min-height:48px; }
-  .back-btn { position:absolute; left:8px; top:50%; transform:translateY(-50%); display:inline-flex; align-items:center; gap:6px; background:transparent; border:none; color:#334155; padding:6px 8px; border-radius:8px; cursor:pointer; }
-  .back-btn:hover:not(:disabled) { background:#e2e8f0; }
-  .back-btn:disabled { opacity:.45; cursor:not-allowed; }
-  .back-btn .back-icon { width:24px; height:24px; }
-  .steps { list-style:none; display:flex; gap:14px; padding:0; margin:0 auto; align-items:center; justify-content:center; width:100%; }
-        .step { display:flex; align-items:center; gap:8px; color:#64748b; font-weight:600; }
-        .step .dot { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:#e2e8f0; color:#0f172a; font-size:13px; font-weight:700; }
-        .step.active .dot { background:var(--accent); color:#fff; }
-        .step.completed .dot { background:#22c55e; color:#fff; }
-        .step .label { font-size:13px; letter-spacing:.3px; }
-        .flag { display:inline-block; margin-left:6px; width:20px; height:auto; vertical-align:middle; }
-        .grid { display:grid; gap:28px; grid-template-columns:1fr; align-items:start; max-width:860px; margin:0 auto 44px; }
-        .new-recipient-btn { display:inline-flex; align-items:center; gap:10px; }
-        .new-recipient-btn .icon { width:18px; height:18px; }
-        .card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px 20px 24px; box-shadow:0 3px 10px -2px rgba(0,0,0,.05),0 10px 24px -8px rgba(0,0,0,.04); position:relative; overflow:hidden; transition:border-color .18s, box-shadow .18s; }
-        .card:focus-within { border-color:var(--accent); box-shadow:0 0 0 2px rgba(var(--accent-rgb),.18), 0 4px 12px -2px rgba(0,0,0,.05), 0 12px 28px -6px rgba(0,0,0,.04); }
-        .card h2, .card h3, .card h4 { margin:0 0 14px; font-weight:600; letter-spacing:-.5px; }
-        .exchange-form h2 { font-size:24px; }
-        form { display:flex; flex-direction:column; gap:18px; }
-        .input-break { height:6px; }
-        .rate-wrapper { display:flex; flex-direction:column; gap:4px; margin:-4px 0 6px; }
-        .rate-info { margin:0; font-size:13px; color:#334155; display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
-        .delta { font-size:11px; padding:2px 6px; border-radius:20px; font-weight:600; letter-spacing:.5px; }
-        .delta.up { background:#dcfce7; color:#166534; }
-        .delta.down { background:#fee2e2; color:#991b1b; }
-        .rate-meta { display:flex; align-items:center; gap:10px; font-size:11px; color:#64748b; }
-        .timestamp { background:#f1f5f9; padding:4px 8px; border-radius:6px; }
-        .mini-btn { border:1px solid #cbd5e1; background:#fff; padding:4px 8px; border-radius:6px; font-size:12px; cursor:pointer; line-height:1; }
-        .mini-btn:hover:not(:disabled) { background:#f1f5f9; }
-        .mini-btn:disabled { opacity:.5; cursor:wait; }
-        .error { color:#b91c1c; font-weight:500; }
-        .form-group { display:flex; flex-direction:column; gap:6px; }
-  label { font-size:13px; font-weight:600; color:#334155; letter-spacing:.4px; text-transform:uppercase; display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
-        select { font:inherit; padding:12px 14px; border:1px solid #cbd5e1; background:#f8fafc; border-radius:10px; transition:border-color .18s, background .18s, box-shadow .18s; }
-        input { font:inherit; padding:12px 14px; border:none; background:#f8fafc; border-radius:10px; transition: background .18s; }
-        .radio-group { display:flex; gap:14px; flex-wrap:wrap; }
-        .radio { display:inline-flex; align-items:center; gap:8px; background:#f8fafc; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; }
-        .radio input { width:auto; padding:0; background:transparent; }
-        .currency-input { position:relative; display:flex; align-items:center; }
-        .currency-input input { width:100%; padding-right:86px; }
-        .currency-suffix { position:absolute; right:6px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:8px; padding:6px 10px; background:#eef2f7; border-radius:8px; border:1px solid #e2e8f0; }
-        .currency-suffix .flag { margin-left:0; width:18px; height:auto; }
-        .currency-suffix .code { font-weight:700; font-size:12px; color:#334155; letter-spacing:.6px; }
-        /* Brand pills for card number suffix */
-        .currency-suffix.card-brands { gap:6px; padding:6px 8px; }
-        .currency-suffix.card-brands .brand { 
-          display:inline-flex; align-items:center; justify-content:center;
-          padding:4px 6px; font-size:10px; font-weight:800; letter-spacing:.6px;
-          background:#e2e8f0; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px;
-          min-width:34px; text-transform:uppercase;
-        }
-        .currency-suffix.card-brands .brand.visa { }
-        .currency-suffix.card-brands .brand.mc { }
-        /* Expiry inputs group */
-        .expiry-group { display:flex; align-items:center; gap:8px; }
-        .expiry-group input { width:58px; text-align:center; }
-        .expiry-group .slash { font-weight:700; color:#64748b; }
-        /* Checkbox row styling */
-        .checkbox-row .checkbox { display:inline-flex; align-items:center; gap:8px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; cursor:pointer; }
-        .checkbox-row input[type="checkbox"] { width:auto; height:auto; accent-color:var(--accent); }
-        .review-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:10px 0 14px; }
-        .review-actions { display:flex; gap:12px; align-items:center; }
-        .step-actions { max-width:860px; margin: -16px auto 36px; padding:0 4px; }
-  .label-inline-info { margin-left:8px; font-weight:600; font-size:12px; color:#64748b; white-space:nowrap; }
-  .fee-row { display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#64748b; margin:6px 2px 0; }
-  .fee-row .waived { text-decoration: line-through; opacity:.75; }
-  .fee-row .fee-free { font-weight:700; color:#16a34a; }
-  .fee-mini { margin-top:6px; font-size:12px; color:#334155; }
-    /* Review fee styling */
-    .fee-review { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 8px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; }
-    .fee-label { font-weight:700; color:#334155; }
-    .fee-badge { padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; letter-spacing:.3px; border:1px solid; }
-    .fee-badge.applied { background:#dcfce7; color:#166534; border-color:#22c55e; }
-    .fee-badge.charged { background:#fef3c7; color:#92400e; border-color:#f59e0b; }
-    .fee-amount { font-weight:800; color:#0f172a; }
-    .fee-amount.zero { text-decoration:line-through; opacity:.7; }
-    .fee-note { font-size:12px; color:#64748b; }
-  .upsell-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:6px; padding:8px 10px; border:1px dashed #cbd5e1; background:#f8fafc; border-radius:8px; font-size:12px; color:#334155; }
-  .upsell-btn { background:transparent; border:1px solid #cbd5e1; padding:6px 10px; border-radius:8px; font-weight:700; cursor:pointer; color:#0f172a; }
-  .upsell-btn:hover { background:#e2e8f0; }
-        select:focus { outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 2px rgba(var(--accent-rgb),.15); }
-        input:focus { outline:none; border:none; background:#fff; box-shadow:none; }
-        input[disabled], select[disabled] { opacity:.8; cursor:not-allowed; }
-        .two-col { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; }
-        .two-col.single { grid-template-columns:1fr; }
-        .two-col.wire { grid-template-columns:1fr 1fr; }
-        button.btn.primary { background:var(--accent); color:#fff; border:none; font-weight:600; letter-spacing:.6px; box-shadow:0 6px 18px -4px rgba(var(--accent-rgb),.5); position:relative; overflow:hidden; }
-        button.btn.primary::after { content:""; position:absolute; inset:0; background:linear-gradient(120deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.25) 60%,rgba(255,255,255,0)); transform:translateX(-100%); transition:transform .6s; }
-        button.btn.primary:hover::after { transform:translateX(100%); }
-        button.btn.primary:hover { filter:brightness(1.05); }
-        button[disabled] { opacity:.7; cursor:wait; }
-        .features, .testimonials { max-width:860px; margin:0 auto 56px; }
-        .features h3, .testimonials h3 { font-size:22px; margin-bottom:20px; }
-        .features-grid, .testimonials-grid { display:grid; gap:22px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
-        .feature p { margin:4px 0 0; font-size:14px; line-height:1.45; color:#475569; }
-        blockquote { margin:0; font-size:14px; line-height:1.5; font-style:italic; color:#334155; position:relative; }
-        blockquote cite { font-style:normal; font-weight:600; margin-left:4px; }
-        blockquote a { color:var(--accent); text-decoration:none; }
-        blockquote a:hover { text-decoration:underline; }
-        /* Hide number input spinners (Chrome, Safari, Edge, Opera) */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        /* Hide number input spinners (Firefox) */
-        input[type="number"] { -moz-appearance: textfield; }
-        /* Scroll reveal (simple fade/slide) placeholder */
-        .scroll-reveal { animation:fadeUp .55s ease both; }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-        /* Dark mode */
-        @media (prefers-color-scheme:dark) {
-          .main-content { background:#0f172a; }
-          .step { color:#94a3b8; }
-          .step .dot { background:#334155; color:#e2e8f0; }
-          .card { background:#1e293b; border-color:#334155; box-shadow:0 6px 18px -6px rgba(0,0,0,.6),0 2px 6px -2px rgba(0,0,0,.5); }
-          .card:focus-within { border-color:var(--accent); box-shadow:0 0 0 2px rgba(var(--accent-rgb),.35), 0 6px 18px -6px rgba(0,0,0,.6), 0 2px 6px -2px rgba(0,0,0,.5); }
-          label { color:#cbd5e1; }
-          select { background:#1e293b; border-color:#475569; color:#e2e8f0; }
-          input { background:#1e293b; border:none; color:#e2e8f0; }
-          .radio { background:#1e293b; border-color:#475569; }
-          .currency-suffix { background:#24324a; border-color:#334155; }
-          .currency-suffix .code { color:#e2e8f0; }
-          .currency-suffix.card-brands { background:#24324a; border-color:#334155; }
-          .currency-suffix.card-brands .brand { background:#334155; border-color:#475569; color:#e2e8f0; }
-          .expiry-group .slash { color:#94a3b8; }
-          .checkbox-row .checkbox { background:#1e293b; border-color:#475569; }
-          select:focus { background:#24324a; }
-          input:focus { background:#24324a; box-shadow:none; }
-          .rate-info { color:#94a3b8; }
-          .timestamp { background:#334155; color:#cbd5e1; }
-          .back-btn { color:#cbd5e1; }
-          .back-btn:hover:not(:disabled) { background:#24324a; }
-          .delta.up { background:#14532d; color:#4ade80; }
-          .delta.down { background:#7f1d1d; color:#fca5a5; }
-          .error { color:#f87171; }
-          .feature p { color:#cbd5e1; }
-          blockquote { color:#cbd5e1; }
-          .intro-lead { color:#cbd5e1; }
-          .label-inline-info { color:#94a3b8; }
-          .fee-row { color:#94a3b8; }
-          .fee-row .fee-free { color:#4ade80; }
-          .fee-mini { color:#cbd5e1; }
-           .fee-review { background:#1e293b; border-color:#334155; }
-           .fee-label { color:#cbd5e1; }
-           .fee-badge.applied { background:#0f3a1e; color:#86efac; border-color:#22c55e; }
-           .fee-badge.charged { background:#3a2f1a; color:#f5d27b; border-color:#b98b2a; }
-           .fee-amount { color:#e2e8f0; }
-           .fee-note { color:#94a3b8; }
-          .upsell-row { background:#1e293b; border-color:#334155; color:#e2e8f0; }
-          .upsell-btn { border-color:#475569; color:#e2e8f0; }
-          .upsell-btn:hover { background:#24324a; }
-        }
-        @media (max-width:880px) { .introduction { padding:52px 20px 36px; } .main-content { padding:46px 18px 36px; } }
-        @media (max-width:580px) { 
-          .intro-cta { flex-direction:column; align-items:stretch; }
-          /* Progress bar compaction for phones */
-          .progress { padding:6px 6px 6px 40px; min-height:40px; }
-          .steps { gap:10px; }
-          .step .label { display:none; }
-          .step .dot { width:24px; height:24px; font-size:12px; }
-          .back-btn { left:6px; }
-          .back-btn .back-icon { width:20px; height:20px; }
-          /* Force all multi-column groups to stack line-by-line on small screens */
-          .two-col, .two-col.wire, .two-col.single { grid-template-columns:1fr !important; }
-        }
-      `}</style>
     </RequireAuth>
   );
 }

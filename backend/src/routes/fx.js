@@ -24,7 +24,7 @@ function fetchJson(url) {
 // GET /api/fx/cad-vnd
 router.get('/cad-vnd', async (_req, res) => {
   const primaryUrl = 'https://open.er-api.com/v6/latest/CAD'
-  const fallbackUrl = 'https://api.exchangerate.host/latest?base=CAD&symbols=VND'
+  const fallbackUrl = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATE_API_KEY}/latest/USD`
 
   try {
     let rate = null
@@ -34,7 +34,7 @@ router.get('/cad-vnd', async (_req, res) => {
     try {
       const j = await fetchJson(primaryUrl)
       if (j && j.rates && typeof j.rates.VND === 'number') {
-        rate = j.rates.VND
+        rate = j.rates.VND + 200 // add 200 VND margin
         source = 'open.er-api.com'
         fetchedAt = j.time_last_update_utc || fetchedAt
       }
