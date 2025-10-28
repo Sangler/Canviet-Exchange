@@ -7,8 +7,40 @@ import { useAuth } from '../context/AuthContext';
 import CIcon from '@coreui/icons-react';
 import { cilArrowCircleLeft } from '@coreui/icons';
 
+type TransactionHistory = {
+  _id: string;
+  amountSent: number;
+  amountReceived: number;
+  currencyFrom: string;
+  currencyTo: string;
+  status: string;
+  createdAt: string;
+  recipientBank: {
+    accountHolderName?: string;
+    bankName: string;
+  };
+};
+
 export default function Transfer() {
   const { user } = useAuth();
+  // Transaction history
+  const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState<boolean>(true);
+  
+  // Bank selection
+  const [selectedBank, setSelectedBank] = useState<string>('');
+  const [bankDropdownOpen, setBankDropdownOpen] = useState<boolean>(false);
+  
+  const vietnameseBanks = [
+    { value: 'vietcombank', label: 'Vietcombank', icon: '/bank-icons/vietcombank.png' },
+    { value: 'agribank', label: 'Agribank', icon: '/bank-icons/agribank.png' },
+    { value: 'techcombank', label: 'Techcombank', icon: '/bank-icons/techcombank.png' },
+    { value: 'mb', label: 'MB Bank', icon: '/bank-icons/mb.png' },
+    { value: 'acb', label: 'ACB', icon: '/bank-icons/acb.png' },
+    { value: 'vietinbank', label: 'VietinBank', icon: '/bank-icons/vietinbank.png' },
+    { value: 'shinhan', label: 'Shinhan Bank', icon: '/bank-icons/shinhan.png' },
+  ];
+  
   // Fee rules
   const FEE_CAD = 1.5;
   const FEE_THRESHOLD = 1000;
@@ -69,11 +101,36 @@ export default function Transfer() {
     }
   }
 
+  // Fetch user's transaction history
+  async function fetchTransactionHistory() {
+    if (!user?.id) return;
+    
+    try {
+      setTransactionsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/requests?userId=${user.id}&status=approved`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data.requests || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch transaction history:', error);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  }
+
   useEffect(() => {
     fetchRate();
+    fetchTransactionHistory();
     rateTimer.current = setInterval(() => fetchRate(false), 60_000);
     return () => { if (rateTimer.current) clearInterval(rateTimer.current); };
-  }, []);
+  }, [user?.id]);
 
   const [amountFrom, setAmountFrom] = useState<string>('');
   const [amountTo, setAmountTo] = useState<string>('');
@@ -224,6 +281,85 @@ export default function Transfer() {
                 {step === 1 && (
                   <section id="recent-transfer" className="card exchange-form scroll-reveal">
                     <h2>Recent Transfers</h2>
+                    
+                    {transactionsLoading ? (
+                      <div className="text-center py-4">
+                        <p className="text-medium-emphasis">Loading your transfer history...</p>
+                      </div>
+                    ) : transactions.length === 0 ? (
+                      <div className="text-center py-4">
+                        <p className="text-medium-emphasis mb-3">
+                          You have not sent any money back to Vietnam yet. Make your first transfer now!
+                        </p>
+                        <button 
+                          type="button" 
+                          className="btn primary" 
+                          onClick={() => setStep(2)}
+                        >
+                          Start First Transfer
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="table-responsive">
+                        <table className="table table-hover">
+                          <thead>
+                            <tr>
+                              <th>Date</th>
+                              <th>Recipient</th>
+                              <th>Amount Sent</th>
+                              <th>Amount Received</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {transactions.slice(0, 5).map((tx) => (
+                              <tr key={tx._id}>
+                                <td>
+                                  {new Date(tx.createdAt).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </td>
+                                <td>
+                                  <div>
+                                    <strong>{tx.recipientBank?.accountHolderName || 'N/A'}</strong>
+                                    <div className="small text-medium-emphasis">
+                                      {tx.recipientBank?.bankName}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td>
+                                  <strong>{tx.amountSent.toLocaleString()} {tx.currencyFrom}</strong>
+                                </td>
+                                <td>
+                                  <strong>{tx.amountReceived.toLocaleString()} {tx.currencyTo}</strong>
+                                </td>
+                                <td>
+                                  <span className={`badge ${
+                                    tx.status === 'completed' ? 'bg-success' :
+                                    tx.status === 'approved' ? 'bg-info' :
+                                    tx.status === 'pending' ? 'bg-warning' :
+                                    'bg-danger'
+                                  }`}>
+                                    {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {transactions.length > 5 && (
+                          <div className="text-center mt-3">
+                            <a href="/transfers-history" className="btn btn-outline-primary">
+                              View All Transfers
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </section>
                 )}
 
@@ -240,7 +376,7 @@ export default function Transfer() {
                             id="amountFrom"
                             name="amountFrom"
                             placeholder="Enter amount"
-                            min={50}
+                            min={20}
                             max={10000}
                             step="0.01"
                             required
@@ -279,13 +415,36 @@ export default function Transfer() {
                           </div>
                         </div>
                       </div>
-                      {/* Put the transfer fee span here */}
-                      {/* Fee not applied here; only calculated/shown at Review (Step 4) */}
-                      {/* Upsell hint to reach threshold (with mini fee label) */}
+                      {/* Transfer fee notification */}
                       {(() => {
                         const val = parseFloat(amountFrom);
-                        // Show by default, hide only when amount >= threshold
-                        if (!isNaN(val) && val >= FEE_THRESHOLD) return null;
+                        
+                        // Show congratulations message when amount >= threshold
+                        if (!isNaN(val) && val >= FEE_THRESHOLD) {
+                          return (
+                            <div className="alert alert-success d-flex align-items-center mt-3" role="alert">
+                              <svg 
+                                width="24" 
+                                height="24" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round"
+                                className="me-2"
+                              >
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                              </svg>
+                              <div>
+                                <strong>Congrats!</strong> NO Transfer fee applied. <strong> You Save ${FEE_CAD.toFixed(2)} CAD!</strong>.
+                              </div>
+                            </div>
+                          );
+                        }
+                        
+                        // Show fee warning and upsell by default or when amount is below threshold
                         return (
                           <>
                             <div className="fee-mini" role="note">Transfer fee: <strong>${FEE_CAD.toFixed(2)}</strong> CAD</div>
@@ -535,32 +694,92 @@ export default function Transfer() {
                         )}
                       </form>
                     </section>
+
+                    <section id="receiver" className="card transfer-details scroll-reveal">
+                      <button 
+                        type="button" 
+                        className="dropdown-header"
+                        onClick={() => {
+                          const section = document.getElementById('receiverForm');
+                          section?.classList.toggle('expanded');
+                        }}
+                      >
+                        <div className="dropdown-header-content">
+                          <div className="dropdown-header-title">
+                            <svg className="payment-icon accent" width="32" height="24" viewBox="0 0 32 24" fill="none">
+                              <rect x="2" y="4" width="28" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
+                              <path d="M2 9h28M8 14h4M8 17h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                            </svg>
+                            <h3>Receiver Bank Details</h3>
+                          </div>
+                          <span className="delivery-info">Required for transfer</span>
+                        </div>
+                        <svg className="dropdown-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </button>
+                      
+                      <div id="receiverForm" className="dropdown-content expanded">
+                        <div className="form-group">
+                          <label>Receiver Bank:</label>
+                          <div className="custom-bank-select">
+                            <button
+                              type="button"
+                              className="bank-select-trigger"
+                              onClick={() => setBankDropdownOpen(!bankDropdownOpen)}
+                            >
+                              {selectedBank ? (
+                                <div className="bank-option-display">
+                                  <img 
+                                    src={vietnameseBanks.find(b => b.value === selectedBank)?.icon} 
+                                    alt=""
+                                    className="bank-icon"
+                                  />
+                                  <span>{vietnameseBanks.find(b => b.value === selectedBank)?.label}</span>
+                                </div>
+                              ) : (
+                                <span className="placeholder">Select a Bank</span>
+                              )}
+                              <svg className="dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                            
+                            {bankDropdownOpen && (
+                              <div className="bank-options-list">
+                                <div className="bank-option-placeholder">Select a Bank</div>
+                                {vietnameseBanks.map((bank) => (
+                                  <button
+                                    key={bank.value}
+                                    type="button"
+                                    className={`bank-option ${selectedBank === bank.value ? 'selected' : ''}`}
+                                    onClick={() => {
+                                      setSelectedBank(bank.value);
+                                      setBankDropdownOpen(false);
+                                    }}
+                                  >
+                                    <img src={bank.icon} alt="" className="bank-icon" />
+                                    <span>{bank.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <input type="hidden" name="receiverBank" value={selectedBank} required />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Account #</label>
+                          <input type="text" name="receiverBankAccount" placeholder="Account Number" required />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Content</label>
+                          <input type="text" name="transferContent" placeholder="Message to recipient (Optional)" />
+                        </div>
+                      </div>
+                    </section>
                   </>
-                )}
-
-                {step === 3 && (
-                <section id="card" className="card transfer-details scroll-reveal">
-                  <div>
-                    <label>Receiver Bank:</label>
-                    <select name="receiverBank" required>
-                      <option value="">Select a Bank</option>
-                      <option value="vietcombank">Vietcombank</option>
-                      <option value="agribank">Agribank</option>
-                      <option value="techcombank">Techcombank</option>
-                      <option value="mb">MB Bank</option>
-                      <option value="acb">ACB</option>
-                      <option value="vietinbank">VietinBank</option>
-                      <option value="shinhan">Shinhan Bank</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label>Account #</label>
-                    <input type="text" name="receiverBankAccount" placeholder="Account Number" required />
-                  </div>
-
-                </section>
-
                 )}
 
                 {step === 3 && (
@@ -602,9 +821,15 @@ export default function Transfer() {
                           const fee = val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0;
                           const net = Math.max(val - fee, 0);
                           const vnd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(net * rate);
-                          return <div><strong>They receive:</strong> {vnd} VND</div>;
+                          const rateFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate);
+                          return (
+                            <div>
+                              <strong>They receive:</strong> {vnd} VNĐ{' '}
+                              <span className="fee-note">(${net.toFixed(2)} CAD × {rateFormatted})</span>
+                            </div>
+                          );
                         }
-                        return <div><strong>They receive:</strong> {amountTo || '0'} VND</div>;
+                        return <div><strong>They receive:</strong> {amountTo || '0'} VNĐ</div>;
                       })()}
                       <div><strong>Method:</strong> {transferMethod}</div>
                     </div>

@@ -51,13 +51,21 @@ const AppHeader: React.FC = () => {
     <CHeader position="sticky" className="p-0">
       <CContainer className="border-bottom px-4 d-flex align-items-center" fluid>
         
-        <CHeaderToggler
-          onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
-          style={{ marginInlineStart: '-14px' }}
-        >
-          <CIcon icon={cilMenu} size="lg" />
-
-        </CHeaderToggler>
+        {user && (
+          <CHeaderToggler
+            onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
+            style={{ marginInlineStart: '-14px' }}
+          >
+            <CIcon icon={cilMenu} size="lg" />
+          </CHeaderToggler>
+        )}
+        
+        {!user && (
+          <a href="/home" className="text-decoration-none">
+            <h4 className="mb-0 ms-2">CanViet Exchange</h4>
+          </a>
+        )}
+        
         <span className="ms-3" style={{ display: 'inline-flex', gap: 8 }}>
           <a href="?lang=en" style={{ textDecoration: 'none' }}>EN</a>
           <span aria-hidden>|</span>
@@ -79,34 +87,48 @@ const AppHeader: React.FC = () => {
             </div>
           </CNavItem>
         </CHeaderNav>
-        {/* TODO: load information user from auth context */}
-  <CHeaderNav className="ms-auto ms-md-0 d-flex align-items-center">
-          <div className="d-flex align-items-center">
-            <span className="me-3">{user?.email ?? 'user@canviet-exchange.com'}</span>
-            <CDropdown variant="nav-item">
-              <CDropdownToggle className="py-0 pe-0" caret={false}>
-                <div className="avatar avatar-md">👤</div>
-              </CDropdownToggle>
-              <CDropdownMenu className="pt-0 profile-dropdown">
-                <CDropdownItem href="/personal-info">
-                  <CIcon icon={cilUser} className="me-2" />
-                  Personal Details
-                </CDropdownItem>
+        
+        {/* Logged-in user dropdown */}
+        {user && (
+          <CHeaderNav className="ms-auto ms-md-0 d-flex align-items-center">
+            <div className="d-flex align-items-center">
+              <span className="me-3">{user?.email ?? 'user@canviet-exchange.com'}</span>
+              <CDropdown variant="nav-item">
+                <CDropdownToggle className="py-0 pe-0" caret={false}>
+                  <div className="avatar avatar-md">👤</div>
+                </CDropdownToggle>
+                <CDropdownMenu className="pt-0 profile-dropdown">
+                  <CDropdownItem href="/personal-info">
+                    <CIcon icon={cilUser} className="me-2" />
+                    Personal Details
+                  </CDropdownItem>
 
+                  <CDropdownItem>
+                    <CIcon icon={cilBell} className="me-2" />
+                    Messages
+                  </CDropdownItem>
 
-                <CDropdownItem>
-                  <CIcon icon={cilBell} className="me-2" />
-                  Messages
-                </CDropdownItem>
-
-                <CDropdownItem onClick={() => logout()}>
-                  <CIcon icon={cilList} className="me-2" />
-                  Logout
-                </CDropdownItem>
-              </CDropdownMenu>
-            </CDropdown>
-          </div>
-        </CHeaderNav>
+                  <CDropdownItem onClick={() => logout()}>
+                    <CIcon icon={cilList} className="me-2" />
+                    Logout
+                  </CDropdownItem>
+                </CDropdownMenu>
+              </CDropdown>
+            </div>
+          </CHeaderNav>
+        )}
+        
+        {/* Guest login/signup buttons */}
+        {!user && (
+          <CHeaderNav className="ms-auto d-flex align-items-center gap-2">
+            <a href="/login" className="btn btn-outline-primary">
+              Login
+            </a>
+            <a href="/register" className="btn btn-primary">
+              Sign Up
+            </a>
+          </CHeaderNav>
+        )}
       </CContainer>
     </CHeader>
   );

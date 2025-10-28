@@ -9,9 +9,10 @@ const usersRoutes = require('./routes/users')
 const adminRoutes = require('./routes/admin')
 const otpRoutes = require('./routes/otp')
 const transfersRoutes = require('./routes/transfers')
-const fxRoutes = require('./routes/fx')
+const https = require('https')
 const User = require('./models/User')
 const { connectMongo } = require('./db/mongoose')
+const { version, name } = require('../package.json')
 const logger = require('./utils/logger')
 const requestLogger = require('./middleware/requestLogger')
 
@@ -35,7 +36,56 @@ app.use('/api/users', usersRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/otp', otpRoutes)
 app.use('/api/transfers', transfersRoutes)
-app.use('/api/fx', fxRoutes)
+
+// Lightweight passthrough for CAD->VND rate using exchangerate-api.com
+app.get('/api/fx/cad-vnd', async (_req, res) => {
+  const apiKey = process.env.NEXT_PUBLIC_EXCHANGE_API_KEY;
+
+  if (!apiKey) {
+    logger.error('[FX] EXCHANGE_RATE_API_KEY is not set. Cannot fetch exchange rate.');
+    return res.status(503).json({ ok: false, message: 'Exchange rate service is not configured.' });
+  }
+
+  const primaryUrl = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/CAD`;
+
+  function fetchJson(url) {
+    return new Promise((resolve, reject) => {
+      https.get(url, (r) => {
+        if (r.statusCode && r.statusCode >= 400) {
+          return reject(new Error(`Request failed with status ${r.statusCode}`));
+        }
+        let data = '';
+        r.on('data', chunk => data += chunk);
+        r.on('end', () => {
+          try {
+            const json = JSON.parse(data);
+            resolve(json);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }).on('error', reject);
+    });
+  }
+
+  try {
+    const j = await fetchJson(primaryUrl);
+    
+    // exchangerate-api.com success structure: result === 'success'
+    if (j && j.result === 'success' && j.conversion_rates && typeof j.conversion_rates.VND === 'number') {
+      const rate = j.conversion_rates.VND;
+      const source = 'exchangerate-api.com';
+      const fetchedAt = j.time_last_update_utc || new Date().toISOString();
+      return res.json({ ok: true, pair: 'CAD_VND', rate, fetchedAt, source });
+    } else {
+      // This will be caught and logged below
+      throw new Error(j['error-type'] || 'API returned an invalid response');
+    }
+  } catch (e) {
+    logger.error(`[FX] Failed to fetch exchange rate from primary source: ${e.message}`);
+    return res.status(502).json({ ok: false, message: 'Exchange rate is currently unavailable.' });
+  }
+});
 
 // Dev-only SMTP verification endpoint
 if ((process.env.NODE_ENV || 'development') !== 'production') {
