@@ -71,7 +71,7 @@ const AppHeader: React.FC = () => {
           <span aria-hidden>|</span>
           <a href="?lang=vi" style={{ textDecoration: 'none' }}>VI</a>
         </span>
-        <CHeaderNav className="d-none d-md-flex">
+        <CHeaderNav className="d-flex">
           <CNavItem>
             <div className="d-flex align-items-center ms-3">
               <button
@@ -79,7 +79,7 @@ const AppHeader: React.FC = () => {
                 className="btn p-0"
                 onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}
                 aria-label={`Toggle ${colorMode === 'dark' ? 'light' : 'dark'} mode`}
-                title="Toggle color mode"
+                title="Change to Dark/Light Mode"
                 style={{ background: 'transparent', border: 0 }}
               >
                 <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />

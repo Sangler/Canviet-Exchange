@@ -206,7 +206,7 @@ export default function Transfer() {
           <div className="body flex-grow-1 transfers-page">
             <section className="introduction lt-md2:!pt-[52px] lt-md2:!pb-[36px] lt-md2:!px-[20px]">
               <div className="intro-inner">
-                <h1>Fast, Secure, Friendly Transfers</h1>
+                <h1 className="trf">Fast, Secure, Friendly Transfers</h1>
                 <p className="intro-lead">
                   Send money from Canada
                   <img className="flag" src="/flags/Flag_of_Canada.png" alt="Canada" title="Canada" />

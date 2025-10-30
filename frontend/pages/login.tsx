@@ -3,11 +3,14 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { setAuthToken } from "../lib/auth";
 import { useAuth } from "../context/AuthContext";
-import { CSpinner } from "@coreui/react";
+import { CSpinner, useColorModes } from "@coreui/react";
+import CIcon from "@coreui/icons-react";
+import { cilMoon, cilSun } from "@coreui/icons";
 
 export default function LoginPage() {
   const router = useRouter();
   const { token, user, loading: authLoading } = useAuth();
+  const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   const [method, setMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -168,6 +171,24 @@ export default function LoginPage() {
       </Head>
   <div className="auth-container bg-auth">
     <div className="auth-card">
+          {/* Language switcher and theme toggle */}
+          <div className="top-right">
+            <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+              <a href="?lang=en" style={{ textDecoration: 'none', color: 'inherit' }}>EN</a>
+              <span aria-hidden>|</span>
+              <a href="?lang=vi" style={{ textDecoration: 'none', color: 'inherit' }}>VI</a>
+            </span>
+            <button
+              type="button"
+              className="mode-btn"
+              onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}
+              aria-label={`Toggle ${colorMode === 'dark' ? 'light' : 'dark'} mode`}
+              title="Change to Dark/Light Mode"
+            >
+              <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />
+            </button>
+          </div>
+
           <div className="login-header auth-header">
             <div className="logo">
               <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />

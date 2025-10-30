@@ -1,15 +1,20 @@
 import { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { useColorModes } from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilMoon, cilSun } from '@coreui/icons';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -57,6 +62,9 @@ export default function RegisterPage() {
       if (phone && phone.trim()) {
         payload.phone = phone.trim();
       }
+      if (referralCode && referralCode.trim()) {
+        payload.referralCode = referralCode.trim();
+      }
       // Use same-origin proxy for backend calls
       const resp = await fetch('/api/auth/register', {
         method: 'POST',
@@ -86,7 +94,25 @@ export default function RegisterPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
   <div className="auth-container bg-auth">
-    <div className="auth-card">
+    <div className="auth-card register">
+          {/* Language switcher and theme toggle */}
+          <div className="top-right">
+            <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+              <a href="?lang=en" style={{ textDecoration: 'none', color: 'inherit' }}>EN</a>
+              <span aria-hidden>|</span>
+              <a href="?lang=vi" style={{ textDecoration: 'none', color: 'inherit' }}>VI</a>
+            </span>
+            <button
+              type="button"
+              className="mode-btn"
+              onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}
+              aria-label={`Toggle ${colorMode === 'dark' ? 'light' : 'dark'} mode`}
+              title="Change to Dark/Light Mode"
+            >
+              <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />
+            </button>
+          </div>
+
           <div className="auth-header">
             <div className="logo" aria-hidden>
               <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
@@ -152,6 +178,20 @@ export default function RegisterPage() {
                   <label htmlFor="confirm">Confirm password</label>
                   <span className="input-border" />
                   <span className="error-message">{errors.confirm}</span>
+                </div>
+
+                {/* Referral code input (optional) */}
+                <div className="input-group">
+                  <input 
+                    type="text" 
+                    id="referralCode" 
+                    placeholder=" " 
+                    value={referralCode} 
+                    onChange={(e) => setReferralCode(e.target.value.trim())} 
+                  />
+                  <label htmlFor="referralCode">Referral Code (Optional)</label>
+                  <span className="input-border" />
+                  <span className="error-message"></span>
                 </div>
 
                 <div className="flex-gap-12">
