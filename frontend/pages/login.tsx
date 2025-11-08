@@ -3,6 +3,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { setAuthToken } from "../lib/auth";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { CSpinner, useColorModes } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import { cilMoon, cilSun } from "@coreui/icons";
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { token, user, loading: authLoading } = useAuth();
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
+  const { language, setLanguage, t } = useLanguage();
   const [method, setMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -46,15 +48,15 @@ export default function LoginPage() {
   const validate = () => {
     const next: typeof errors = {};
     if (method === "email") {
-      if (!email) next.email = "Email is required";
+      if (!email) next.email = t('validation.emailRequired');
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-        next.email = "Enter a valid email";
+        next.email = t('validation.emailInvalid');
     } else {
-      if (!phone) next.phone = "Phone is required";
+      if (!phone) next.phone = t('validation.phoneRequired');
       else if (!/^\+?[0-9\s\-()]{7,}$/.test(phone))
-        next.phone = "Enter a valid phone number";
+        next.phone = t('validation.phoneInvalid');
     }
-    if (!password) next.password = "Password is required";
+    if (!password) next.password = t('validation.passwordRequired');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -174,9 +176,29 @@ export default function LoginPage() {
           {/* Language switcher and theme toggle */}
           <div className="top-right">
             <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-              <a href="?lang=en" style={{ textDecoration: 'none', color: 'inherit' }}>EN</a>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); setLanguage('en'); }} 
+                style={{ 
+                  textDecoration: 'none', 
+                  color: 'inherit',
+                  fontWeight: language === 'en' ? 'bold' : 'normal'
+                }}
+              >
+                EN
+              </a>
               <span aria-hidden>|</span>
-              <a href="?lang=vi" style={{ textDecoration: 'none', color: 'inherit' }}>VI</a>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); setLanguage('vi'); }} 
+                style={{ 
+                  textDecoration: 'none', 
+                  color: 'inherit',
+                  fontWeight: language === 'vi' ? 'bold' : 'normal'
+                }}
+              >
+                VI
+              </a>
             </span>
             <button
               type="button"
@@ -193,8 +215,8 @@ export default function LoginPage() {
             <div className="logo">
               <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
             </div>
-            <h1>Sign in to Dashboard</h1>
-            <p>Welcome! Please sign in to continue</p>
+            <h1>{t('auth.signIn')}</h1>
+            <p>{t('auth.welcome')}</p>
           </div>
 
           <form
@@ -215,7 +237,7 @@ export default function LoginPage() {
                 className={`pill ${method === "email" ? "active" : ""}`}
                 onClick={() => setMethod("email")}
               >
-                Email
+                {t('common.email')}
               </button>
               <button
                 type="button"
@@ -224,7 +246,7 @@ export default function LoginPage() {
                 className={`pill ${method === "phone" ? "active" : ""}`}
                 onClick={() => setMethod("phone")}
               >
-                Phone
+                {t('common.phone')}
               </button>
             </div>
 
@@ -244,7 +266,7 @@ export default function LoginPage() {
                   aria-invalid={!!errors.email}
                   aria-describedby="emailError"
                 />
-                <label htmlFor="email">Email address</label>
+                <label htmlFor="email">{t('auth.emailAddress')}</label>
                 <span className="input-border" />
                 <span className="error-message" id="emailError">
                   {errors.email}
@@ -266,7 +288,7 @@ export default function LoginPage() {
                   aria-invalid={!!errors.phone}
                   aria-describedby="phoneError"
                 />
-                <label htmlFor="phone">Phone number</label>
+                <label htmlFor="phone">{t('common.phone')}</label>
                 <span className="input-border" />
                 <span className="error-message" id="phoneError">
                   {errors.phone}
@@ -289,7 +311,7 @@ export default function LoginPage() {
                 aria-invalid={!!errors.password}
                 aria-describedby="passwordError"
               />
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password">{t('auth.password')}</label>
               <button
                 type="button"
                 className="password-toggle"
@@ -337,14 +359,14 @@ export default function LoginPage() {
                     />
                   </svg>
                 </span>
-                Remember Me
+                {t('auth.rememberMe')}
               </label>
               <div className="form-links">
                 <a href="/register" className="forgot-link">
-                  Register
+                  {t('common.register')}
                 </a>
                 <a href="#" className="forgot-link">
-                  Forgot password?
+                  {t('auth.forgotPassword')}
                 </a>
               </div>
             </div>
@@ -355,7 +377,7 @@ export default function LoginPage() {
               disabled={loading}
             >
               <span className="btn-text">
-                {loading ? "Signing in…" : "Sign in"}
+                {loading ? t('auth.signingIn') : t('auth.signIn')}
               </span>
               <div className="btn-loader" aria-hidden>
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -387,7 +409,7 @@ export default function LoginPage() {
           </form>
 
           <div className="divider">
-            <span>or continue with</span>
+            <span>{t('auth.orContinueWith')}</span>
           </div>
 
           <div className="social-buttons">
@@ -439,8 +461,8 @@ export default function LoginPage() {
                   />
                 </svg>
               </div>
-              <h3>Welcome back!</h3>
-              <p>Redirecting to your dashboard...</p>
+              <h3>{t('auth.welcomeBack')}</h3>
+              <p>{t('auth.redirectingDashboard')}</p>
             </div>
           )}
         </div>

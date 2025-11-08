@@ -226,7 +226,20 @@ export default function PersonalInfoPage() {
                       <option value="+1">+1</option>
                       <option value="+84">+84</option>
                     </select>
-                    <input className="phone themed" value={phone} onChange={(e)=> setPhone(e.target.value)} placeholder="Your phone" />
+                    <input 
+                      className="phone themed" 
+                      type="tel"
+                      value={phone} 
+                      onChange={(e)=> {
+                        const value = e.target.value.replace(/\D/g, '');
+                        if (value.length <= 10) {
+                          setPhone(value);
+                        }
+                      }} 
+                      placeholder="Your phone" 
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                    />
                   </div>
                   {phone && <button type="button" className="link-btn" onClick={()=> alert('Change number flow TBD')}>Change phone number</button>}
                 </section>

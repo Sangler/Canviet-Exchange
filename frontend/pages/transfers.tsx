@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import RequireAuth from '../components/RequireAuth';
 import AppSidebar from '../components/AppSidebar';
 import AppHeader from '../components/AppHeader';
@@ -51,6 +51,7 @@ export default function Transfer() {
   const [rateError, setRateError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const rateTimer = useRef<NodeJS.Timeout | null>(null);
+  
   async function fetchRate(manual = false) {
     try {
       if (manual) setRateLoading(true);
@@ -61,28 +62,16 @@ export default function Transfer() {
       let fetchedAt: string | null = null;
 
       try {
-        const url = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/CAD`;
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('Exchange API HTTP error');
-        const data = await resp.json();
-        // We expect { result: 'success', conversion_rates: { VND: number }, time_last_update_utc: string }
-        if (data?.result === 'success' && typeof data?.conversion_rates?.VND === 'number') {
-          nextRate = data.conversion_rates.VND;
-          fetchedAt = data?.time_last_update_utc || null;
-        } else {
-          throw new Error('Exchange API invalid payload');
-        }
-      } catch (e) {
-        // Same-origin fallback works over LAN/IP and in production
-        const resp2 = await fetch(`/api/fx/cad-vnd`);
-        if (!resp2.ok) throw new Error('Rate fetch failed');
-        const json2 = await resp2.json();
-        if (json2?.ok && typeof json2.rate === 'number') {
-          nextRate = json2.rate;
-          fetchedAt = json2.fetchedAt || null;
-        } else {
-          throw new Error('Invalid payload');
-        }
+        // Single source of truth: call backend endpoint that already applies the +200 VND margin.
+        const resp = await fetch('/api/fx/cad-vnd');
+        if (!resp.ok) throw new Error('Backend FX HTTP error');
+        const json = await resp.json();
+        if (!json?.ok || typeof json.rate !== 'number') throw new Error('Backend FX invalid payload');
+        nextRate = json.rate;
+        fetchedAt = json.fetchedAt || null;
+      } catch (err) {
+        // Surface the error up so outer catch() sets the user-visible error state
+        throw err;
       }
 
       if (typeof nextRate === 'number') {
@@ -134,10 +123,32 @@ export default function Transfer() {
 
   const [amountFrom, setAmountFrom] = useState<string>('');
   const [amountTo, setAmountTo] = useState<string>('');
+  const [activeInput, setActiveInput] = useState<'from' | 'to'>('from'); // Track which input user is editing
   const [submitting, setSubmitting] = useState(false);
   const [transferMethod, setTransferMethod] = useState<string>('e-transfer');
-  // Multi-step flow: 1=Recipient, 2=Amount, 3=Details, 4=Review
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  // Multi-step flow: 1=Recipient, 2=Amount, 3=Payment Method, 3.5=Receiver Details, 4=Review
   const [step, setStep] = useState<number>(1);
+  const [subStep, setSubStep] = useState<number>(0); // 0 or 1 for half-steps within step 3
+  // Recipient phone
+  const [recipientPhoneCode, setRecipientPhoneCode] = useState<string>('+84');
+  const [recipientPhone, setRecipientPhone] = useState<string>('');
+
+  // Customer-specific extra margin based on amountFrom (CAD)
+  // Rules:
+  // - amount < 300 CAD => +0 VND
+  // - amount >= 300 and < 1000 => +50 VND
+  // - amount >= 1000 => + 150 VND
+  const extraMargin = useMemo(() => {
+    const val = parseFloat((amountFrom || '').toString());
+    if (isNaN(val) || val <= 0) return 0;
+    if (val >= 1000) return 150;
+    if (val >= 300) return 50;
+    return 0;
+  }, [amountFrom]);
+
+  // Effective rate used for calculations = base backend rate (includes +200 margin) + customer extra margin
+  const effectiveRate = useMemo(() => (typeof rate === 'number' ? Number(rate) + Number(extraMargin) : null), [rate, extraMargin]);
 
   // Persist step in localStorage
   useEffect(() => {
@@ -153,23 +164,62 @@ export default function Transfer() {
     } catch {}
   }, []);
 
-  // Auto-calc receive amount
+  // Auto-calc receive amount (CAD -> VND)
   useEffect(() => {
-    const val = parseFloat(amountFrom);
-    if (!isNaN(val) && rate) {
-      // Do NOT apply fee in Step 2. Show gross VND based on full amount.
-      setAmountTo(new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(val * rate));
+    if (activeInput !== 'from') return;
+    const val = parseFloat(amountFrom.replace(/,/g, ''));
+    if (!isNaN(val) && effectiveRate && effectiveRate > 0) {
+      // Do NOT apply fee in Step 2. Show gross VND based on full amount using effectiveRate (includes extra margin).
+      setAmountTo(new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(val * effectiveRate));
     } else {
       setAmountTo('');
     }
-  }, [amountFrom, rate]);
+  }, [amountFrom, effectiveRate, activeInput]);
 
-  function formatNumberInput(e: React.ChangeEvent<HTMLInputElement>) {
-    // Normalize mobile input: support commas as decimal, strip invalid chars, keep single dot
+  // Auto-calc send amount (VND -> CAD)
+  useEffect(() => {
+    if (activeInput !== 'to') return;
+    const val = parseFloat(amountTo.replace(/,/g, ''));
+    if (!isNaN(val) && effectiveRate && effectiveRate > 0) {
+      setAmountFrom((val / effectiveRate).toFixed(2));
+    } else {
+      setAmountFrom('');
+    }
+  }, [amountTo, effectiveRate, activeInput]);
+
+  function formatCurrencyInput(e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') {
     const raw = e.target.value || '';
-    const normalized = raw.replace(/,/g, '.');
-    const cleaned = normalized.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-    setAmountFrom(cleaned);
+    
+    if (type === 'from') {
+      // CAD: Allow decimals, limit to 5 digits before decimal, 2 decimals after, remove leading zeros
+      const normalized = raw.replace(/,/g, '.');
+      const cleaned = normalized.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+      const parts = cleaned.split('.');
+      
+      parts[0] = parts[0].replace(/^0+/, '') || '0';
+      
+      if (parts[0].length > 5) {
+        parts[0] = parts[0].slice(0, 5);
+      }
+      
+      if (parts[1]) {
+        parts[1] = parts[1].slice(0, 2);
+      }
+      
+      const limited = parts.join('.');
+      const display = limited === '0' ? '' : limited;
+      
+      setActiveInput('from');
+      setAmountFrom(display);
+    } else {
+      // VND: No decimals, limit to 9 digits, format with commas, remove leading zeros
+      const cleaned = raw.replace(/[^0-9]/g, '');
+      const limited = cleaned.slice(0, 9);
+      const withoutLeadingZeros = limited.replace(/^0+/, '') || '0';
+      const formatted = withoutLeadingZeros === '0' ? '' : new Intl.NumberFormat('en-US').format(parseInt(withoutLeadingZeros, 10));
+      setActiveInput('to');
+      setAmountTo(formatted);
+    }
   }
 
   async function onCalcSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -195,7 +245,9 @@ export default function Transfer() {
 
   const isCard = transferMethod === 'debit' || transferMethod === 'credit';
   const isBank = transferMethod === 'e-transfer' || transferMethod === 'wire';
-  const rateStr = typeof rate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate) : null;
+  const rateStr = typeof effectiveRate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate) : null;
+  const baseRateStr = typeof rate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate) : null;
+  const [showRateModal, setShowRateModal] = useState(false);
 
   return (
     <RequireAuth>
@@ -204,6 +256,30 @@ export default function Transfer() {
         <div className="wrapper d-flex flex-column min-vh-100">
           <AppHeader />
           <div className="body flex-grow-1 transfers-page">
+            {showRateModal && (
+              <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="Exchange rate details" onClick={() => setShowRateModal(false)}>
+                <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
+                  <h3 className="rate-modal-title">How we calculate your exchange rate</h3>
+                  <p className="rate-modal-p">
+                    Current's rate: {baseRateStr ? <strong>{baseRateStr} VND</strong> : <em>not available</em>}
+                  </p>
+
+                  <p className="rate-modal-p">Plus, you get a bonus rate when you send more:</p>
+                  <ul className="rate-modal-list">
+                    <li>Send less than $300 CAD → Standard rate</li>
+                    <li>Send $300 - $999 CAD → Extra <strong>+50 VND/CAD</strong></li>
+                    <li>Send $1,000+ CAD → Extra <strong>+150 VND/CAD</strong> with no transfer fee applied!</li>
+                  </ul>
+                  <p className="rate-modal-p">Your current bonus: <strong>+{extraMargin} VND</strong></p>
+                  <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
+
+                  <p className="rate-modal-p note">*Note: Exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.</p>
+                  <div className="rate-modal-actions">
+                    <button className="btn" type="button" onClick={() => setShowRateModal(false)}>Got it</button>
+                  </div>
+                </div>
+              </div>
+            )}
             <section className="introduction lt-md2:!pt-[52px] lt-md2:!pb-[36px] lt-md2:!px-[20px]">
               <div className="intro-inner">
                 <h1 className="trf">Fast, Secure, Friendly Transfers</h1>
@@ -225,7 +301,18 @@ export default function Transfer() {
             <main className="main-content lt-md2:!pt-[46px] lt-md2:!pb-[36px] lt-md2:!px-[18px]">
               {/* Progress bar + Back */}
               <div className="progress lt-phone:!py-[6px] lt-phone:!pr-[6px] lt-phone:!pl-[88px] lt-phone:!min-h-[40px]" role="region" aria-label="Transfer progress">
-                <button className="back-btn z-20 pointer-events-auto lt-phone:!left-[8px] lt-phone:!p-1" onClick={() => setStep(prev => Math.max(1, prev - 1))} disabled={step <= 1}>
+                <button 
+                  className="back-btn z-20 pointer-events-auto lt-phone:!left-[8px] lt-phone:!p-1" 
+                  onClick={() => {
+                    if (step === 3 && subStep === 1) {
+                      setSubStep(0);
+                    } else {
+                      setStep(prev => Math.max(1, prev - 1));
+                      setSubStep(0);
+                    }
+                  }} 
+                  disabled={step <= 1}
+                >
                   <CIcon icon={cilArrowCircleLeft} size="xl" className="back-icon lt-phone:!w-5 lt-phone:!h-5" aria-hidden="true" />
 
                 </button>
@@ -238,7 +325,7 @@ export default function Transfer() {
                     <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">2</span>
                     <span className="label">Amount</span>
                   </li>
-                  <li className={`step ${step === 3 ? 'active' : step > 3 ? 'completed' : ''}`}>
+                  <li className={`step ${step === 3 ? 'active' : step > 3 ? 'completed' : ''} ${step === 3 && subStep === 1 ? 'half-completed' : ''}`}>
                     <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">3</span>
                     <span className="label">Details</span>
                   </li>
@@ -369,7 +456,29 @@ export default function Transfer() {
                     <form id="moneyExchangeForm" onSubmit={onCalcSubmit}>
                       <div className="form-group">
                         <label htmlFor="amountFrom">YOU SEND:</label>
-                          {rateStr && (<span className="label-inline-info">1 CAD = {rateStr} VND</span>)}
+                          {rate && (
+                            <span className="label-inline-info">
+
+                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate + 150)} VND <strong>Best Rate</strong>
+                              <button
+                                type="button"
+                                aria-label="Rate details"
+                                onClick={() => setShowRateModal(true)}
+                                className="rate-info-btn"
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                              </button>
+                            </span>
+                          )}
+                          {amountFrom && parseFloat(amountFrom) > 0 && effectiveRate && (
+                            <span className="label-inline-info" style={{ color: '#059669', fontWeight: 500 }}>
+                              Your rate: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND
+                            </span>
+                          )}
                         <div className="currency-input" role="group" aria-label="You send amount in CAD">
                           <input
                             type="number"
@@ -381,8 +490,8 @@ export default function Transfer() {
                             step="0.01"
                             required
                             value={amountFrom}
-                            onChange={formatNumberInput}
-                            onInput={formatNumberInput}
+                            onChange={(e) => formatCurrencyInput(e, 'from')}
+                            onInput={(e) => formatCurrencyInput(e as unknown as React.ChangeEvent<HTMLInputElement>, 'from')}
                             inputMode="decimal"
                             aria-label="You send"
                           />
@@ -402,9 +511,9 @@ export default function Transfer() {
                             type="text"
                             id="amountTo"
                             name="amountTo"
-                            placeholder="Auto-calculated"
-                            readOnly
+                            placeholder="Enter VND amount"
                             value={amountTo}
+                            onChange={(e) => formatCurrencyInput(e, 'to')}
                             inputMode="numeric"
                             pattern="[0-9,]*"
                             aria-label="They receive"
@@ -462,8 +571,8 @@ export default function Transfer() {
                   </section>
                 )}
 
-                {/* Step 3 */}
-                {step === 3 && (
+                {/* Step 3.1 - Payment Method */}
+                {step === 3 && subStep === 0 && (
                   <>
                     <h2>Select payment method</h2>
 
@@ -521,7 +630,7 @@ export default function Transfer() {
                                   <rect x="1" y="7" width="30" height="4" fill="currentColor"/>
                                 </svg>
                                 <span className="payment-label">Credit card</span>
-                                <span className="payment-note">2% processing fee applies</span>
+                                <span className="payment-note">2% processing fee might be applied</span>
                               </div>
                             </label>
                           </div>
@@ -601,6 +710,16 @@ export default function Transfer() {
                                 <input type="text" name="country" placeholder="e.g., Canada" defaultValue="Canada" required />
                               </div>
                             </div>
+
+                            <div className="form-group delivery-notice">
+                              <p className="notice-text">
+                                <strong>Expected delivery:</strong> 24-48 business hours
+                              </p>
+                              <p className="notice-subtext">
+                                Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
+                                Consider that your transfer might take longer than expected—this is normal!
+                              </p>
+                            </div>
                           </>
                         )}
                       </form>
@@ -659,7 +778,7 @@ export default function Transfer() {
                                   <rect x="2" y="4" width="28" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
                                   <circle cx="22" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
                                 </svg>
-                                <span className="payment-label">Bank Transfer</span>
+                                <span className="payment-label">Bank Transfer</span><strong>RECOMMENDED</strong>
                               </div>
                             </label>
                           </div>
@@ -689,37 +808,70 @@ export default function Transfer() {
                               </div>
                             )}
 
-   
+                            <div className="form-group delivery-notice">
+                              <p className="notice-text">
+                                <strong>Expected delivery:</strong> {transferMethod === 'e-transfer' ? 'Within 24 hours' : '5-7 business days'}
+                              </p>
+                              <p className="notice-subtext">
+                                Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
+                                Consider that your transfer might take longer than expected—this is normal!
+                              </p>
+                            </div>
                           </>
                         )}
                       </form>
                     </section>
+                  </>
+                )}
+
+                {step === 3 && subStep === 0 && (
+                  <div className="step-actions">
+                    <button type="button" className="btn primary w-full" onClick={() => setSubStep(1)}>
+                      Continue to Receiver Details
+                    </button>
+                  </div>
+                )}
+
+                {/* Step 3.2 - Receiver Bank Details */}
+                {step === 3 && subStep === 1 && (
+                  <>
+                    <h2>Receiver Bank Details</h2>
 
                     <section id="receiver" className="card transfer-details scroll-reveal">
-                      <button 
-                        type="button" 
-                        className="dropdown-header"
-                        onClick={() => {
-                          const section = document.getElementById('receiverForm');
-                          section?.classList.toggle('expanded');
-                        }}
-                      >
-                        <div className="dropdown-header-content">
-                          <div className="dropdown-header-title">
-                            <svg className="payment-icon accent" width="32" height="24" viewBox="0 0 32 24" fill="none">
-                              <rect x="2" y="4" width="28" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
-                              <path d="M2 9h28M8 14h4M8 17h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                            </svg>
-                            <h3>Receiver Bank Details</h3>
-                          </div>
-                          <span className="delivery-info">Required for transfer</span>
+                      <div className="dropdown-content expanded">
+
+                        <div className="form-group">
+                          <label>Recipient Full Name</label>
+                          <input type="text" name="receiverName" placeholder="Recipient Full Name" required />
                         </div>
-                        <svg className="dropdown-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </button>
-                      
-                      <div id="receiverForm" className="dropdown-content expanded">
+
+                        <div className="form-group">
+                          <label>Recipient Phone Number</label>
+                          <div className="phone-row">
+                            <select className="code themed" value={recipientPhoneCode} onChange={(e) => setRecipientPhoneCode(e.target.value)}>
+                              <option value="+1">+1</option>
+                              <option value="+84">+84</option>
+                            </select>
+                            <input 
+                              className="phone themed" 
+                              type="tel"
+                              value={recipientPhone} 
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                if (value.length <= 10) {
+                                  setRecipientPhone(value);
+                                }
+                              }} 
+                              placeholder="Recipient phone number" 
+                              maxLength={10}
+                              pattern="[0-9]{10}"
+                              required 
+                            />
+                          </div>
+                          <input type="hidden" name="receiverPhoneNumber" value={`${recipientPhoneCode}${recipientPhone}`} />
+                          <p>Please enter the correct recipient's phone number!</p>
+                        </div>
+
                         <div className="form-group">
                           <label>Receiver Bank:</label>
                           <div className="custom-bank-select">
@@ -782,10 +934,10 @@ export default function Transfer() {
                   </>
                 )}
 
-                {step === 3 && (
+                {step === 3 && subStep === 1 && (
                   <div className="step-actions">
                     <button type="button" className="btn primary w-full" onClick={() => setStep(4)}>
-                      Confirm Transfer
+                      Continue to Review
                     </button>
                   </div>
                 )}
@@ -817,11 +969,11 @@ export default function Transfer() {
                       })()}
                       {(() => {
                         const val = parseFloat(amountFrom);
-                        if (!isNaN(val) && typeof rate === 'number') {
+                        if (!isNaN(val) && typeof effectiveRate === 'number') {
                           const fee = val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0;
                           const net = Math.max(val - fee, 0);
-                          const vnd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(net * rate);
-                          const rateFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate);
+                          const vnd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(net * (effectiveRate || 0));
+                          const rateFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate || 0);
                           return (
                             <div>
                               <strong>They receive:</strong> {vnd} VNĐ{' '}
@@ -833,15 +985,34 @@ export default function Transfer() {
                       })()}
                       <div><strong>Method:</strong> {transferMethod}</div>
                     </div>
+                    
+                    <div className="form-group checkbox-row">
+                      <label className="checkbox">
+                        <input 
+                          type="checkbox" 
+                          checked={agreedToTerms}
+                          onChange={(e) => setAgreedToTerms(e.target.checked)}
+                          required
+                        />
+                        <span>
+                          <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer">Terms and Conditions</a> Read & Agreed!
+                        </span>
+                      </label>
+                    </div>
+                    
                     <div className="review-actions">
                       <button type="button" className="btn ghost" onClick={() => setStep(3)}>Back</button>
                       <form onSubmit={onTransferSubmit}>
-                        <button type="submit" className="btn primary" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit Transfer'}</button>
+                        <button type="submit" className="btn primary" disabled={submitting || !agreedToTerms}>
+                          {submitting ? 'Submitting…' : 'Submit Transfer'}
+                        </button>
                       </form>
                     </div>
                   </section>
                 )}
               </div>
+
+            {/* Modal styles moved to frontend/scss/style.scss */}
 
               <section className="features scroll-reveal">
                 <h3>Why choose us</h3>

@@ -5,6 +5,7 @@ import store from '../store/store'
 import '../styles/globals.css'
 import '../scss/style.scss'
 import { AuthProvider } from '../context/AuthContext'
+import { LanguageProvider } from '../context/LanguageContext'
 
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -13,9 +14,11 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <Provider store={store}>
-      <AuthProvider>
-                  <Component {...pageProps} />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <Component {...pageProps} />
+        </AuthProvider>
+      </LanguageProvider>
     </Provider>
   )
 }

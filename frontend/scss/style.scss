@@ -370,10 +370,14 @@ button[disabled] { opacity:.7; cursor:wait; }
 .back-btn:disabled { opacity:.45; cursor:not-allowed; }
 .back-btn .back-icon { width:24px; height:24px; }
 .steps { list-style:none; display:flex; gap:14px; padding:0; margin:0 auto; align-items:center; justify-content:center; width:100%; }
-.step { display:flex; align-items:center; gap:8px; color:#64748b; font-weight:600; }
+.step { display:flex; align-items:center; gap:8px; color:#64748b; font-weight:600; position:relative; }
 .step .dot { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:#e2e8f0; color:#0f172a; font-size:13px; font-weight:700; }
 .step.active .dot { background:var(--accent); color:#fff; }
 .step.completed .dot { background:#22c55e; color:#fff; }
+.step.half-completed .dot { 
+  background: linear-gradient(90deg, #22c55e 0%, #22c55e 50%, var(--accent) 50%, var(--accent) 100%);
+  color:#fff; 
+}
 .step .label { font-size:13px; letter-spacing:.3px; }
 
 /* Cards & grid */
@@ -397,6 +401,72 @@ input[type="number"] {
   -webkit-appearance: textfield;
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+/* Modal & rate info (moved from transfers.tsx styled-jsx) */
+.rate-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+.rate-modal {
+  background: #fff;
+  /* Use a slightly warmer/darker tone for better contrast on light modal */
+  color: #0b1220; /* deep navy for high readability on white */
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+.rate-modal-title {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #07162a; /* stronger title color */
+  font-weight: 700;
+}
+.rate-modal-p {
+  margin-bottom: 8px;
+  color: #334155; /* body copy color */
+}
+.rate-modal-p.note {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-left: 3px solid #94a3b8;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+}
+.rate-modal-list {
+  margin: 8px 0 0 18px;
+  color: #4a5e7b;
+}
+.rate-modal-actions { text-align: right; margin-top: 12px; }
+
+/* Emphasize inline strong text inside modal when showing numbers */
+.rate-modal strong { color: #0c56a1; font-weight: 700; }
+
+.rate-info-btn { background: none; border: none; padding: 0; margin: 0; cursor: pointer; }
+.rate-info-btn svg { transition: transform .18s ease, stroke .18s ease, opacity .18s ease; opacity: .9 }
+.rate-info-btn:hover svg { transform: scale(1.08); opacity: 1; stroke: #0d6efd }
+
+.label-inline-info { display: inline-flex; align-items: center; gap: 8px; }
+
+/* Light mode (default) */
+.rate-modal {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+.rate-modal-overlay {
+  background: rgba(0,0,0,0.45);
 }
 
 /* Form group - extends base form styling for structured layouts */
@@ -442,6 +512,35 @@ input[type="number"] {
 .form-group select:focus {
   /* Enhanced focus with accent ring */
   box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+}
+
+/* Delivery notice - informational callout for delivery timing */
+.delivery-notice {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-left: 4px solid #0ea5e9;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 8px;
+}
+
+.delivery-notice .notice-text {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  color: #0c4a6e;
+  line-height: 1.4;
+}
+
+.delivery-notice .notice-text strong {
+  font-weight: 600;
+  color: #0369a1;
+}
+
+.delivery-notice .notice-subtext {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
 }
 
 /* Receiver bank select - distinctive background */
@@ -569,8 +668,12 @@ select[name="receiverBank"]:focus {
 .expiry-group .slash { font-weight:700; color:#64748b; }
 
 /* Checkbox */
-.checkbox-row .checkbox { display:inline-flex; align-items:center; gap:8px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; cursor:pointer; }
-.checkbox-row input[type="checkbox"] { width:auto; height:auto; accent-color:var(--accent); }
+.checkbox-row .checkbox { display:inline-flex; align-items:flex-start; gap:10px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 16px; cursor:pointer; transition: all 0.2s ease; }
+.checkbox-row .checkbox:hover { border-color:#94a3b8; background:#f1f5f9; }
+.checkbox-row input[type="checkbox"] { width:18px; height:18px; margin-top:2px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+.checkbox-row .checkbox span { flex:1; line-height:1.5; }
+.checkbox-row .checkbox span a { color:var(--accent); text-decoration:underline; font-weight:600; }
+.checkbox-row .checkbox span a:hover { color:#0047cc; }
 
 /* Review & fees */
 .review-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:10px 0 14px; }
@@ -883,8 +986,7 @@ body {
 }
 
 h1.trf { color: #e6edf7; }
-h1{ color:#0f172a;}
-h2, h3, h4 { color: #0f172a; }
+h1, h2, h3, h4 { color: #0f172a; }
 p { color: #475569; }
 
 /* Auth pages - dark themed (these are the "dark" auth pages shown in light OS mode) */
@@ -1027,15 +1129,6 @@ select[name="receiverBank"]:focus {
   background:#e2e8f0; 
 }
 
-.step { 
-  color:#64748b; 
-}
-
-.step .dot { 
-  background:#e2e8f0; 
-  color:#0f172a; 
-}
-
 .fee-mini { 
   color:#334155; 
 }
@@ -1109,8 +1202,6 @@ select[name="receiverBank"]:focus {
   }
 
   .intro-lead { color:#cbd5e1; }
-  .step { color:#94a3b8; }
-  .step .dot { background:#334155; color:#e2e8f0; }
   .card { background:#1e293b; border-color:#334155; box-shadow:0 6px 18px -6px rgba(0,0,0,.6),0 2px 6px -2px rgba(0,0,0,.5); }
   .card:focus-within { border-color:var(--accent); box-shadow:0 0 0 2px rgba(var(--accent-rgb),.35), 0 6px 18px -6px rgba(0,0,0,.6), 0 2px 6px -2px rgba(0,0,0,.5); }
   label { color:#cbd5e1; }
@@ -1123,6 +1214,9 @@ select[name="receiverBank"]:focus {
   .currency-suffix.card-brands .brand { background:#334155; border-color:#475569; color:#e2e8f0; }
   .expiry-group .slash { color:#94a3b8; }
   .checkbox-row .checkbox { background:#1e293b; border-color:#475569; }
+  .checkbox-row .checkbox:hover { background:#24324a; border-color:#64748b; }
+  .checkbox-row .checkbox span a { color:#60a5fa; }
+  .checkbox-row .checkbox span a:hover { color:#93c5fd; }
   select:focus { background:#24324a; }
   input:focus { background:#24324a; }
   .back-btn { color:#cbd5e1; }
@@ -1166,6 +1260,25 @@ select[name="receiverBank"]:focus {
   .form-group select:focus {
     background:#24324a;
     box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.18);
+  }
+
+  /* Delivery notice - dark mode */
+  .delivery-notice {
+    background: #0c2340;
+    border-color: #1e3a5f;
+    border-left-color: #0ea5e9;
+  }
+
+  .delivery-notice .notice-text {
+    color: #bae6fd;
+  }
+
+  .delivery-notice .notice-text strong {
+    color: #7dd3fc;
+  }
+
+  .delivery-notice .notice-subtext {
+    color: #94a3b8;
   }
 
   /* Custom bank select dark mode */
@@ -1425,6 +1538,20 @@ select[name="receiverBank"]:focus {
   .checkbox-container input:checked + .checkmark {
     background: #5b8def !important;
     border-color: #5b8def !important;
+  }
+
+  .rate-modal {
+    background: #0b1220;
+    color: #e6eef8;
+    box-shadow: 0 10px 30px rgba(2,6,23,0.8);
+  }
+  .rate-modal-overlay {
+    background: rgba(2,6,23,0.7);
+  }
+  .rate-modal-p.note {
+    background: #0f1730;
+    border-left-color: #475569;
+    color: #94a3b8;
   }
 }
 

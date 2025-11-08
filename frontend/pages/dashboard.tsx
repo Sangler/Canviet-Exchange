@@ -8,7 +8,12 @@ type RequestItem = {
   amountSent: number;
   amountReceived?: number;
   exchangeRate?: number;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  status: 'pending' | 'approved' | 'reject' | 'completed';
+  recipientBank?: {
+    bankName?: string;
+    accountHolderName?: string;
+    accountNumber?: string;
+  };
 };
 
 export default function DashboardPage() {
@@ -41,10 +46,10 @@ export default function DashboardPage() {
               <tr>
                 <th>ID</th>
                 <th>Submitted</th>
-                <th>From → To</th>
                 <th>Amount</th>
                 <th>Rate</th>
                 <th>Status</th>
+                <th>Recipient Name</th>
               </tr>
             </thead>
             <tbody>
@@ -52,10 +57,20 @@ export default function DashboardPage() {
                 <tr key={r._id}>
                   <td className="mono hidden sm:table-cell">{r._id.slice(-6)}</td>
                   <td>{new Date(r.createdAt).toLocaleString()}</td>
-                  <td>{r.fromCurrency} → {r.toCurrency}</td>
                   <td>{r.amountSent} {r.fromCurrency}</td>
                   <td>{r.exchangeRate ?? '-'}</td>
-                  <td><span className={`badge ${r.status}`}>{r.status}</span></td>
+                  <td>
+                    <span className={`badge ${
+                      r.status === 'completed' ? 'bg-success' :
+                      r.status === 'approved' ? 'bg-info' :
+                      r.status === 'pending' ? 'bg-warning' :
+                      r.status === 'reject' ? 'bg-danger' :
+                      'bg-secondary'
+                    }`}>
+                      {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                    </span>
+                  </td>
+                  <td>{r.recipientBank?.accountHolderName || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>

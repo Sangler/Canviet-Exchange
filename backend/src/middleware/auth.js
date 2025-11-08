@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me'
+const JWT_SECRET = process.env.JWT_SECRET 
 
 // Extract Bearer token from Authorization header
 function getToken(req) {

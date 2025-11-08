@@ -48,12 +48,7 @@ const requestSchema = new mongoose.Schema({
     default: 'VND',
     required: true
   },
-  
-  exchangeRate: {
-    type: Number,
-    required: true
-  },
-  
+
   transferFee: {
     type: Number,
     default: 0,
@@ -67,15 +62,15 @@ const requestSchema = new mongoose.Schema({
       enum: ['debit', 'credit', 'e-transfer', 'wire'],
       required: true
     },
-    
-    // Card details (for debit/credit)
+    /*
     cardNumber: {
       type: String,
       select: false // Hide by default for security
     },
     cardNickname: String,
     cardName: String,
-    
+    */
+   
     // Bank details (for e-transfer/wire)
     senderBankAccount: String,
     senderTransitNumber: String,
@@ -116,7 +111,12 @@ const requestSchema = new mongoose.Schema({
     }
   },
   
-
+  termAndServiceAccepted: {
+    type: Boolean,
+    required: true
+  },
+  
+  // Admin notes
   completedAt: Date,
   createdAt: Date
   

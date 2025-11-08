@@ -4,10 +4,12 @@ import { useRouter } from 'next/router';
 import { useColorModes } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilMoon, cilSun } from '@coreui/icons';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
+  const { language, setLanguage, t } = useLanguage();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -23,21 +25,21 @@ export default function RegisterPage() {
 
   const validateStep1 = () => {
     const next: typeof errors = {};
-    if (!firstName) next.firstName = 'First name is required';
-    if (!lastName) next.lastName = 'Last name is required';
-    if (!email) next.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'Enter a valid email';
+    if (!firstName) next.firstName = t('validation.firstNameRequired');
+    if (!lastName) next.lastName = t('validation.lastNameRequired');
+    if (!email) next.email = t('validation.emailRequired');
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = t('validation.emailInvalid');
     // Phone field is currently hidden; only validate if user has entered a value
-    if (phone && !/^\+?[0-9\s\-()]{7,}$/.test(phone)) next.phone = 'Enter a valid phone number';
+    if (phone && !/^\+?[0-9\s\-()]{7,}$/.test(phone)) next.phone = t('validation.phoneInvalid');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
   const validateStep2 = () => {
     const next: typeof errors = {};
-    if (!password) next.password = 'Password is required';
-    else if (password.length < 8) next.password = 'Password must be at least 8 characters';
-    if (confirm !== password) next.confirm = 'Passwords do not match';
+    if (!password) next.password = t('validation.passwordRequired');
+    else if (password.length < 8) next.password = t('validation.passwordLength');
+    if (confirm !== password) next.confirm = t('validation.passwordMismatch');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -98,9 +100,29 @@ export default function RegisterPage() {
           {/* Language switcher and theme toggle */}
           <div className="top-right">
             <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-              <a href="?lang=en" style={{ textDecoration: 'none', color: 'inherit' }}>EN</a>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); setLanguage('en'); }} 
+                style={{ 
+                  textDecoration: 'none', 
+                  color: 'inherit',
+                  fontWeight: language === 'en' ? 'bold' : 'normal'
+                }}
+              >
+                EN
+              </a>
               <span aria-hidden>|</span>
-              <a href="?lang=vi" style={{ textDecoration: 'none', color: 'inherit' }}>VI</a>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); setLanguage('vi'); }} 
+                style={{ 
+                  textDecoration: 'none', 
+                  color: 'inherit',
+                  fontWeight: language === 'vi' ? 'bold' : 'normal'
+                }}
+              >
+                VI
+              </a>
             </span>
             <button
               type="button"
@@ -117,8 +139,8 @@ export default function RegisterPage() {
             <div className="logo" aria-hidden>
               <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
             </div>
-            <h1>Create your account</h1>
-            <p>Start transferring in minutes</p>
+            <h1>{t('auth.createAccount')}</h1>
+            <p>{t('auth.startTransferring')}</p>
           </div>
 
           <form className="auth-form" noValidate onSubmit={step === 1 ? onNext : onCreate}>
@@ -126,19 +148,19 @@ export default function RegisterPage() {
               <>
                 <div className={`input-group ${errors.firstName ? 'has-error' : ''}`}>
                   <input id="firstName" name="firstName" placeholder=" " value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                  <label htmlFor="firstName">First name</label>
+                  <label htmlFor="firstName">{t('auth.firstName')}</label>
                   <span className="input-border" />
                   <span className="error-message">{errors.firstName}</span>
                 </div>
                 <div className={`input-group ${errors.lastName ? 'has-error' : ''}`}>
                   <input id="lastName" name="lastName" placeholder=" " value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                  <label htmlFor="lastName">Last name</label>
+                  <label htmlFor="lastName">{t('auth.lastName')}</label>
                   <span className="input-border" />
                   <span className="error-message">{errors.lastName}</span>
                 </div>
                 <div className={`input-group ${errors.email ? 'has-error' : ''}`}>
                   <input type="email" id="email" placeholder=" " value={email} onChange={(e) => setEmail(e.target.value)} />
-                  <label htmlFor="email">Email address</label>
+                  <label htmlFor="email">{t('auth.emailAddress')}</label>
                   <span className="input-border" />
                   <span className="error-message">{errors.email}</span>
                 </div>
@@ -149,7 +171,7 @@ export default function RegisterPage() {
                   <span className="error-message">{errors.phone}</span>
                 </div> */}
                 <button type="submit" className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} disabled={loading}>
-                  <span className="btn-text">{loading ? 'Next…' : 'Create New Account'}</span>
+                  <span className="btn-text">{loading ? t('common.next') : t('auth.createNewAccount')}</span>
                   <div className="btn-loader" aria-hidden>
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                       <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />
@@ -164,7 +186,7 @@ export default function RegisterPage() {
               <>
                 <div className={`input-group ${errors.password ? 'has-error' : ''}`}>
                   <input type={showPassword ? 'text' : 'password'} id="password" placeholder=" " value={password} onChange={(e) => setPassword(e.target.value)} />
-                  <label htmlFor="password">Password</label>
+                  <label htmlFor="password">{t('auth.password')}</label>
                   <button type="button" className="password-toggle" onClick={() => setShowPassword((s) => !s)} aria-label="Toggle password visibility">
                     <svg className="eye-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
                       <path d="M8 3C4.5 3 1.6 5.6 1 8c.6 2.4 3.5 5 7 5s6.4-2.6 7-5c-.6-2.4-3.5-5-7-5zm0 8.5A3.5 3.5 0 118 4.5a3.5 3.5 0 010 7zm0-5.5a2 2 0 100 4 2 2 0 000-4z" fill="currentColor" />
@@ -175,7 +197,7 @@ export default function RegisterPage() {
                 </div>
                 <div className={`input-group ${errors.confirm ? 'has-error' : ''}`}>
                   <input type={showPassword ? 'text' : 'password'} id="confirm" placeholder=" " value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-                  <label htmlFor="confirm">Confirm password</label>
+                  <label htmlFor="confirm">{t('auth.confirmPassword')}</label>
                   <span className="input-border" />
                   <span className="error-message">{errors.confirm}</span>
                 </div>
@@ -189,17 +211,17 @@ export default function RegisterPage() {
                     value={referralCode} 
                     onChange={(e) => setReferralCode(e.target.value.trim())} 
                   />
-                  <label htmlFor="referralCode">Referral Code (Optional)</label>
+                  <label htmlFor="referralCode">{t('auth.referralCode')}</label>
                   <span className="input-border" />
                   <span className="error-message"></span>
                 </div>
 
                 <div className="flex-gap-12">
                   <button type="button" className="submit-btn submit-btn--accent" onClick={() => setStep(1)} disabled={loading}>
-                    Back
+                    {t('common.back')}
                   </button>
                   <button type="submit" className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} disabled={loading}>
-                    <span className="btn-text">{loading ? 'Creating…' : 'Register'}</span>
+                    <span className="btn-text">{loading ? t('auth.creating') : t('common.register')}</span>
                     <div className="btn-loader" aria-hidden>
                       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                         <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />
@@ -216,14 +238,14 @@ export default function RegisterPage() {
 
 
           <div className="alt-link">
-            <span>Already have an account? </span>
-            <a href="/login">Sign in</a>
+            <span>{t('auth.alreadyHaveAccount')} </span>
+            <a href="/login">{t('auth.signIn')}</a>
           </div>
 
           {success && (
             <div className="success-message" role="status" aria-live="polite">
-              <h3>Account created!</h3>
-              <p>Redirecting to verify your email…</p>
+              <h3>{t('auth.accountCreated')}</h3>
+              <p>{t('auth.redirectingVerify')}</p>
             </div>
           )}
         </div>

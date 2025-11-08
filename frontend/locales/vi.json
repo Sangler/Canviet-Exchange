@@ -1,0 +1,89 @@
+{
+  "common": {
+    "email": "Địa chỉ Email",
+    "password": "Mật khẩu",
+    "phone": "Số điện thoại",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Đăng xuất",
+    "submit": "Gửi",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "loading": "Đang tải...",
+    "error": "Lỗi tải trang",
+    "success": "Thành công"
+  },
+  "auth": {
+    "welcome": "Chào mừng! Vui lòng đăng nhập để tiếp tục",
+    "emailAddress": "Địa chỉ email",
+    "password": "Mật khẩu",
+    "rememberMe": "Ghi nhớ đăng nhập",
+    "forgotPassword": "Quên mật khẩu?",
+    "signIn": "Đăng nhập",
+    "signingIn": "Đang đăng nhập…",
+    "welcomeBack": "Chào mừng trở lại!",
+    "redirectingDashboard": "Đang chuyển hướng đến bảng điều khiển...",
+    "orContinueWith": "hoặc đăng nhập với",
+    "noAccount": "Chưa có tài khoản?",
+    "hasAccount": "Đã có tài khoản?",
+    "createAccount": "Tạo tài khoản",
+    "startTransferring": "Bắt đầu chuyển tiền trong vài phút",
+    "firstName": "Tên",
+    "lastName": "Họ",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "referralCode": "Mã giới thiệu (Tùy chọn)",
+    "createNewAccount": "Tạo tài khoản mới",
+    "creating": "Đang tạo...",
+    "accountCreated": "Tài khoản đã được tạo!",
+    "redirecting": "Đang chuyển hướng để xác minh email...",
+    "alreadyHaveAccount": "Bạn đã có tài khoản?",
+    "verifyEmail": "Xác minh email của bạn",
+    "verifyEmailSubtitle": "Chúng tôi sẽ gửi mã 6 chữ số đến hộp thư của bạn",
+    "sendCode": "Gửi mã",
+    "sending": "Đang gửi…",
+    "sixDigitCode": "Mã xác minh 6 chữ số",
+    "verify": "Xác minh",
+    "verifying": "Đang xác minh…",
+    "codeSent": "Mã đã được gửi đến email của bạn",
+    "verificationFailed": "Xác minh thất bại",
+    "failedToRequestCode": "Không thể yêu cầu mã",
+    "redirectingVerify": "Đang chuyển hướng để xác minh email..."
+  },
+  "validation": {
+    "required": "Trường này là bắt buộc",
+    "firstNameRequired": "Tên là bắt buộc",
+    "lastNameRequired": "Họ là bắt buộc",
+    "emailRequired": "Email là bắt buộc",
+    "emailInvalid": "Nhập địa chỉ email hợp lệ",
+    "phoneRequired": "Số điện thoại là bắt buộc",
+    "phoneInvalid": "Nhập số điện thoại hợp lệ",
+    "passwordRequired": "Mật khẩu là bắt buộc",
+    "passwordLength": "Mật khẩu phải có ít nhất 8 ký tự",
+    "passwordMismatch": "Mật khẩu không khớp"
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển",
+    "welcome": "Chào mừng trở lại"
+  },
+  "transfers": {
+    "title": "Gửi tiền",
+    "yourRequests": "Yêu cầu của bạn",
+    "newTransfer": "Chuyển khoản mới",
+    "amount": "Số tiền",
+    "recipient": "Người nhận",
+    "status": "Trạng thái"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "profile": "Hồ sơ",
+    "security": "Bảo mật",
+    "notifications": "Thông báo"
+  },
+  "personalInfo": {
+    "title": "Thông tin cá nhân",
+    "updateProfile": "Cập nhật hồ sơ của bạn",
+    "saveChanges": "Lưu thay đổi"
+  }
+}

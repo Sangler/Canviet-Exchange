@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   CContainer,
@@ -31,6 +32,7 @@ const AppHeader: React.FC = () => {
   const sidebarShow = useSelector((state: any) => state.sidebarShow);
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   const { user, logout } = useAuth();
+  const { language, setLanguage } = useLanguage();
 
   // Persist color mode in localStorage and restore on mount
   useEffect(() => {
@@ -67,9 +69,27 @@ const AppHeader: React.FC = () => {
         )}
         
         <span className="ms-3" style={{ display: 'inline-flex', gap: 8 }}>
-          <a href="?lang=en" style={{ textDecoration: 'none' }}>EN</a>
+          <a 
+            href="#" 
+            onClick={(e) => { e.preventDefault(); setLanguage('en'); }} 
+            style={{ 
+              textDecoration: 'none', 
+              fontWeight: language === 'en' ? 'bold' : 'normal' 
+            }}
+          >
+            EN
+          </a>
           <span aria-hidden>|</span>
-          <a href="?lang=vi" style={{ textDecoration: 'none' }}>VI</a>
+          <a 
+            href="#" 
+            onClick={(e) => { e.preventDefault(); setLanguage('vi'); }} 
+            style={{ 
+              textDecoration: 'none', 
+              fontWeight: language === 'vi' ? 'bold' : 'normal' 
+            }}
+          >
+            VI
+          </a>
         </span>
         <CHeaderNav className="d-flex">
           <CNavItem>
