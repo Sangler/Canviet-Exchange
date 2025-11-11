@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import RequireAuth from '../components/RequireAuth';
 import AppSidebar from '../components/AppSidebar';
 import AppHeader from '../components/AppHeader';
@@ -7,8 +7,42 @@ import { useAuth } from '../context/AuthContext';
 import CIcon from '@coreui/icons-react';
 import { cilArrowCircleLeft } from '@coreui/icons';
 
+type TransactionHistory = {
+  _id: string;
+  amountSent: number;
+  amountReceived: number;
+  currencyFrom: string;
+  currencyTo: string;
+  status: string;
+  createdAt: string;
+  recipientBank: {
+    accountHolderName?: string;
+    bankName: string;
+  };
+};
+
 export default function Transfer() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  // Transaction history
+  const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState<boolean>(true);
+  
+  // Bank selection
+  const [selectedBank, setSelectedBank] = useState<string>('');
+  const [customBankName, setCustomBankName] = useState<string>('');
+  const [bankDropdownOpen, setBankDropdownOpen] = useState<boolean>(false);
+  
+  const vietnameseBanks = [
+    { value: 'vietcombank', label: 'Vietcombank', icon: '/bank-icons/vietcombank.png' },
+    { value: 'agribank', label: 'Agribank', icon: '/bank-icons/agribank.png' },
+    { value: 'techcombank', label: 'Techcombank', icon: '/bank-icons/techcombank.png' },
+    { value: 'mb', label: 'MB Bank', icon: '/bank-icons/mb.png' },
+    { value: 'acb', label: 'ACB', icon: '/bank-icons/acb.png' },
+    { value: 'vietinbank', label: 'VietinBank', icon: '/bank-icons/vietinbank.png' },
+    { value: 'shinhan', label: 'Shinhan Bank', icon: '/bank-icons/shinhan.png' },
+    { value: 'Others', label: 'Others', icon: undefined },
+  ];
+  
   // Fee rules
   const FEE_CAD = 1.5;
   const FEE_THRESHOLD = 1000;
@@ -19,6 +53,7 @@ export default function Transfer() {
   const [rateError, setRateError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const rateTimer = useRef<NodeJS.Timeout | null>(null);
+  
   async function fetchRate(manual = false) {
     try {
       if (manual) setRateLoading(true);
@@ -29,28 +64,16 @@ export default function Transfer() {
       let fetchedAt: string | null = null;
 
       try {
-        const url = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/CAD`;
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('Exchange API HTTP error');
-        const data = await resp.json();
-        // We expect { result: 'success', conversion_rates: { VND: number }, time_last_update_utc: string }
-        if (data?.result === 'success' && typeof data?.conversion_rates?.VND === 'number') {
-          nextRate = data.conversion_rates.VND;
-          fetchedAt = data?.time_last_update_utc || null;
-        } else {
-          throw new Error('Exchange API invalid payload');
-        }
-      } catch (e) {
-        // Same-origin fallback works over LAN/IP and in production
-        const resp2 = await fetch(`/api/fx/cad-vnd`);
-        if (!resp2.ok) throw new Error('Rate fetch failed');
-        const json2 = await resp2.json();
-        if (json2?.ok && typeof json2.rate === 'number') {
-          nextRate = json2.rate;
-          fetchedAt = json2.fetchedAt || null;
-        } else {
-          throw new Error('Invalid payload');
-        }
+        // Single source of truth: call backend endpoint that already applies the +200 VND margin.
+        const resp = await fetch('/api/fx/cad-vnd');
+        if (!resp.ok) throw new Error('Backend FX HTTP error');
+        const json = await resp.json();
+        if (!json?.ok || typeof json.rate !== 'number') throw new Error('Backend FX invalid payload');
+        nextRate = json.rate;
+        fetchedAt = json.fetchedAt || null;
+      } catch (err) {
+        // Surface the error up so outer catch() sets the user-visible error state
+        throw err;
       }
 
       if (typeof nextRate === 'number') {
@@ -69,50 +92,292 @@ export default function Transfer() {
     }
   }
 
+  // Fetch user's transaction history
+  async function fetchTransactionHistory() {
+    if (!user?.id) return;
+    
+    try {
+      setTransactionsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/requests?userId=${user.id}&status=approved`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data.requests || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch transaction history:', error);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  }
+
   useEffect(() => {
     fetchRate();
+    fetchTransactionHistory();
     rateTimer.current = setInterval(() => fetchRate(false), 60_000);
     return () => { if (rateTimer.current) clearInterval(rateTimer.current); };
-  }, []);
+  }, [user?.id]);
 
   const [amountFrom, setAmountFrom] = useState<string>('');
   const [amountTo, setAmountTo] = useState<string>('');
+  const [activeInput, setActiveInput] = useState<'from' | 'to'>('from'); // Track which input user is editing
   const [submitting, setSubmitting] = useState(false);
   const [transferMethod, setTransferMethod] = useState<string>('e-transfer');
-  // Multi-step flow: 1=Recipient, 2=Amount, 3=Details, 4=Review
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  // Multi-step flow: 1=Recipient, 2=Amount, 3=Payment Method (with substeps 3.1 and 3.2), 4=Review
   const [step, setStep] = useState<number>(1);
+  const [subStep, setSubStep] = useState<number>(0); // Substep within step 3 (0=payment, 1=receiver)
+  // Recipient info
+  const [recipientPhoneCode, setRecipientPhoneCode] = useState<string>('+84');
+  const [recipientPhone, setRecipientPhone] = useState<string>('');
+  const [recipientName, setRecipientName] = useState<string>('');
+  const [recipientAccountNumber, setRecipientAccountNumber] = useState<string>('');
+  const [transferContent, setTransferContent] = useState<string>('');
+  // Bank transfer details (wire transfer) - SAFE to store
+  const [bankAccountNumber, setBankAccountNumber] = useState<string>('');
+  const [bankTransitNumber, setBankTransitNumber] = useState<string>('');
+  const [bankInstitutionNumber, setBankInstitutionNumber] = useState<string>('');
+  // Billing address
+  const [useHomeAddress, setUseHomeAddress] = useState(false);
+  const [billingStreet, setBillingStreet] = useState<string>('');
+  const [billingUnit, setBillingUnit] = useState<string>('');
+  const [billingCity, setBillingCity] = useState<string>('');
+  const [billingProvince, setBillingProvince] = useState<string>('');
+  const [billingPostal, setBillingPostal] = useState<string>('');
+  const [billingCountry, setBillingCountry] = useState<string>('Canada');
+  // Draft restoration indicator
+  const [draftRestored, setDraftRestored] = useState(false);
+  // Flag to prevent saving during initial restoration
+  const [isRestoringFromDraft, setIsRestoringFromDraft] = useState(true);
 
-  // Persist step in localStorage
+  // Customer-specific extra margin based on amountFrom (CAD)
+  // Rules:
+  // - amount < 300 CAD => +0 VND
+  // - amount >= 300 and < 1000 => +50 VND
+  // - amount >= 1000 => + 150 VND
+  const extraMargin = useMemo(() => {
+    const val = parseFloat((amountFrom || '').toString());
+    if (isNaN(val) || val <= 0) return 0;
+    if (val >= 1000) return 150;
+    if (val >= 300) return 50;
+    return 0;
+  }, [amountFrom]);
+
+  // Effective rate used for calculations = base backend rate (includes +200 margin) + customer extra margin
+  const effectiveRate = useMemo(() => (typeof rate === 'number' ? Number(rate) + Number(extraMargin) : null), [rate, extraMargin]);
+
+  // ============================================
+  // SAFE DATA PERSISTENCE (localStorage)
+  // ============================================
+  // Save non-sensitive form data to localStorage
+  // SECURITY: NEVER save card details (card number, CVV, expiration)
   useEffect(() => {
-    try { localStorage.setItem('transfer.step', String(step)); } catch {}
-  }, [step]);
+    // Don't save during initial restoration to avoid overwriting the draft
+    if (isRestoringFromDraft) return;
+    
+    try {
+      const transferDraft = {
+        step,
+        amountFrom,
+        amountTo,
+        transferMethod,
+        recipientPhoneCode,
+        recipientPhone,
+        recipientName,
+        recipientAccountNumber,
+        transferContent,
+        selectedBank,
+        customBankName,
+        // Bank transfer info (wire) - SAFE to store
+        bankAccountNumber,
+        bankTransitNumber,
+        bankInstitutionNumber,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('transfer.draft', JSON.stringify(transferDraft));
+    } catch (error) {
+      console.warn('Failed to save transfer draft:', error);
+    }
+  }, [step, amountFrom, amountTo, transferMethod, recipientPhoneCode, recipientPhone, recipientName, recipientAccountNumber, transferContent, selectedBank, customBankName, bankAccountNumber, bankTransitNumber, bankInstitutionNumber, isRestoringFromDraft]);
+
+  // Restore form data from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('transfer.step');
-      if (saved) {
-        const n = parseInt(saved, 10);
-        if (!isNaN(n) && n >= 1 && n <= 4) setStep(n);
+      
+      const saved = localStorage.getItem('transfer.draft');
+      
+      // If no draft exists, start fresh at step 1
+      if (!saved) {
+        setStep(1);
+        setIsRestoringFromDraft(false); // Done restoring
+        return;
       }
-    } catch {}
-  }, []);
+      
+      const draft = JSON.parse(saved);
+      const timestamp = new Date(draft.timestamp);
+      const hoursSinceLastEdit = (Date.now() - timestamp.getTime()) / (1000 * 60 * 60);
+      
+      // Clear old drafts (4+ hours)
+      if (hoursSinceLastEdit >= 4) {
+        localStorage.removeItem('transfer.draft');
+        setStep(1);
+        setIsRestoringFromDraft(false); // Done restoring
+        return;
+      }
+      
+      // Restore all form data (non-sensitive only)
+      if (draft.amountFrom) setAmountFrom(draft.amountFrom);
+      if (draft.amountTo) setAmountTo(draft.amountTo);
+      if (draft.transferMethod) setTransferMethod(draft.transferMethod);
+      if (draft.recipientPhoneCode) setRecipientPhoneCode(draft.recipientPhoneCode);
+      if (draft.recipientPhone) setRecipientPhone(draft.recipientPhone);
+      if (draft.recipientName) setRecipientName(draft.recipientName);
+      if (draft.recipientAccountNumber) setRecipientAccountNumber(draft.recipientAccountNumber);
+      if (draft.transferContent) setTransferContent(draft.transferContent);
+      if (draft.selectedBank) setSelectedBank(draft.selectedBank);
+      if (draft.customBankName) setCustomBankName(draft.customBankName);
+      
+      // Restore bank transfer details (wire) - SAFE to store
+      if (draft.bankAccountNumber) setBankAccountNumber(draft.bankAccountNumber);
+      if (draft.bankTransitNumber) setBankTransitNumber(draft.bankTransitNumber);
+      if (draft.bankInstitutionNumber) setBankInstitutionNumber(draft.bankInstitutionNumber);
+      
+      // Restore to the exact step where they left off
+      // Security rule: Never restore to step 4 (review) - requires fresh validation
+      // Maximum step allowed to restore is step 3
+      
+      const savedStep = draft.step || 1;
+      
+      // If they were at step 4 (review), take them back to step 3 (payment method)
+      if (savedStep === 4) {
+        setStep(3);
+      } else {
+        // Otherwise restore exactly where they were (1, 2, or 3)
+        setStep(savedStep);
+      }
+      
+      // Show restoration notification
+      setDraftRestored(true);
+      setTimeout(() => setDraftRestored(false), 8000);
+      
+      // Allow saving from now on
+      setIsRestoringFromDraft(false);
+      
+    } catch (error) {
+      console.warn('Failed to restore transfer draft:', error);
+      // On error, start fresh
+      setStep(1);
+      setIsRestoringFromDraft(false); // Done restoring
+    }
+  }, []); // Only run on mount
 
-  // Auto-calc receive amount
+  // Auto-fill billing address from user's home address when checkbox is checked
   useEffect(() => {
-    const val = parseFloat(amountFrom);
-    if (!isNaN(val) && rate) {
-      // Do NOT apply fee in Step 2. Show gross VND based on full amount.
-      setAmountTo(new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(val * rate));
+    if (useHomeAddress && user && token) {
+      // Fetch full user profile to get address
+      const fetchUserAddress = async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/users/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const userProfile = data.user;
+            setBillingStreet(userProfile.address?.street || '');
+            setBillingUnit(userProfile.address?.unit || '');
+            setBillingCity(userProfile.address?.city || '');
+            setBillingProvince(userProfile.address?.province || '');
+            setBillingPostal(userProfile.address?.postalCode || '');
+            setBillingCountry('Canada');
+          }
+        } catch (error) {
+          console.error('Failed to fetch user address:', error);
+        }
+      };
+      fetchUserAddress();
+    } else if (!useHomeAddress) {
+      // Clear fields when unchecked
+      setBillingStreet('');
+      setBillingUnit('');
+      setBillingCity('');
+      setBillingProvince('');
+      setBillingPostal('');
+      setBillingCountry('Canada');
+    }
+  }, [useHomeAddress, user, token]);
+
+  // Clear draft after successful submission
+  const clearTransferDraft = () => {
+    try {
+      localStorage.removeItem('transfer.draft');
+    } catch (error) {
+      console.warn('Failed to clear transfer draft:', error);
+    }
+  };
+
+  // Auto-calc receive amount (CAD -> VND)
+  useEffect(() => {
+    if (activeInput !== 'from') return;
+    const val = parseFloat(amountFrom.replace(/,/g, ''));
+    if (!isNaN(val) && effectiveRate && effectiveRate > 0) {
+      // Do NOT apply fee in Step 2. Show gross VND based on full amount using effectiveRate (includes extra margin).
+      setAmountTo(new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(val * effectiveRate));
     } else {
       setAmountTo('');
     }
-  }, [amountFrom, rate]);
+  }, [amountFrom, effectiveRate, activeInput]);
 
-  function formatNumberInput(e: React.ChangeEvent<HTMLInputElement>) {
-    // Normalize mobile input: support commas as decimal, strip invalid chars, keep single dot
+  // Auto-calc send amount (VND -> CAD)
+  useEffect(() => {
+    if (activeInput !== 'to') return;
+    const val = parseFloat(amountTo.replace(/,/g, ''));
+    if (!isNaN(val) && effectiveRate && effectiveRate > 0) {
+      setAmountFrom((val / effectiveRate).toFixed(2));
+    } else {
+      setAmountFrom('');
+    }
+  }, [amountTo, effectiveRate, activeInput]);
+
+  function formatCurrencyInput(e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') {
     const raw = e.target.value || '';
-    const normalized = raw.replace(/,/g, '.');
-    const cleaned = normalized.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-    setAmountFrom(cleaned);
+    
+    if (type === 'from') {
+      // CAD: Allow decimals, limit to 5 digits before decimal, 2 decimals after, remove leading zeros
+      const normalized = raw.replace(/,/g, '.');
+      const cleaned = normalized.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+      const parts = cleaned.split('.');
+      
+      parts[0] = parts[0].replace(/^0+/, '') || '0';
+      
+      if (parts[0].length > 5) {
+        parts[0] = parts[0].slice(0, 5);
+      }
+      
+      if (parts[1]) {
+        parts[1] = parts[1].slice(0, 2);
+      }
+      
+      const limited = parts.join('.');
+      const display = limited === '0' ? '' : limited;
+      
+      setActiveInput('from');
+      setAmountFrom(display);
+    } else {
+      // VND: No decimals, limit to 9 digits, format with commas, remove leading zeros
+      const cleaned = raw.replace(/[^0-9]/g, '');
+      const limited = cleaned.slice(0, 9);
+      const withoutLeadingZeros = limited.replace(/^0+/, '') || '0';
+      const formatted = withoutLeadingZeros === '0' ? '' : new Intl.NumberFormat('en-US').format(parseInt(withoutLeadingZeros, 10));
+      setActiveInput('to');
+      setAmountTo(formatted);
+    }
   }
 
   async function onCalcSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -129,8 +394,98 @@ export default function Transfer() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await new Promise(r => setTimeout(r, 800));
-      alert('Transfer submitted (placeholder)');
+
+      // Ensure we have a valid exchange rate
+      const finalExchangeRate = effectiveRate || rate || 0;
+      
+      if (!finalExchangeRate || finalExchangeRate <= 0) {
+        alert('Exchange rate is not available. Please refresh the page and try again.');
+        setSubmitting(false);
+        return;
+      }
+      
+      // Prepare request data
+      const requestData = {
+        userId: user?.id,
+        userEmail: user?.email,
+        userPhone: {
+          countryCode: recipientPhoneCode,
+          phoneNumber: recipientPhone
+        },
+        amountSent: parseFloat(amountFrom.replace(/,/g, '')),
+        amountReceived: parseFloat(amountTo.replace(/,/g, '')),
+        exchangeRate: finalExchangeRate,
+        currencyFrom: 'CAD',
+        currencyTo: 'VND',
+        transferFee: 0, // Calculate based on your fee structure
+        sendingMethod: {
+          type: transferMethod,
+          // Include bank transfer details if wire transfer
+          ...(transferMethod === 'wire' && {
+            bankTransfer: {
+              institutionNumber: bankInstitutionNumber,
+              transitNumber: bankTransitNumber,
+              accountNumber: bankAccountNumber
+            }
+          })
+        },
+        recipientBank: {
+          bankName: selectedBank === 'Others' ? customBankName : selectedBank,
+          accountNumber: recipientAccountNumber,
+          accountHolderName: recipientName,
+          transferContent: transferContent
+        },
+        termAndServiceAccepted: agreedToTerms
+      };
+
+
+      // Submit to backend
+      const response = await fetch('http://localhost:5000/api/requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      console.log('Response status:', response.status);
+
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || 'Failed to submit transfer request');
+      }
+
+      // Clear the draft after successful submission
+      clearTransferDraft();
+      
+      // Reset form
+      setStep(1);
+      setSubStep(0);
+      setAmountFrom('');
+      setAmountTo('');
+      setTransferMethod('e-transfer');
+      setRecipientPhoneCode('+84');
+      setRecipientPhone('');
+      setRecipientName('');
+      setRecipientAccountNumber('');
+      setTransferContent('');
+      setSelectedBank('');
+      setCustomBankName('');
+      setBankAccountNumber('');
+      setBankTransitNumber('');
+      setBankInstitutionNumber('');
+      setAgreedToTerms(false);
+      setDraftRestored(false);
+
+      // Redirect to receipt page with hash
+      window.location.href = `/transfers/receipt/${data.receiptHash}`;
+
+    } catch (error: any) {
+      console.error('Transfer submission error:', error);
+      alert(`Failed to submit transfer: ${error.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -138,7 +493,9 @@ export default function Transfer() {
 
   const isCard = transferMethod === 'debit' || transferMethod === 'credit';
   const isBank = transferMethod === 'e-transfer' || transferMethod === 'wire';
-  const rateStr = typeof rate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate) : null;
+  const rateStr = typeof effectiveRate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate) : null;
+  const baseRateStr = typeof rate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate) : null;
+  const [showRateModal, setShowRateModal] = useState(false);
 
   return (
     <RequireAuth>
@@ -147,9 +504,33 @@ export default function Transfer() {
         <div className="wrapper d-flex flex-column min-vh-100">
           <AppHeader />
           <div className="body flex-grow-1 transfers-page">
-            <section className="introduction">
+            {showRateModal && (
+              <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="Exchange rate details" onClick={() => setShowRateModal(false)}>
+                <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
+                  <h3 className="rate-modal-title">How we calculate your exchange rate</h3>
+                  <p className="rate-modal-p">
+                    Current's rate: {baseRateStr ? <strong>{baseRateStr} VND</strong> : <em>not available</em>}
+                  </p>
+
+                  <p className="rate-modal-p">Plus, you get a bonus rate when you send more:</p>
+                  <ul className="rate-modal-list">
+                    <li>Send less than $300 CAD → Standard rate</li>
+                    <li>Send $300 - $999 CAD → Extra <strong>+50 VND/CAD</strong></li>
+                    <li>Send $1,000+ CAD → Extra <strong>+150 VND/CAD</strong> with no transfer fee applied!</li>
+                  </ul>
+                  <p className="rate-modal-p">Your current bonus: <strong>+{extraMargin} VND</strong></p>
+                  <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
+
+                  <p className="rate-modal-p note">*Note: Exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.</p>
+                  <div className="rate-modal-actions">
+                    <button className="btn" type="button" onClick={() => setShowRateModal(false)}>Got it</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            <section className="introduction lt-md2:!pt-[52px] lt-md2:!pb-[36px] lt-md2:!px-[20px]">
               <div className="intro-inner">
-                <h1>Fast, Secure, Friendly Transfers</h1>
+                <h1 className="trf">Fast, Secure, Friendly Transfers</h1>
                 <p className="intro-lead">
                   Send money from Canada
                   <img className="flag" src="/flags/Flag_of_Canada.png" alt="Canada" title="Canada" />
@@ -158,35 +539,76 @@ export default function Transfer() {
                   {' '}with transparent rates and fast delivery.
                 </p>
 
-                <div className="intro-cta">
+                <div className="intro-cta lt-phone:flex-col lt-phone:items-stretch">
                   <a href="#exchange" className="btn primary">Get Started</a>
                 </div>
               </div>
               <div className="intro-decor" aria-hidden />
             </section>
 
-            <main className="main-content">
+            <main className="main-content lt-md2:!pt-[46px] lt-md2:!pb-[36px] lt-md2:!px-[18px]">
+              {/* Draft restored notification - only show if step > 1 */}
+              {draftRestored && step > 1 && (
+                <div className="alert alert-info d-flex align-items-center mb-4 mx-auto" style={{ maxWidth: '860px' }} role="alert">
+                  <svg 
+                    width="24" 
+                    height="24" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="me-2"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <div className="flex-grow-1">
+                    <strong>Welcome back!</strong>Please continue where you are left off!
+                  </div>
+                  <button 
+                    type="button" 
+                    className="btn-close ms-2" 
+                    onClick={() => setDraftRestored(false)}
+                    aria-label="Close"
+                  ></button>
+                </div>
+              )}
+              
               {/* Progress bar + Back */}
-              <div className="progress" role="region" aria-label="Transfer progress">
-                <button className="back-btn" onClick={() => setStep(prev => Math.max(1, prev - 1))} disabled={step <= 1}>
-                  <CIcon icon={cilArrowCircleLeft} size="xl" className="back-icon" aria-hidden="true" />
+              <div className="progress lt-phone:!py-[6px] lt-phone:!pr-[6px] lt-phone:!pl-[88px] lt-phone:!min-h-[40px]" role="region" aria-label="Transfer progress">
+                <button 
+                  className="back-btn z-20 pointer-events-auto lt-phone:!left-[8px] lt-phone:!p-1" 
+                  onClick={() => {
+                    if (step === 3 && subStep === 1) {
+                      setSubStep(0);
+                    } else {
+                      setStep(prev => Math.max(1, prev - 1));
+                      setSubStep(0);
+                    }
+                  }} 
+                  disabled={step <= 1}
+                >
+                  <CIcon icon={cilArrowCircleLeft} size="xl" className="back-icon lt-phone:!w-5 lt-phone:!h-5" aria-hidden="true" />
 
                 </button>
-                <ol className="steps" aria-label="Transfer steps">
+                <ol className="steps relative z-0 lt-phone:!gap-[8px]" aria-label="Transfer steps">
                   <li className={`step ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`}>
-                    <span className="dot">1</span>
+                    <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">1</span>
                     <span className="label">Recipient</span>
                   </li>
                   <li className={`step ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`}>
-                    <span className="dot">2</span>
+                    <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">2</span>
                     <span className="label">Amount</span>
                   </li>
-                  <li className={`step ${step === 3 ? 'active' : step > 3 ? 'completed' : ''}`}>
-                    <span className="dot">3</span>
+                  <li className={`step ${step === 3 ? 'active' : step > 3 ? 'completed' : ''} ${step === 3 && subStep === 1 ? 'half-completed' : ''}`}>
+                    <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">3</span>
                     <span className="label">Details</span>
                   </li>
                   <li className={`step ${step === 4 ? 'active' : ''}`}>
-                    <span className="dot">4</span>
+                    <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">4</span>
                     <span className="label">Review</span>
                   </li>
                 </ol>
@@ -224,6 +646,85 @@ export default function Transfer() {
                 {step === 1 && (
                   <section id="recent-transfer" className="card exchange-form scroll-reveal">
                     <h2>Recent Transfers</h2>
+                    
+                    {transactionsLoading ? (
+                      <div className="text-center py-4">
+                        <p className="text-medium-emphasis">Loading your transfer history...</p>
+                      </div>
+                    ) : transactions.length === 0 ? (
+                      <div className="text-center py-4">
+                        <p className="text-medium-emphasis mb-3">
+                          You have not sent any money back to Vietnam yet. Make your first transfer now!
+                        </p>
+                        <button 
+                          type="button" 
+                          className="btn primary" 
+                          onClick={() => setStep(2)}
+                        >
+                          Start First Transfer
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="table-responsive">
+                        <table className="table table-hover">
+                          <thead>
+                            <tr>
+                              <th>Date</th>
+                              <th>Recipient</th>
+                              <th>Amount Sent</th>
+                              <th>Amount Received</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {transactions.slice(0, 5).map((tx) => (
+                              <tr key={tx._id}>
+                                <td>
+                                  {new Date(tx.createdAt).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </td>
+                                <td>
+                                  <div>
+                                    <strong>{tx.recipientBank?.accountHolderName || 'N/A'}</strong>
+                                    <div className="small text-medium-emphasis">
+                                      {tx.recipientBank?.bankName}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td>
+                                  <strong>{tx.amountSent.toLocaleString()} {tx.currencyFrom}</strong>
+                                </td>
+                                <td>
+                                  <strong>{tx.amountReceived.toLocaleString()} {tx.currencyTo}</strong>
+                                </td>
+                                <td>
+                                  <span className={`badge ${
+                                    tx.status === 'completed' ? 'bg-success' :
+                                    tx.status === 'approved' ? 'bg-info' :
+                                    tx.status === 'pending' ? 'bg-warning' :
+                                    'bg-danger'
+                                  }`}>
+                                    {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {transactions.length > 5 && (
+                          <div className="text-center mt-3">
+                            <a href="/transfers-history" className="btn btn-outline-primary">
+                              View All Transfers
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </section>
                 )}
 
@@ -233,20 +734,42 @@ export default function Transfer() {
                     <form id="moneyExchangeForm" onSubmit={onCalcSubmit}>
                       <div className="form-group">
                         <label htmlFor="amountFrom">YOU SEND:</label>
-                          {rateStr && (<span className="label-inline-info">1 CAD = {rateStr} VND</span>)}
+                          {rate && (
+                            <span className="label-inline-info">
+
+                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate + 150)} VND <strong>Best Rate</strong>
+                              <button
+                                type="button"
+                                aria-label="Rate details"
+                                onClick={() => setShowRateModal(true)}
+                                className="rate-info-btn"
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                              </button>
+                            </span>
+                          )}
+                          {amountFrom && parseFloat(amountFrom) > 0 && effectiveRate && (
+                            <span className="label-inline-info" style={{ color: '#059669', fontWeight: 500 }}>
+                              Your rate: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND
+                            </span>
+                          )}
                         <div className="currency-input" role="group" aria-label="You send amount in CAD">
                           <input
                             type="number"
                             id="amountFrom"
                             name="amountFrom"
                             placeholder="Enter amount"
-                            min={50}
+                            min={20}
                             max={10000}
                             step="0.01"
                             required
                             value={amountFrom}
-                            onChange={formatNumberInput}
-                            onInput={formatNumberInput}
+                            onChange={(e) => formatCurrencyInput(e, 'from')}
+                            onInput={(e) => formatCurrencyInput(e as unknown as React.ChangeEvent<HTMLInputElement>, 'from')}
                             inputMode="decimal"
                             aria-label="You send"
                           />
@@ -266,9 +789,9 @@ export default function Transfer() {
                             type="text"
                             id="amountTo"
                             name="amountTo"
-                            placeholder="Auto-calculated"
-                            readOnly
+                            placeholder="Enter VND amount"
                             value={amountTo}
+                            onChange={(e) => formatCurrencyInput(e, 'to')}
                             inputMode="numeric"
                             pattern="[0-9,]*"
                             aria-label="They receive"
@@ -279,13 +802,36 @@ export default function Transfer() {
                           </div>
                         </div>
                       </div>
-                      {/* Put the transfer fee span here */}
-                      {/* Fee not applied here; only calculated/shown at Review (Step 4) */}
-                      {/* Upsell hint to reach threshold (with mini fee label) */}
+                      {/* Transfer fee notification */}
                       {(() => {
                         const val = parseFloat(amountFrom);
-                        // Show by default, hide only when amount >= threshold
-                        if (!isNaN(val) && val >= FEE_THRESHOLD) return null;
+                        
+                        // Show congratulations message when amount >= threshold
+                        if (!isNaN(val) && val >= FEE_THRESHOLD) {
+                          return (
+                            <div className="alert alert-success d-flex align-items-center mt-3" role="alert">
+                              <svg 
+                                width="24" 
+                                height="24" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round"
+                                className="me-2"
+                              >
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                              </svg>
+                              <div>
+                                <strong>Congrats!</strong> NO Transfer fee applied. <strong> You Save ${FEE_CAD.toFixed(2)} CAD!</strong>.
+                              </div>
+                            </div>
+                          );
+                        }
+                        
+                        // Show fee warning and upsell by default or when amount is below threshold
                         return (
                           <>
                             <div className="fee-mini" role="note">Transfer fee: <strong>${FEE_CAD.toFixed(2)}</strong> CAD</div>
@@ -303,36 +849,67 @@ export default function Transfer() {
                   </section>
                 )}
 
-                {/* Step 3 */}
-                {step === 3 && (
+                {/* Step 3.1 - Payment Method */}
+                {step === 3 && subStep === 0 && (
                   <>
                     <h2>Select payment method</h2>
 
                     <section id="card" className="card transfer-details scroll-reveal">
-                      <h3>Pay with card</h3>
-                      <form id="cardForm" onSubmit={onDetailsSubmit}>
+                      <button 
+                        type="button" 
+                        className="dropdown-header"
+                        onClick={() => {
+                          const section = document.getElementById('cardForm');
+                          section?.classList.toggle('expanded');
+                        }}
+                      >
+                        <div className="dropdown-header-content">
+                          <h3>Fast methods</h3>
+                          <div className="dropdown-header-details">
+                            <span className="delivery-info">Delivers instantly</span>
+                            {amountTo && <span className="amount-preview">VND {amountTo}</span>}
+                          </div>
+                        </div>
+                        <svg className="dropdown-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </button>
+                      
+                      <form id="cardForm" className="dropdown-content" onSubmit={onDetailsSubmit}>
                         <div className="form-group">
-                          <label>Transfer Method:</label>
                           <div className="radio-group">
-                            <label className="radio">
+                            <label className="radio payment-radio">
                               <input
                                 type="radio"
-                                name="cardMethod"
+                                name="paymentMethod"
                                 value="debit"
                                 checked={transferMethod === 'debit'}
                                 onChange={(e)=>setTransferMethod(e.target.value)}
                               />
-                              <span>Debit</span>
+                              <div className="radio-content">
+                                <svg className="payment-icon" width="32" height="24" viewBox="0 0 32 24" fill="none">
+                                  <rect x="1" y="3" width="30" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                  <rect x="1" y="7" width="30" height="4" fill="currentColor"/>
+                                </svg>
+                                <span className="payment-label">Debit card</span>
+                              </div>
                             </label>
-                            <label className="radio">
+                            <label className="radio payment-radio">
                               <input
                                 type="radio"
-                                name="cardMethod"
+                                name="paymentMethod"
                                 value="credit"
                                 checked={transferMethod === 'credit'}
                                 onChange={(e)=>setTransferMethod(e.target.value)}
                               />
-                              <span>Credit</span>
+                              <div className="radio-content">
+                                <svg className="payment-icon" width="32" height="24" viewBox="0 0 32 24" fill="none">
+                                  <rect x="1" y="3" width="30" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                  <rect x="1" y="7" width="30" height="4" fill="currentColor"/>
+                                </svg>
+                                <span className="payment-label">Credit card</span>
+                                <span className="payment-note">2% processing fee might be applied</span>
+                              </div>
                             </label>
                           </div>
                         </div>
@@ -350,7 +927,7 @@ export default function Transfer() {
                               </div>
                             </div>
 
-                            <div className="form-group two-col">
+                            <div className="form-group two-col lt-phone:!grid-cols-1">
                               <div>
                                 <label>Expiration date</label>
                                 <div className="expiry-group">
@@ -378,38 +955,89 @@ export default function Transfer() {
                             <h4>Billing address</h4>
                             <div className="form-group checkbox-row">
                               <label className="checkbox">
-                                <input type="checkbox" name="useHomeAddress" />
+                                <input 
+                                  type="checkbox" 
+                                  name="useHomeAddress" 
+                                  checked={useHomeAddress}
+                                  onChange={(e) => setUseHomeAddress(e.target.checked)}
+                                />
                                 <span>Use home address</span>
                               </label>
                             </div>
 
                             <div className="form-group">
                               <label>Street address</label>
-                              <input type="text" name="street" placeholder="e.g., 100 W Georgia St" required />
+                              <input 
+                                type="text" 
+                                name="street" 
+                                value={billingStreet}
+                                readOnly
+                                disabled
+                              />
                             </div>
                             <div className="form-group">
                               <label>Apartment, suite, unit, etc. (optional)</label>
-                              <input type="text" name="unit" placeholder="e.g., Apt 74" />
+                              <input 
+                                type="text" 
+                                name="unit" 
+                                value={billingUnit}
+                                readOnly
+                                disabled
+                              />
                             </div>
-                            <div className="form-group two-col">
+                            <div className="form-group two-col lt-phone:!grid-cols-1">
                               <div>
                                 <label>City</label>
-                                <input type="text" name="city" placeholder="e.g., Vancouver" required />
+                                <input 
+                                  type="text" 
+                                  name="city" 
+                                  value={billingCity}
+                                  readOnly
+                                  disabled
+                                />
                               </div>
                               <div>
                                 <label>Province/State</label>
-                                <input type="text" name="province" placeholder="e.g., BC" required />
+                                <input 
+                                  type="text" 
+                                  name="province" 
+                                  value={billingProvince}
+                                  readOnly
+                                  disabled
+                                />
                               </div>
                             </div>
-                            <div className="form-group two-col">
+                            <div className="form-group two-col lt-phone:!grid-cols-1">
                               <div>
                                 <label>Postal code</label>
-                                <input type="text" name="postal" placeholder="e.g., V6B 1X4" required />
+                                <input 
+                                  type="text" 
+                                  name="postal" 
+                                  value={billingPostal}
+                                  readOnly
+                                  disabled
+                                />
                               </div>
                               <div>
                                 <label>Country</label>
-                                <input type="text" name="country" placeholder="e.g., Canada" defaultValue="Canada" required />
+                                <input 
+                                  type="text" 
+                                  name="country" 
+                                  value={billingCountry}
+                                  readOnly
+                                  disabled
+                                />
                               </div>
+                            </div>
+
+                            <div className="form-group delivery-notice">
+                              <p className="notice-text">
+                                <strong>Expected delivery:</strong> 24-48 business hours
+                              </p>
+                              <p className="notice-subtext">
+                                Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
+                                Consider that your transfer might take longer than expected—this is normal!
+                              </p>
                             </div>
                           </>
                         )}
@@ -417,12 +1045,30 @@ export default function Transfer() {
                     </section>
 
                     <section id="bank" className="card transfer-details scroll-reveal">
-                      <h3>Transfer by Bank</h3>
-                      <form id="bankForm" onSubmit={onDetailsSubmit}>
+                      <button 
+                        type="button" 
+                        className="dropdown-header"
+                        onClick={() => {
+                          const section = document.getElementById('bankForm');
+                          section?.classList.toggle('expanded');
+                        }}
+                      >
+                        <div className="dropdown-header-content">
+                          <div className="dropdown-header-title">
+                            <span className="best-value-badge">BEST VALUE</span>
+                            <h3>Pay by bank</h3>
+                          </div>
+                          {amountTo && <span className="amount-preview">VND {amountTo}</span>}
+                        </div>
+                        <svg className="dropdown-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </button>
+                      
+                      <form id="bankForm" className="dropdown-content" onSubmit={onDetailsSubmit}>
                         <div className="form-group">
-                          <label>Transfer Method:</label>
                           <div className="radio-group">
-                            <label className="radio">
+                            <label className="radio payment-radio">
                               <input
                                 type="radio"
                                 name="bankMethod"
@@ -430,9 +1076,15 @@ export default function Transfer() {
                                 checked={transferMethod === 'e-transfer'}
                                 onChange={(e)=>setTransferMethod(e.target.value)}
                               />
-                              <span>E-Transfer</span>
+                              <div className="radio-content">
+                                <svg className="payment-icon" width="32" height="24" viewBox="0 0 32 24" fill="none">
+                                  <rect x="2" y="4" width="28" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                  <path d="M6 8h8M6 12h12M6 16h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                </svg>
+                                <span className="payment-label">E-Transfer</span>
+                              </div>
                             </label>
-                            <label className="radio">
+                            <label className="radio payment-radio">
                               <input
                                 type="radio"
                                 name="bankMethod"
@@ -440,7 +1092,13 @@ export default function Transfer() {
                                 checked={transferMethod === 'wire'}
                                 onChange={(e)=>setTransferMethod(e.target.value)}
                               />
-                              <span>Bank Transfer</span>
+                              <div className="radio-content">
+                                <svg className="payment-icon" width="32" height="24" viewBox="0 0 32 24" fill="none">
+                                  <rect x="2" y="4" width="28" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                  <circle cx="22" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                                </svg>
+                                <span className="payment-label">Bank Transfer</span><strong>RECOMMENDED</strong>
+                              </div>
                             </label>
                           </div>
                         </div>
@@ -453,23 +1111,52 @@ export default function Transfer() {
                             </div>
 
                             {transferMethod === 'wire' && (
-                              <div className="form-group two-col wire">
+                              <div className="form-group two-col wire lt-phone:!grid-cols-1">
                                 <div>
                                   <label>Account #</label>
-                                  <input type="text" name="senderBankAccount" placeholder="e.g., 0123498765" required />
+                                  <input 
+                                    type="text" 
+                                    name="senderBankAccount" 
+                                    placeholder="e.g., 0123498765" 
+                                    value={bankAccountNumber}
+                                    onChange={(e) => setBankAccountNumber(e.target.value)}
+                                    required 
+                                  />
                                 </div>
                                 <div>
                                   <label>Transit Number</label>
-                                  <input type="text" name="senderTransitNumber" placeholder="e.g., 012" required />
+                                  <input 
+                                    type="text" 
+                                    name="senderTransitNumber" 
+                                    placeholder="e.g., 012" 
+                                    value={bankTransitNumber}
+                                    onChange={(e) => setBankTransitNumber(e.target.value)}
+                                    required 
+                                  />
                                 </div>
                                 <div>
                                   <label>Institution Number</label>
-                                  <input type="text" name="senderInstitutionNumber" placeholder="e.g., 01234" required />
+                                  <input 
+                                    type="text" 
+                                    name="senderInstitutionNumber" 
+                                    placeholder="e.g., 01234" 
+                                    value={bankInstitutionNumber}
+                                    onChange={(e) => setBankInstitutionNumber(e.target.value)}
+                                    required 
+                                  />
                                 </div>
                               </div>
                             )}
 
-   
+                            <div className="form-group delivery-notice">
+                              <p className="notice-text">
+                                <strong>Expected delivery:</strong> {transferMethod === 'e-transfer' ? 'Within 24 hours' : '5-7 business days'}
+                              </p>
+                              <p className="notice-subtext">
+                                Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
+                                Consider that your transfer might take longer than expected—this is normal!
+                              </p>
+                            </div>
                           </>
                         )}
                       </form>
@@ -477,35 +1164,179 @@ export default function Transfer() {
                   </>
                 )}
 
-                {step === 3 && (
-                <section id="card" className="card transfer-details scroll-reveal">
-                  <div>
-                    <label>Receiver Bank:</label>
-                    <select name="receiverBank" required>
-                      <option value="">Select a Bank</option>
-                      <option value="vietcombank">Vietcombank</option>
-                      <option value="agribank">Agribank</option>
-                      <option value="techcombank">Techcombank</option>
-                      <option value="mb">MB Bank</option>
-                      <option value="acb">ACB</option>
-                      <option value="vietinbank">VietinBank</option>
-                      <option value="shinhan">Shinhan Bank</option>
-                    </select>
+                {step === 3 && subStep === 0 && (
+                  <div className="step-actions">
+                    <button 
+                      type="button" 
+                      className="btn primary w-full" 
+                      onClick={() => {
+                        // Validate billing address checkbox for card payments
+                        if (isCard && !useHomeAddress) {
+                          alert('Please check "Use home address" to fill in your billing address before continuing.');
+                          return;
+                        }
+                        setSubStep(1);
+                      }}
+                    >
+                      Continue to Receiver Details
+                    </button>
                   </div>
-
-                  <div>
-                    <label>Account #</label>
-                    <input type="text" name="receiverBankAccount" placeholder="Account Number" required />
-                  </div>
-
-                </section>
-
                 )}
 
-                {step === 3 && (
+                {/* Step 3.2 - Receiver Bank Details */}
+                {step === 3 && subStep === 1 && (
+                  <>
+                    <h2>Receiver Bank Details</h2>
+
+                    <section id="receiver" className="card transfer-details scroll-reveal">
+                      <div className="dropdown-content expanded">
+
+                        <div className="form-group">
+                          <label>Recipient Full Name</label>
+                          <input 
+                            type="text" 
+                            name="receiverName" 
+                            placeholder="Recipient Full Name" 
+                            value={recipientName}
+                            onChange={(e) => setRecipientName(e.target.value)}
+                            required 
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Recipient Phone Number</label>
+                          <div className="phone-row">
+                            <select className="code themed" value={recipientPhoneCode} onChange={(e) => setRecipientPhoneCode(e.target.value)}>
+                              <option value="+1">+1</option>
+                              <option value="+84">+84</option>
+                            </select>
+                            <input 
+                              className="phone themed" 
+                              type="tel"
+                              value={recipientPhone} 
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                if (value.length <= 10) {
+                                  setRecipientPhone(value);
+                                }
+                              }} 
+                              placeholder="Recipient phone number" 
+                              maxLength={10}
+                              pattern="[0-9]{10}"
+                              required 
+                            />
+                          </div>
+                          <input type="hidden" name="receiverPhoneNumber" value={`${recipientPhoneCode}${recipientPhone}`} />
+                          <p>Please enter the correct recipient's phone number!</p>
+                        </div>
+
+                        <div className="form-group">
+                          <label>Receiver Bank:</label>
+                          <div className={`custom-bank-select ${bankDropdownOpen ? 'dropdown-open' : ''}`}>
+                            <button
+                              type="button"
+                              className="bank-select-trigger"
+                              onClick={() => setBankDropdownOpen(!bankDropdownOpen)}
+                            >
+                              {selectedBank ? (
+                                <div className="bank-option-display">
+                                  {selectedBank === 'Others' ? (
+                                    <span>{customBankName || 'Others'}</span>
+                                  ) : (
+                                    <>
+                                      <img 
+                                        src={vietnameseBanks.find(b => b.value === selectedBank)?.icon} 
+                                        alt=""
+                                        className="bank-icon"
+                                      />
+                                      <span>{vietnameseBanks.find(b => b.value === selectedBank)?.label}</span>
+                                    </>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="placeholder">Select a Bank</span>
+                              )}
+                              <svg className="dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                            
+                            {bankDropdownOpen && (
+                              <div className="bank-options-list">
+                                <div className="bank-option-placeholder">Select a Bank</div>
+                                {vietnameseBanks.map((bank) => (
+                                  <button
+                                    key={bank.value}
+                                    type="button"
+                                    className={`bank-option ${selectedBank === bank.value ? 'selected' : ''}`}
+                                    onClick={() => {
+                                      setSelectedBank(bank.value);
+                                      setBankDropdownOpen(false);
+                                      if (bank.value !== 'Others') {
+                                        setCustomBankName(''); // Clear custom name if not Others
+                                      }
+                                    }}
+                                  >
+                                    {bank.icon ? (
+                                      <img src={bank.icon} alt="" className="bank-icon" />
+                                    ) : (
+                                      <span className="bank-icon-placeholder"></span>
+                                    )}
+                                    <span>{bank.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <input type="hidden" name="receiverBank" value={selectedBank === 'Others' ? customBankName : selectedBank} required />
+                        </div>
+
+                        {/* Show custom bank name input if "Others" is selected */}
+                        {selectedBank === 'Others' && (
+                          <div className="form-group">
+                            <label>Bank Name</label>
+                            <input 
+                              type="text" 
+                              name="customBankName" 
+                              placeholder="Enter bank name" 
+                              value={customBankName}
+                              onChange={(e) => setCustomBankName(e.target.value)}
+                              required 
+                            />
+                          </div>
+                        )}
+
+                        <div className="form-group">
+                          <label>Account #</label>
+                          <input 
+                            type="text" 
+                            name="receiverBankAccount" 
+                            placeholder="Account Number" 
+                            value={recipientAccountNumber}
+                            onChange={(e) => setRecipientAccountNumber(e.target.value)}
+                            required 
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Content</label>
+                          <input 
+                            type="text" 
+                            name="transferContent" 
+                            placeholder="Message to recipient (Optional)" 
+                            value={transferContent}
+                            onChange={(e) => setTransferContent(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </section>
+                  </>
+                )}
+
+                {step === 3 && subStep === 1 && (
                   <div className="step-actions">
                     <button type="button" className="btn primary w-full" onClick={() => setStep(4)}>
-                      Confirm Transfer
+                      Continue to Review
                     </button>
                   </div>
                 )}
@@ -537,25 +1368,53 @@ export default function Transfer() {
                       })()}
                       {(() => {
                         const val = parseFloat(amountFrom);
-                        if (!isNaN(val) && typeof rate === 'number') {
+                        if (!isNaN(val) && typeof effectiveRate === 'number') {
                           const fee = val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0;
                           const net = Math.max(val - fee, 0);
-                          const vnd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(net * rate);
-                          return <div><strong>They receive:</strong> {vnd} VND</div>;
+                          const vnd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(net * (effectiveRate || 0));
+                          const rateFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate || 0);
+                          return (
+                            <div>
+                              <strong>They receive:</strong> {vnd} VNĐ{' '}
+                              <span className="fee-note">(${net.toFixed(2)} CAD × {rateFormatted})</span>
+                            </div>
+                          );
                         }
-                        return <div><strong>They receive:</strong> {amountTo || '0'} VND</div>;
+                        return <div><strong>They receive:</strong> {amountTo || '0'} VNĐ</div>;
                       })()}
                       <div><strong>Method:</strong> {transferMethod}</div>
+                      <div><strong>Recipient:</strong> {recipientName || '-'}</div>
+                      <div><strong>Bank:</strong> {selectedBank === 'Others' ? customBankName || 'Others' : selectedBank}</div>
+                      <div><strong>Account #:</strong> {recipientAccountNumber || '-'}</div>
                     </div>
+                    
+                    <div className="form-group checkbox-row">
+                      <label className="checkbox">
+                        <input 
+                          type="checkbox" 
+                          checked={agreedToTerms}
+                          onChange={(e) => setAgreedToTerms(e.target.checked)}
+                          required
+                        />
+                        <span>
+                          <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer">Terms and Conditions</a> Read & Agreed!
+                        </span>
+                      </label>
+                    </div>
+                    
                     <div className="review-actions">
                       <button type="button" className="btn ghost" onClick={() => setStep(3)}>Back</button>
                       <form onSubmit={onTransferSubmit}>
-                        <button type="submit" className="btn primary" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit Transfer'}</button>
+                        <button type="submit" className="btn primary" disabled={submitting || !agreedToTerms}>
+                          {submitting ? 'Submitting…' : 'Submit Transfer'}
+                        </button>
                       </form>
                     </div>
                   </section>
                 )}
               </div>
+
+            {/* Modal styles moved to frontend/scss/style.scss */}
 
               <section className="features scroll-reveal">
                 <h3>Why choose us</h3>
@@ -589,187 +1448,6 @@ export default function Transfer() {
           <AppFooter />
         </div>
       </div>
-      {/* TODO: CLEAN UP CSS IN ALL PAGES  */}
-      <style jsx>{`
-        .transfers-page { --accent:#2563eb; --accent-rgb:37,99,235; --bg-soft:#f1f5f9; }
-        .introduction { position:relative; padding:60px 28px 40px; background:linear-gradient(135deg,#1d4ed8,#0f172a); color:#fff; overflow:hidden; }
-        .intro-inner { max-width:860px; margin:0 auto; position:relative; z-index:2; }
-        .introduction h1 { font-size:clamp(2rem,4.5vw,3.2rem); margin:0 0 16px; font-weight:700; letter-spacing:-1px; line-height:1.05; }
-        .intro-lead { font-size:clamp(1rem,1.7vw,1.25rem); max-width:560px; line-height:1.45; margin:0 0 28px; color:#e2e8f0; }
-        .intro-cta { display:flex; gap:14px; flex-wrap:wrap; }
-        .btn { --btn-bg:#fff; --btn-color:#0f172a; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; font-weight:600; padding:12px 22px; border-radius:10px; font-size:14px; transition:background .18s, color .18s, box-shadow .18s, border-color .18s; border:1px solid transparent; }
-        .btn.primary { background:rgba(255,255,255,0.12); color:#fff; border-color:rgba(255,255,255,0.25); backdrop-filter:blur(4px); }
-        .btn.primary:hover { background:#fff; color:#0f172a; }
-        .btn.ghost { background:rgba(255,255,255,0.04); color:#fff; border-color:rgba(255,255,255,0.18); }
-        .btn.ghost:hover { background:rgba(255,255,255,.18); }
-        .w-full { width:100%; }
-        .intro-decor { position:absolute; inset:0; background:radial-gradient(circle at 70% 30%,rgba(255,255,255,0.18),transparent 60%), radial-gradient(circle at 30% 70%,rgba(255,255,255,0.15),transparent 55%); opacity:.55; }
-  .main-content { padding:50px 24px 40px; background:#f8fafc; }
-  .progress { position:relative; max-width:860px; margin:0 auto 20px; padding:8px 8px; padding-left:48px; display:flex; align-items:center; min-height:48px; }
-  .back-btn { position:absolute; left:8px; top:50%; transform:translateY(-50%); display:inline-flex; align-items:center; gap:6px; background:transparent; border:none; color:#334155; padding:6px 8px; border-radius:8px; cursor:pointer; }
-  .back-btn:hover:not(:disabled) { background:#e2e8f0; }
-  .back-btn:disabled { opacity:.45; cursor:not-allowed; }
-  .back-btn .back-icon { width:24px; height:24px; }
-  .steps { list-style:none; display:flex; gap:14px; padding:0; margin:0 auto; align-items:center; justify-content:center; width:100%; }
-        .step { display:flex; align-items:center; gap:8px; color:#64748b; font-weight:600; }
-        .step .dot { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:#e2e8f0; color:#0f172a; font-size:13px; font-weight:700; }
-        .step.active .dot { background:var(--accent); color:#fff; }
-        .step.completed .dot { background:#22c55e; color:#fff; }
-        .step .label { font-size:13px; letter-spacing:.3px; }
-        .flag { display:inline-block; margin-left:6px; width:20px; height:auto; vertical-align:middle; }
-        .grid { display:grid; gap:28px; grid-template-columns:1fr; align-items:start; max-width:860px; margin:0 auto 44px; }
-        .new-recipient-btn { display:inline-flex; align-items:center; gap:10px; }
-        .new-recipient-btn .icon { width:18px; height:18px; }
-        .card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px 20px 24px; box-shadow:0 3px 10px -2px rgba(0,0,0,.05),0 10px 24px -8px rgba(0,0,0,.04); position:relative; overflow:hidden; transition:border-color .18s, box-shadow .18s; }
-        .card:focus-within { border-color:var(--accent); box-shadow:0 0 0 2px rgba(var(--accent-rgb),.18), 0 4px 12px -2px rgba(0,0,0,.05), 0 12px 28px -6px rgba(0,0,0,.04); }
-        .card h2, .card h3, .card h4 { margin:0 0 14px; font-weight:600; letter-spacing:-.5px; }
-        .exchange-form h2 { font-size:24px; }
-        form { display:flex; flex-direction:column; gap:18px; }
-        .input-break { height:6px; }
-        .rate-wrapper { display:flex; flex-direction:column; gap:4px; margin:-4px 0 6px; }
-        .rate-info { margin:0; font-size:13px; color:#334155; display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
-        .delta { font-size:11px; padding:2px 6px; border-radius:20px; font-weight:600; letter-spacing:.5px; }
-        .delta.up { background:#dcfce7; color:#166534; }
-        .delta.down { background:#fee2e2; color:#991b1b; }
-        .rate-meta { display:flex; align-items:center; gap:10px; font-size:11px; color:#64748b; }
-        .timestamp { background:#f1f5f9; padding:4px 8px; border-radius:6px; }
-        .mini-btn { border:1px solid #cbd5e1; background:#fff; padding:4px 8px; border-radius:6px; font-size:12px; cursor:pointer; line-height:1; }
-        .mini-btn:hover:not(:disabled) { background:#f1f5f9; }
-        .mini-btn:disabled { opacity:.5; cursor:wait; }
-        .error { color:#b91c1c; font-weight:500; }
-        .form-group { display:flex; flex-direction:column; gap:6px; }
-  label { font-size:13px; font-weight:600; color:#334155; letter-spacing:.4px; text-transform:uppercase; display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
-        select { font:inherit; padding:12px 14px; border:1px solid #cbd5e1; background:#f8fafc; border-radius:10px; transition:border-color .18s, background .18s, box-shadow .18s; }
-        input { font:inherit; padding:12px 14px; border:none; background:#f8fafc; border-radius:10px; transition: background .18s; }
-        .radio-group { display:flex; gap:14px; flex-wrap:wrap; }
-        .radio { display:inline-flex; align-items:center; gap:8px; background:#f8fafc; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; }
-        .radio input { width:auto; padding:0; background:transparent; }
-        .currency-input { position:relative; display:flex; align-items:center; }
-        .currency-input input { width:100%; padding-right:86px; }
-        .currency-suffix { position:absolute; right:6px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:8px; padding:6px 10px; background:#eef2f7; border-radius:8px; border:1px solid #e2e8f0; }
-        .currency-suffix .flag { margin-left:0; width:18px; height:auto; }
-        .currency-suffix .code { font-weight:700; font-size:12px; color:#334155; letter-spacing:.6px; }
-        /* Brand pills for card number suffix */
-        .currency-suffix.card-brands { gap:6px; padding:6px 8px; }
-        .currency-suffix.card-brands .brand { 
-          display:inline-flex; align-items:center; justify-content:center;
-          padding:4px 6px; font-size:10px; font-weight:800; letter-spacing:.6px;
-          background:#e2e8f0; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px;
-          min-width:34px; text-transform:uppercase;
-        }
-        .currency-suffix.card-brands .brand.visa { }
-        .currency-suffix.card-brands .brand.mc { }
-        /* Expiry inputs group */
-        .expiry-group { display:flex; align-items:center; gap:8px; }
-        .expiry-group input { width:58px; text-align:center; }
-        .expiry-group .slash { font-weight:700; color:#64748b; }
-        /* Checkbox row styling */
-        .checkbox-row .checkbox { display:inline-flex; align-items:center; gap:8px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; cursor:pointer; }
-        .checkbox-row input[type="checkbox"] { width:auto; height:auto; accent-color:var(--accent); }
-        .review-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:10px 0 14px; }
-        .review-actions { display:flex; gap:12px; align-items:center; }
-        .step-actions { max-width:860px; margin: -16px auto 36px; padding:0 4px; }
-  .label-inline-info { margin-left:8px; font-weight:600; font-size:12px; color:#64748b; white-space:nowrap; }
-  .fee-row { display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#64748b; margin:6px 2px 0; }
-  .fee-row .waived { text-decoration: line-through; opacity:.75; }
-  .fee-row .fee-free { font-weight:700; color:#16a34a; }
-  .fee-mini { margin-top:6px; font-size:12px; color:#334155; }
-    /* Review fee styling */
-    .fee-review { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 8px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; }
-    .fee-label { font-weight:700; color:#334155; }
-    .fee-badge { padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; letter-spacing:.3px; border:1px solid; }
-    .fee-badge.applied { background:#dcfce7; color:#166534; border-color:#22c55e; }
-    .fee-badge.charged { background:#fef3c7; color:#92400e; border-color:#f59e0b; }
-    .fee-amount { font-weight:800; color:#0f172a; }
-    .fee-amount.zero { text-decoration:line-through; opacity:.7; }
-    .fee-note { font-size:12px; color:#64748b; }
-  .upsell-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:6px; padding:8px 10px; border:1px dashed #cbd5e1; background:#f8fafc; border-radius:8px; font-size:12px; color:#334155; }
-  .upsell-btn { background:transparent; border:1px solid #cbd5e1; padding:6px 10px; border-radius:8px; font-weight:700; cursor:pointer; color:#0f172a; }
-  .upsell-btn:hover { background:#e2e8f0; }
-        select:focus { outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 2px rgba(var(--accent-rgb),.15); }
-        input:focus { outline:none; border:none; background:#fff; box-shadow:none; }
-        input[disabled], select[disabled] { opacity:.8; cursor:not-allowed; }
-        .two-col { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; }
-        .two-col.single { grid-template-columns:1fr; }
-        .two-col.wire { grid-template-columns:1fr 1fr; }
-        button.btn.primary { background:var(--accent); color:#fff; border:none; font-weight:600; letter-spacing:.6px; box-shadow:0 6px 18px -4px rgba(var(--accent-rgb),.5); position:relative; overflow:hidden; }
-        button.btn.primary::after { content:""; position:absolute; inset:0; background:linear-gradient(120deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.25) 60%,rgba(255,255,255,0)); transform:translateX(-100%); transition:transform .6s; }
-        button.btn.primary:hover::after { transform:translateX(100%); }
-        button.btn.primary:hover { filter:brightness(1.05); }
-        button[disabled] { opacity:.7; cursor:wait; }
-        .features, .testimonials { max-width:860px; margin:0 auto 56px; }
-        .features h3, .testimonials h3 { font-size:22px; margin-bottom:20px; }
-        .features-grid, .testimonials-grid { display:grid; gap:22px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
-        .feature p { margin:4px 0 0; font-size:14px; line-height:1.45; color:#475569; }
-        blockquote { margin:0; font-size:14px; line-height:1.5; font-style:italic; color:#334155; position:relative; }
-        blockquote cite { font-style:normal; font-weight:600; margin-left:4px; }
-        blockquote a { color:var(--accent); text-decoration:none; }
-        blockquote a:hover { text-decoration:underline; }
-        /* Hide number input spinners (Chrome, Safari, Edge, Opera) */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        /* Hide number input spinners (Firefox) */
-        input[type="number"] { -moz-appearance: textfield; }
-        /* Scroll reveal (simple fade/slide) placeholder */
-        .scroll-reveal { animation:fadeUp .55s ease both; }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-        /* Dark mode */
-        @media (prefers-color-scheme:dark) {
-          .main-content { background:#0f172a; }
-          .step { color:#94a3b8; }
-          .step .dot { background:#334155; color:#e2e8f0; }
-          .card { background:#1e293b; border-color:#334155; box-shadow:0 6px 18px -6px rgba(0,0,0,.6),0 2px 6px -2px rgba(0,0,0,.5); }
-          .card:focus-within { border-color:var(--accent); box-shadow:0 0 0 2px rgba(var(--accent-rgb),.35), 0 6px 18px -6px rgba(0,0,0,.6), 0 2px 6px -2px rgba(0,0,0,.5); }
-          label { color:#cbd5e1; }
-          select { background:#1e293b; border-color:#475569; color:#e2e8f0; }
-          input { background:#1e293b; border:none; color:#e2e8f0; }
-          .radio { background:#1e293b; border-color:#475569; }
-          .currency-suffix { background:#24324a; border-color:#334155; }
-          .currency-suffix .code { color:#e2e8f0; }
-          .currency-suffix.card-brands { background:#24324a; border-color:#334155; }
-          .currency-suffix.card-brands .brand { background:#334155; border-color:#475569; color:#e2e8f0; }
-          .expiry-group .slash { color:#94a3b8; }
-          .checkbox-row .checkbox { background:#1e293b; border-color:#475569; }
-          select:focus { background:#24324a; }
-          input:focus { background:#24324a; box-shadow:none; }
-          .rate-info { color:#94a3b8; }
-          .timestamp { background:#334155; color:#cbd5e1; }
-          .back-btn { color:#cbd5e1; }
-          .back-btn:hover:not(:disabled) { background:#24324a; }
-          .delta.up { background:#14532d; color:#4ade80; }
-          .delta.down { background:#7f1d1d; color:#fca5a5; }
-          .error { color:#f87171; }
-          .feature p { color:#cbd5e1; }
-          blockquote { color:#cbd5e1; }
-          .intro-lead { color:#cbd5e1; }
-          .label-inline-info { color:#94a3b8; }
-          .fee-row { color:#94a3b8; }
-          .fee-row .fee-free { color:#4ade80; }
-          .fee-mini { color:#cbd5e1; }
-           .fee-review { background:#1e293b; border-color:#334155; }
-           .fee-label { color:#cbd5e1; }
-           .fee-badge.applied { background:#0f3a1e; color:#86efac; border-color:#22c55e; }
-           .fee-badge.charged { background:#3a2f1a; color:#f5d27b; border-color:#b98b2a; }
-           .fee-amount { color:#e2e8f0; }
-           .fee-note { color:#94a3b8; }
-          .upsell-row { background:#1e293b; border-color:#334155; color:#e2e8f0; }
-          .upsell-btn { border-color:#475569; color:#e2e8f0; }
-          .upsell-btn:hover { background:#24324a; }
-        }
-        @media (max-width:880px) { .introduction { padding:52px 20px 36px; } .main-content { padding:46px 18px 36px; } }
-        @media (max-width:580px) { 
-          .intro-cta { flex-direction:column; align-items:stretch; }
-          /* Progress bar compaction for phones */
-          .progress { padding:6px 6px 6px 40px; min-height:40px; }
-          .steps { gap:10px; }
-          .step .label { display:none; }
-          .step .dot { width:24px; height:24px; font-size:12px; }
-          .back-btn { left:6px; }
-          .back-btn .back-icon { width:20px; height:20px; }
-          /* Force all multi-column groups to stack line-by-line on small screens */
-          .two-col, .two-col.wire, .two-col.single { grid-template-columns:1fr !important; }
-        }
-      `}</style>
     </RequireAuth>
   );
 }

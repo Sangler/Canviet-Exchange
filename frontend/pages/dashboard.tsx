@@ -2,25 +2,52 @@ import { useEffect, useState } from 'react';
 
 type RequestItem = {
   _id: string;
+  referenceID?: string;
   createdAt: string;
   fromCurrency: string;
   toCurrency: string;
   amountSent: number;
   amountReceived?: number;
   exchangeRate?: number;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  status: 'pending' | 'approved' | 'reject' | 'completed';
+  recipientBank?: {
+    bankName?: string;
+    accountHolderName?: string;
+    accountNumber?: string;
+  };
 };
+
+// Generate receipt hash from referenceID using Web Crypto API
+async function generateReceiptHash(referenceID: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(referenceID);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.substring(0, 24);
+}
 
 export default function DashboardPage() {
   const [data, setData] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hashes, setHashes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch('/api/requests');
         const json = await res.json();
-        setData(json.requests || []);
+        const requests = json.requests || [];
+        setData(requests);
+        
+        // Pre-compute all receipt hashes
+        const hashMap: Record<string, string> = {};
+        for (const req of requests) {
+          if (req.referenceID) {
+            hashMap[req._id] = await generateReceiptHash(req.referenceID);
+          }
+        }
+        setHashes(hashMap);
       } finally {
         setLoading(false);
       }
@@ -29,7 +56,7 @@ export default function DashboardPage() {
 
   return (
     <div className="container">
-      <h1>Your Requests</h1>
+      <h1 className="mb-4">Your Requests</h1>
       {loading ? (
         <div className="card">Loading…</div>
       ) : data.length === 0 ? (
@@ -41,44 +68,48 @@ export default function DashboardPage() {
               <tr>
                 <th>ID</th>
                 <th>Submitted</th>
-                <th>From → To</th>
                 <th>Amount</th>
                 <th>Rate</th>
                 <th>Status</th>
+                <th>Recipient Name</th>
               </tr>
             </thead>
             <tbody>
-              {data.map(r => (
-                <tr key={r._id}>
-                  <td className="mono">{r._id.slice(-6)}</td>
-                  <td>{new Date(r.createdAt).toLocaleString()}</td>
-                  <td>{r.fromCurrency} → {r.toCurrency}</td>
-                  <td>{r.amountSent} {r.fromCurrency}</td>
-                  <td>{r.exchangeRate ?? '-'}</td>
-                  <td><span className={`badge ${r.status}`}>{r.status}</span></td>
-                </tr>
-              ))}
+              {data.map(r => {
+                const receiptHash = hashes[r._id];
+                return (
+                  <tr key={r._id}>
+                    <td className="mono hidden sm:table-cell">
+                      {receiptHash ? (
+                        <a href={`/transfers/receipt/${receiptHash}`} style={{ color: '#0369a1', textDecoration: 'underline' }}>
+                          {r._id.slice(-6)}
+                        </a>
+                      ) : (
+                        r._id.slice(-6)
+                      )}
+                    </td>
+                    <td>{new Date(r.createdAt).toLocaleString()}</td>
+                    <td>{r.amountSent} {r.fromCurrency}</td>
+                    <td>{r.exchangeRate ?? '-'}</td>
+                    <td>
+                      <span className={`badge ${
+                        r.status === 'completed' ? 'bg-success' :
+                        r.status === 'approved' ? 'bg-info' :
+                        r.status === 'pending' ? 'bg-warning' :
+                        r.status === 'reject' ? 'bg-danger' :
+                        'bg-secondary'
+                      }`}>
+                        {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                      </span>
+                    </td>
+                    <td>{r.recipientBank?.accountHolderName || 'N/A'}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
-
-      <style jsx>{`
-        .container { max-width: 980px; margin: 32px auto; padding: 0 16px; }
-        h1 { margin-bottom: 16px; }
-        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; }
-        .empty { color: #6b7280; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #f1f5f9; }
-        th { font-weight: 600; color: #374151; }
-        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-        .badge { padding: 4px 10px; border-radius: 9999px; font-size: 12px; text-transform: capitalize; }
-        .badge.pending { background: #fef3c7; color: #92400e; }
-        .badge.approved { background: #dcfce7; color: #166534; }
-        .badge.rejected { background: #fee2e2; color: #991b1b; }
-        .badge.completed { background: #e0e7ff; color: #3730a3; }
-        @media (max-width: 640px) { .mono { display: none; } }
-      `}</style>
     </div>
   );
 }

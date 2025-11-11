@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const userSchema = new mongoose.Schema({
   KYCStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
-  KyCDocumentUrl: { type: String },
+  KyCDocumentUrl: { type: String, enum: ['ID Document', 'Driving license', 'Passport'] },
   IDNumber: { type: String },
   email: {
     type: String,
@@ -11,10 +11,8 @@ const userSchema = new mongoose.Schema({
     lowercase: true
   },
   phone: {
-    type: String,
-    required: false,
-    unique: true,
-    sparse: true
+    countryCode: { type: String },
+    phoneNumber: { type: String, required: false, unique: true, sparse: true, maxlength: 10 }
   },
   firstName: {
     type: String,
@@ -57,6 +55,30 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'], 
     default: 'user' 
   }, // to support role-based access
+  /*
+  // Referral code that this user can share
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true
+  },
+
+  // Who referred this user
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+
+  // List of users this user has referred
+  referrals: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
+*/
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

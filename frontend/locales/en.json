@@ -1,0 +1,88 @@
+{
+  "common": {
+    "email": "Email",
+    "password": "Password",
+    "phone": "Phone",
+    "login": "Sign in",
+    "register": "Register",
+    "logout": "Logout",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "auth": {
+    "welcome": "Welcome! Please sign in to continue",
+    "emailAddress": "Email address",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "welcomeBack": "Welcome back!",
+    "redirectingDashboard": "Redirecting to your dashboard...",
+    "orContinueWith": "or continue with",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "createAccount": "Create your account",
+    "startTransferring": "Start transferring in minutes",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "confirmPassword": "Confirm password",
+    "referralCode": "Referral Code (Optional)",
+    "createNewAccount": "Create New Account",
+    "creating": "Creating…",
+    "accountCreated": "Account created!",
+    "redirecting": "Redirecting to verify your email…",
+    "alreadyHaveAccount": "Already have an account?",
+    "verifyEmail": "Verify your email",
+    "verifyEmailSubtitle": "We will send a 6‑digit code to your inbox",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "sixDigitCode": "6-digit code",
+    "verify": "Verify",
+    "verifying": "Verifying…",
+    "codeSent": "Code sent to your email",
+    "verificationFailed": "Verification failed",
+    "failedToRequestCode": "Failed to request code",
+    "redirectingVerify": "Redirecting to verify your email..."
+  },
+  "validation": {
+    "required": "This field is required",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Enter a valid email",
+    "phoneInvalid": "Enter a valid phone number",
+    "passwordRequired": "Password is required",
+    "passwordLength": "Password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back"
+  },
+  "transfers": {
+    "title": "Send Money",
+    "yourRequests": "Your Requests",
+    "newTransfer": "New Transfer",
+    "amount": "Amount",
+    "recipient": "Recipient",
+    "status": "Status"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "security": "Security",
+    "notifications": "Notifications"
+  },
+  "personalInfo": {
+    "title": "Personal Information",
+    "updateProfile": "Update your profile",
+    "saveChanges": "Save Changes"
+  }
+}

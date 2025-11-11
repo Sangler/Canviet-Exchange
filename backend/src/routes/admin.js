@@ -12,6 +12,6 @@ function requireAdmin(req, res, next) {
   } catch (e) { return res.status(403).json({ message: 'Forbidden' }) }
 }
 
-router.get('/users', auth, requireEmailVerified, requireAdmin, adminController.listUsers)
+router.get('/users', auth, requireEmailVerified(), requireAdmin, adminController.listUsers)
 
 module.exports = router
