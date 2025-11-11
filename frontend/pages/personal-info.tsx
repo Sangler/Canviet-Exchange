@@ -11,7 +11,7 @@ interface MeResponse {
     id?: string; email?: string; firstName?: string; lastName?: string; 
     phone?: { countryCode?: string; phoneNumber?: string } | string; 
     role?: string; emailVerified?: boolean; createdAt?: string;
-    dateOfBirth?: string; address?: { street?: string; postalCode?: string; city?: string; country?: string }; employmentStatus?: string;
+    dateOfBirth?: string; address?: { street?: string; postalCode?: string; city?: string; province?: string; country?: string }; employmentStatus?: string;
   };
 }
 
@@ -72,6 +72,40 @@ export default function PersonalInfoPage() {
         setCity(addr.city || '');
         setPostalCode(addr.postalCode || '');
         setCountry(addr.country || 'Canada');
+        // Auto-select province by comparing DB value with option values.
+        const dbProv = (addr.province || '').toString();
+        if (dbProv) {
+          // List of option values present in the select (as rendered in this component)
+          const optionValues = [
+            'Ontario','Quebec','Alberta','British Columbia','Manitoba','Saskatchewan','Nova Scotia','New Brunswick','Newfoundland and Labrador','Prince Edward Island'
+          ];
+
+          // Direct exact match
+          if (optionValues.includes(dbProv)) {
+            setProvince(dbProv);
+          } else {
+            // Case-insensitive match
+            const found = optionValues.find(o => o.toLowerCase() === dbProv.toLowerCase());
+            if (found) {
+              setProvince(found);
+            } else {
+              // Basic normalization and common-name mapping (e.g., 'British Columbia' -> 'BC')
+              const norm = dbProv.toLowerCase().trim();
+              const mappings: Record<string,string> = {
+                'british columbia': 'British Columbia',
+                'bc': 'British Columbia',
+                'newfoundland & labrador': 'Newfoundland and Labrador',
+                'newfoundland and labrador': 'Newfoundland and Labrador',
+                'prince edward island': 'Prince Edward Island',
+                'nova scotia': 'Nova Scotia'
+              };
+              if (mappings[norm]) setProvince(mappings[norm]);
+              else setProvince(dbProv); // fallback: keep DB value (will appear as non-matching value)
+            }
+          }
+        } else {
+          setProvince('');
+        }
         // DOB parse to YYYY-MM-DD
         if (u.dateOfBirth) {
           const d = new Date(u.dateOfBirth);
@@ -119,6 +153,7 @@ export default function PersonalInfoPage() {
           street,
           postalCode,
           city,
+          province,
           country,
         },
         employmentStatus,
@@ -270,7 +305,7 @@ export default function PersonalInfoPage() {
                       <option value="Ontario">Ontario</option>
                       <option value="Quebec">Quebec</option>
                       <option value="Alberta">Alberta</option>
-                      <option value="BC">British Columbia</option>
+                      <option value="British Columbia">British Columbia</option>
                       <option value="Manitoba">Manitoba</option>
                       <option value="Saskatchewan">Saskatchewan</option>
                       <option value="Nova Scotia">Nova Scotia</option>

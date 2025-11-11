@@ -73,6 +73,7 @@ exports.updateProfile = async (req, res) => {
       street: String(address.street || ''),
       postalCode: String(address.postalCode || ''),
       city: String(address.city || ''),
+      province: String(address.province || ''),
       country: String(address.country || ''),
     }
     user.employmentStatus = String(employmentStatus)

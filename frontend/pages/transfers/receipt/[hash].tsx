@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useAuth } from '../../../context/AuthContext';
 import AppSidebar from '../../../components/AppSidebar';
 import AppHeader from '../../../components/AppHeader';
 import AppFooter from '../../../components/AppFooter';
+import RequireAuth from '../../../components/RequireAuth';
 
 interface Request {
   _id: string;
@@ -42,6 +44,7 @@ interface Request {
 export default function ReceiptPage() {
   const router = useRouter();
   const { hash } = router.query;
+  const { token, logout } = useAuth();
   const [request, setRequest] = useState<Request | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,7 +54,18 @@ export default function ReceiptPage() {
 
     async function fetchReceipt() {
       try {
-        const response = await fetch(`http://localhost:5000/api/requests/receipt/${hash}`);
+        const response = await fetch(`/api/requests/receipt/${hash}`, {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : '',
+          },
+        });
+
+        // If token is invalid/expired the server will return 401 — force logout
+        if (response.status === 401) {
+          try { logout(); } catch {};
+          return;
+        }
+
         const data = await response.json();
 
         if (!response.ok || !data.ok) {
@@ -61,7 +75,7 @@ export default function ReceiptPage() {
         setRequest(data.request);
       } catch (err: any) {
         console.error('Error fetching receipt:', err);
-        setError(err.message);
+        setError(err.message || String(err));
       } finally {
         setLoading(false);
       }
@@ -92,57 +106,62 @@ export default function ReceiptPage() {
 
   if (loading) {
     return (
-      <div className="wrapper d-flex flex-column min-vh-100">
-        <AppSidebar />
-        <div className="wrapper d-flex flex-column min-vh-100 bg-light dark:bg-slate-900">
-          <AppHeader />
-          <div className="body flex-grow-1 px-3">
-            <div className="container-lg py-4">
-              <div className="text-center py-5">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
+      <RequireAuth>
+        <div className="wrapper d-flex flex-column min-vh-100">
+          <AppSidebar />
+          <div className="wrapper d-flex flex-column min-vh-100 bg-light dark:bg-slate-900">
+            <AppHeader />
+            <div className="body flex-grow-1 px-3">
+              <div className="container-lg py-4">
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-3">Loading receipt...</p>
                 </div>
-                <p className="mt-3">Loading receipt...</p>
               </div>
             </div>
+            <AppFooter />
           </div>
-          <AppFooter />
         </div>
-      </div>
+      </RequireAuth>
     );
   }
 
   if (error || !request) {
     return (
+      <RequireAuth>
+        <div className="wrapper d-flex flex-column min-vh-100">
+          <AppSidebar />
+          <div className="wrapper d-flex flex-column min-vh-100 bg-light dark:bg-slate-900">
+            <AppHeader />
+            <div className="body flex-grow-1 px-3">
+              <div className="container-lg py-4">
+                <div className="alert alert-danger dark:bg-[#450a0a] dark:border-[#7f1d1d] dark:text-[#fca5a5]" role="alert">
+                  <h4 className="alert-heading dark:text-[#fecaca]">Receipt Not Found</h4>
+                  <p>{error || 'The receipt you are looking for does not exist or has been removed.'}</p>
+                  <hr />
+                  <button className="btn btn-primary" onClick={() => router.push('/transfers')}>
+                    Back to Transfers
+                  </button>
+                </div>
+              </div>
+            </div>
+            <AppFooter />
+          </div>
+        </div>
+      </RequireAuth>
+    );
+  }
+
+  return (
+    <RequireAuth>
       <div className="wrapper d-flex flex-column min-vh-100">
         <AppSidebar />
         <div className="wrapper d-flex flex-column min-vh-100 bg-light dark:bg-slate-900">
           <AppHeader />
           <div className="body flex-grow-1 px-3">
             <div className="container-lg py-4">
-              <div className="alert alert-danger dark:bg-[#450a0a] dark:border-[#7f1d1d] dark:text-[#fca5a5]" role="alert">
-                <h4 className="alert-heading dark:text-[#fecaca]">Receipt Not Found</h4>
-                <p>{error || 'The receipt you are looking for does not exist or has been removed.'}</p>
-                <hr />
-                <button className="btn btn-primary" onClick={() => router.push('/transfers')}>
-                  Back to Transfers
-                </button>
-              </div>
-            </div>
-          </div>
-          <AppFooter />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="wrapper d-flex flex-column min-vh-100">
-      <AppSidebar />
-      <div className="wrapper d-flex flex-column min-vh-100 bg-light dark:bg-slate-900">
-        <AppHeader />
-        <div className="body flex-grow-1 px-3">
-          <div className="container-lg py-4">
             {/* Header */}
             <div className="d-flex justify-content-between align-items-center mb-4">
               <h1 className="h3 mb-0">Transfer Receipt</h1>
@@ -361,12 +380,14 @@ export default function ReceiptPage() {
                     View Transfer History
                   </button>
                 </div>
+                </div>
               </div>
             </div>
           </div>
+          <AppFooter />
         </div>
-        <AppFooter />
       </div>
-    </div>
+    </RequireAuth>
+    
   );
 }

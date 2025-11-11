@@ -142,6 +142,14 @@ export default function Transfer() {
   const [bankAccountNumber, setBankAccountNumber] = useState<string>('');
   const [bankTransitNumber, setBankTransitNumber] = useState<string>('');
   const [bankInstitutionNumber, setBankInstitutionNumber] = useState<string>('');
+  // Billing address
+  const [useHomeAddress, setUseHomeAddress] = useState(false);
+  const [billingStreet, setBillingStreet] = useState<string>('');
+  const [billingUnit, setBillingUnit] = useState<string>('');
+  const [billingCity, setBillingCity] = useState<string>('');
+  const [billingProvince, setBillingProvince] = useState<string>('');
+  const [billingPostal, setBillingPostal] = useState<string>('');
+  const [billingCountry, setBillingCountry] = useState<string>('Canada');
   // Draft restoration indicator
   const [draftRestored, setDraftRestored] = useState(false);
   // Flag to prevent saving during initial restoration
@@ -267,6 +275,43 @@ export default function Transfer() {
       setIsRestoringFromDraft(false); // Done restoring
     }
   }, []); // Only run on mount
+
+  // Auto-fill billing address from user's home address when checkbox is checked
+  useEffect(() => {
+    if (useHomeAddress && user && token) {
+      // Fetch full user profile to get address
+      const fetchUserAddress = async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/users/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const userProfile = data.user;
+            setBillingStreet(userProfile.address?.street || '');
+            setBillingUnit(userProfile.address?.unit || '');
+            setBillingCity(userProfile.address?.city || '');
+            setBillingProvince(userProfile.address?.province || '');
+            setBillingPostal(userProfile.address?.postalCode || '');
+            setBillingCountry('Canada');
+          }
+        } catch (error) {
+          console.error('Failed to fetch user address:', error);
+        }
+      };
+      fetchUserAddress();
+    } else if (!useHomeAddress) {
+      // Clear fields when unchecked
+      setBillingStreet('');
+      setBillingUnit('');
+      setBillingCity('');
+      setBillingProvince('');
+      setBillingPostal('');
+      setBillingCountry('Canada');
+    }
+  }, [useHomeAddress, user, token]);
 
   // Clear draft after successful submission
   const clearTransferDraft = () => {
@@ -910,37 +955,78 @@ export default function Transfer() {
                             <h4>Billing address</h4>
                             <div className="form-group checkbox-row">
                               <label className="checkbox">
-                                <input type="checkbox" name="useHomeAddress" />
+                                <input 
+                                  type="checkbox" 
+                                  name="useHomeAddress" 
+                                  checked={useHomeAddress}
+                                  onChange={(e) => setUseHomeAddress(e.target.checked)}
+                                />
                                 <span>Use home address</span>
                               </label>
                             </div>
 
                             <div className="form-group">
                               <label>Street address</label>
-                              <input type="text" name="street" placeholder="e.g., 100 W Georgia St" required />
+                              <input 
+                                type="text" 
+                                name="street" 
+                                value={billingStreet}
+                                readOnly
+                                disabled
+                              />
                             </div>
                             <div className="form-group">
                               <label>Apartment, suite, unit, etc. (optional)</label>
-                              <input type="text" name="unit" placeholder="e.g., Apt 74" />
+                              <input 
+                                type="text" 
+                                name="unit" 
+                                value={billingUnit}
+                                readOnly
+                                disabled
+                              />
                             </div>
                             <div className="form-group two-col lt-phone:!grid-cols-1">
                               <div>
                                 <label>City</label>
-                                <input type="text" name="city" placeholder="e.g., Vancouver" required />
+                                <input 
+                                  type="text" 
+                                  name="city" 
+                                  value={billingCity}
+                                  readOnly
+                                  disabled
+                                />
                               </div>
                               <div>
                                 <label>Province/State</label>
-                                <input type="text" name="province" placeholder="e.g., BC" required />
+                                <input 
+                                  type="text" 
+                                  name="province" 
+                                  value={billingProvince}
+                                  readOnly
+                                  disabled
+                                />
                               </div>
                             </div>
                             <div className="form-group two-col lt-phone:!grid-cols-1">
                               <div>
                                 <label>Postal code</label>
-                                <input type="text" name="postal" placeholder="e.g., V6B 1X4" required />
+                                <input 
+                                  type="text" 
+                                  name="postal" 
+                                  value={billingPostal}
+                                  readOnly
+                                  disabled
+                                />
                               </div>
                               <div>
                                 <label>Country</label>
-                                <input type="text" name="country" placeholder="e.g., Canada" defaultValue="Canada" required />
+                                <input 
+                                  type="text" 
+                                  name="country" 
+                                  value={billingCountry}
+                                  readOnly
+                                  disabled
+                                />
                               </div>
                             </div>
 
@@ -1080,7 +1166,18 @@ export default function Transfer() {
 
                 {step === 3 && subStep === 0 && (
                   <div className="step-actions">
-                    <button type="button" className="btn primary w-full" onClick={() => setSubStep(1)}>
+                    <button 
+                      type="button" 
+                      className="btn primary w-full" 
+                      onClick={() => {
+                        // Validate billing address checkbox for card payments
+                        if (isCard && !useHomeAddress) {
+                          alert('Please check "Use home address" to fill in your billing address before continuing.');
+                          return;
+                        }
+                        setSubStep(1);
+                      }}
+                    >
                       Continue to Receiver Details
                     </button>
                   </div>
