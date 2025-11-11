@@ -11,10 +11,8 @@ const otpRoutes = require('./routes/otp')
 const transfersRoutes = require('./routes/transfers')
 const requestsRoutes = require('./routes/requests')
 const fxRoutes = require('./routes/fx')
-const coinbaseRoutes = require('./routes/coinbase-usdc-cad')
 const User = require('./models/User')
 const { connectMongo } = require('./db/mongoose')
-const { version, name } = require('../package.json')
 const logger = require('./utils/logger')
 const requestLogger = require('./middleware/requestLogger')
 
@@ -40,7 +38,6 @@ app.use('/api/otp', otpRoutes)
 app.use('/api/transfers', transfersRoutes)
 app.use('/api/requests', requestsRoutes)
 app.use('/api/fx', fxRoutes)
-app.use('/api/coinbase', coinbaseRoutes)
 
 // Dev-only SMTP verification endpoint
 if ((process.env.NODE_ENV || 'development') !== 'production') {

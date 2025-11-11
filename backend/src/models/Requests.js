@@ -12,9 +12,16 @@ const requestSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  userPhone: {
+
+  referenceID: {
     type: String,
-    required: true
+    required: true,
+    unique: true,
+    index: true
+  },
+  userPhone: {
+    countryCode: { type: String },
+    phoneNumber: { type: String, required: false, maxlength: 10 }
   },
   // Request status
   status: {
@@ -37,6 +44,11 @@ const requestSchema = new mongoose.Schema({
     min: 0
   },
   
+  exchangeRate: {
+    type: Number,
+    required: true,
+    min: 0
+  },
   currencyFrom: {
     type: String,
     default: 'CAD',
@@ -71,10 +83,7 @@ const requestSchema = new mongoose.Schema({
     cardName: String,
     */
    
-    // Bank details (for e-transfer/wire)
-    senderBankAccount: String,
-    senderTransitNumber: String,
-    senderInstitutionNumber: String,
+    // Bank details (for wire transfer)
     bankTransfer: {
       institutionNumber: String,
       transitNumber: String,
@@ -107,7 +116,7 @@ const requestSchema = new mongoose.Schema({
     // Transfer content/message
     transferContent: {
       type: String,
-      maxlength: 500
+      maxlength: 50
     }
   },
   

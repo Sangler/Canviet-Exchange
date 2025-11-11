@@ -2,6 +2,7 @@ const router = require('express').Router();
 const Request = require('../models/Requests');
 const authMiddleware = require('../middleware/auth');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
 
 // Optional auth middleware - doesn't reject if no token
 const optionalAuth = (req, res, next) => {
@@ -74,6 +75,66 @@ router.get('/', optionalAuth, async (req, res) => {
   }
 });
 
+// GET /api/requests/receipt/:hash - Get request by receipt hash
+// IMPORTANT: This route MUST be before /:id route to avoid conflict
+router.get('/receipt/:hash', optionalAuth, async (req, res) => {
+  try {
+    const { hash } = req.params;
+
+    logger.info(`[Requests] Looking for receipt with hash: ${hash}`);
+
+    // Find all requests and check which one matches the hash
+    const requests = await Request.find().select('-sendingMethod.cardNumber -sendingMethod.cardName').lean();
+    
+    logger.info(`[Requests] Found ${requests.length} total requests in database`);
+    
+    let matchedRequest = null;
+    for (const request of requests) {
+      if (!request.referenceID) {
+        logger.warn(`[Requests] Request ${request._id} has no referenceID, skipping...`);
+        continue;
+      }
+      
+      const computedHash = crypto.createHash('sha256')
+        .update(request.referenceID)
+        .digest('hex')
+        .substring(0, 24);
+      
+      
+      if (computedHash === hash) {
+        matchedRequest = request;
+        logger.info(`[Requests] Found matching request!`);
+        break;
+      }
+    }
+
+    if (!matchedRequest) {
+      logger.warn(`[Requests] Receipt not found for hash: ${hash}`);
+      return res.status(404).json({
+        ok: false,
+        message: 'Receipt not found'
+      });
+    }
+
+    logger.info(`[Requests] Retrieved receipt for reference ${matchedRequest.referenceID}`);
+
+    return res.json({
+      ok: true,
+      request: matchedRequest
+    });
+
+  } catch (err) {
+    logger.error('[Requests] Error fetching receipt:', err);
+    logger.error('[Requests] Error stack:', err.stack);
+    logger.error('[Requests] Error message:', err.message);
+    return res.status(500).json({
+      ok: false,
+      message: 'Failed to retrieve receipt',
+      error: err.message
+    });
+  }
+});
+
 // GET /api/requests/:id - Get specific request by ID
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
@@ -116,6 +177,7 @@ router.post('/', authMiddleware, async (req, res) => {
       userPhone,
       amountSent,
       amountReceived,
+      exchangeRate,
       currencyFrom,
       currencyTo,
       transferFee,
@@ -124,21 +186,27 @@ router.post('/', authMiddleware, async (req, res) => {
       termAndServiceAccepted
     } = req.body;
 
-    // Validate required fields
-    if (!userId || !userEmail || !amountSent || !amountReceived || !sendingMethod || !recipientBank || !termAndServiceAccepted) {
-      return res.status(400).json({
-        ok: false,
-        message: 'Missing required fields'
-      });
-    }
+
+    // Generate unique reference number (e.g., CVE20251109AB12CD34)
+    const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14); // YYYYMMDDHHmmss
+    const randomString = crypto.randomBytes(4).toString('hex').toUpperCase(); // 8 random chars
+    const referenceNumber = `CVE${timestamp}${randomString}`;
+    
+    // Create SHA256 hash of reference number for receipt URL (24 characters)
+    const receiptHash = crypto.createHash('sha256')
+      .update(referenceNumber)
+      .digest('hex')
+      .substring(0, 24);
 
     // Create new request
     const newRequest = new Request({
       userId,
       userEmail,
       userPhone,
+      referenceID: referenceNumber,
       amountSent,
       amountReceived,
+      exchangeRate,
       currencyFrom: currencyFrom || 'CAD',
       currencyTo: currencyTo || 'VND',
       transferFee: transferFee || 0,
@@ -150,12 +218,13 @@ router.post('/', authMiddleware, async (req, res) => {
 
     await newRequest.save();
 
-    logger.info(`[Requests] Created new transfer request ${newRequest._id} for user ${userId}`);
+    logger.info(`[Requests] Created new transfer request ${newRequest._id} with reference ${referenceNumber}`);
 
     return res.status(201).json({
       ok: true,
       message: 'Transfer request submitted successfully',
-      request: newRequest
+      request: newRequest,
+      receiptHash: receiptHash // Hash for receipt URL
     });
 
   } catch (err) {

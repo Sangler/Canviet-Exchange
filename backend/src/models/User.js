@@ -11,10 +11,8 @@ const userSchema = new mongoose.Schema({
     lowercase: true
   },
   phone: {
-    type: String,
-    required: false,
-    unique: true,
-    sparse: true
+    countryCode: { type: String },
+    phoneNumber: { type: String, required: false, unique: true, sparse: true, maxlength: 10 }
   },
   firstName: {
     type: String,

@@ -52,7 +52,7 @@ exports.updateProfile = async (req, res) => {
     const userId = req.auth?.sub
     if (!userId) return res.status(401).json({ message: 'Unauthorized' })
 
-    const { dateOfBirth, address, employmentStatus } = req.body || {}
+    const { dateOfBirth, address, employmentStatus, phone } = req.body
 
     // Basic validation for required fields
     if (!dateOfBirth) return res.status(400).json({ message: 'dateOfBirth is required' })
@@ -76,6 +76,45 @@ exports.updateProfile = async (req, res) => {
       country: String(address.country || ''),
     }
     user.employmentStatus = String(employmentStatus)
+    
+    // Update phone if provided
+    if (phone) {
+      // Parse phone into countryCode and phoneNumber
+      let countryCode = '';
+      let phoneNumber = '';
+      
+      if (phone.startsWith('+84')) {
+        countryCode = '+84';
+        phoneNumber = phone.substring(3);
+      } else if (phone.startsWith('+1')) {
+        countryCode = '+1';
+        phoneNumber = phone.substring(2);
+      } else {
+        // Default: extract digits and assume last 10 are phone number
+        const digits = phone.replace(/\D/g, '');
+        phoneNumber = digits.slice(-10);
+        countryCode = '+1'; // Default country code
+      }
+      
+      // Validate phoneNumber is exactly 10 digits
+      if (phoneNumber.length !== 10) {
+        return res.status(400).json({ message: 'Phone number must be exactly 10 digits' })
+      }
+      
+      // Check if phone number is already in use by another user
+      const exists = await User.findOne({ 
+        'phone.phoneNumber': phoneNumber, 
+        _id: { $ne: userId } 
+      })
+      if (exists) return res.status(409).json({ message: 'Phone number already in use' })
+      
+      user.phone = {
+        countryCode,
+        phoneNumber
+      }
+      user.phoneVerified = false // Reset verification when phone changes
+    }
+    
     user.updatedAt = new Date()
 
     await user.save()

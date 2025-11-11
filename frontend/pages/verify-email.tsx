@@ -201,7 +201,7 @@ export default function VerifyEmailPage() {
               <label htmlFor="code">{t('auth.sixDigitCode')}</label>
               <span className="input-border" />
             </div>
-            <button className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} onClick={verify} disabled={loading || !code || !otpToken}>
+            <button className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} onClick={verify} disabled={loading || !code}>
               <span className="btn-text">{loading ? t('auth.verifying') : t('auth.verify')}</span>
               <div className="btn-loader" aria-hidden>
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">

@@ -8,7 +8,9 @@ import { getAuthToken, logout } from '../lib/auth';
 
 interface MeResponse {
   user?: {
-    id?: string; email?: string; firstName?: string; lastName?: string; phone?: string; role?: string; emailVerified?: boolean; createdAt?: string;
+    id?: string; email?: string; firstName?: string; lastName?: string; 
+    phone?: { countryCode?: string; phoneNumber?: string } | string; 
+    role?: string; emailVerified?: boolean; createdAt?: string;
     dateOfBirth?: string; address?: { street?: string; postalCode?: string; city?: string; country?: string }; employmentStatus?: string;
   };
 }
@@ -57,7 +59,13 @@ export default function PersonalInfoPage() {
         setUser(u);
         setFirstName(u.firstName || '');
         setLastName(u.lastName || '');
-        setPhone(u.phone || '');
+        
+        // Handle phone number
+        if (u.phone && typeof u.phone === 'object' && u.phone.countryCode && u.phone.phoneNumber) {
+          setPhoneCountryCode(u.phone.countryCode);
+          setPhone(u.phone.phoneNumber);
+        }
+        
         setEmploymentStatus(u.employmentStatus || '');
         const addr = u.address || {};
         setStreet(addr.street || '');
@@ -100,7 +108,12 @@ export default function PersonalInfoPage() {
           dobIso = new Date(Date.UTC(yyyy, mm - 1, dd)).toISOString();
         }
       }
+      
+      // Combine phone country code and phone number
+      const fullPhone = phone ? `${phoneCountryCode}${phone}` : '';
+      
       const payload: any = {
+        phone: fullPhone,
         dateOfBirth: dobIso,
         address: {
           street,
@@ -171,14 +184,6 @@ export default function PersonalInfoPage() {
             {loading && <div className="loading">Loading profile…</div>}
             {!loading && (
               <>
-                <section className="pi-section">
-                  <label className="field-label" htmlFor="country">Country of residence</label>
-                  <select id="country" className="themed" value={country} onChange={(e)=> setCountry(e.target.value)}>
-                    <option value="Canada">Canada</option>
-                    <option value="Vietnam">Vietnam</option>
-                    <option value="USA">United States</option>
-                  </select>
-                </section>
 
                 <section className="pi-section">
                   <h2>Personal details</h2>
@@ -239,9 +244,19 @@ export default function PersonalInfoPage() {
                       placeholder="Your phone" 
                       maxLength={10}
                       pattern="[0-9]{10}"
+                      required
                     />
                   </div>
                   {phone && <button type="button" className="link-btn" onClick={()=> alert('Change number flow TBD')}>Change phone number</button>}
+                </section>
+
+                <section className="pi-section">
+                  <label className="field-label" htmlFor="country">Country of residence</label>
+                  <select id="country" className="themed" value={country} onChange={(e)=> setCountry(e.target.value)}>
+                    <option value="Canada">Canada</option>
+                    {/* <option value="Vietnam">Vietnam</option> */}
+                    {/* <option value="USA">United States</option> */}
+                  </select>
                 </section>
 
                 <section className="pi-section">
@@ -256,8 +271,15 @@ export default function PersonalInfoPage() {
                       <option value="Quebec">Quebec</option>
                       <option value="Alberta">Alberta</option>
                       <option value="BC">British Columbia</option>
+                      <option value="Manitoba">Manitoba</option>
+                      <option value="Saskatchewan">Saskatchewan</option>
+                      <option value="Nova Scotia">Nova Scotia</option>
+                      <option value="New Brunswick">New Brunswick</option>
+                      <option value="Newfoundland and Labrador">Newfoundland and Labrador</option>
+                      <option value="Prince Edward Island">Prince Edward Island</option>
                     </select>
                   </div>
+
                 </section>
 
                 <section className="pi-section">

@@ -22,13 +22,14 @@ type TransactionHistory = {
 };
 
 export default function Transfer() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   // Transaction history
   const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState<boolean>(true);
   
   // Bank selection
   const [selectedBank, setSelectedBank] = useState<string>('');
+  const [customBankName, setCustomBankName] = useState<string>('');
   const [bankDropdownOpen, setBankDropdownOpen] = useState<boolean>(false);
   
   const vietnameseBanks = [
@@ -39,6 +40,7 @@ export default function Transfer() {
     { value: 'acb', label: 'ACB', icon: '/bank-icons/acb.png' },
     { value: 'vietinbank', label: 'VietinBank', icon: '/bank-icons/vietinbank.png' },
     { value: 'shinhan', label: 'Shinhan Bank', icon: '/bank-icons/shinhan.png' },
+    { value: 'Others', label: 'Others', icon: undefined },
   ];
   
   // Fee rules
@@ -127,12 +129,23 @@ export default function Transfer() {
   const [submitting, setSubmitting] = useState(false);
   const [transferMethod, setTransferMethod] = useState<string>('e-transfer');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  // Multi-step flow: 1=Recipient, 2=Amount, 3=Payment Method, 3.5=Receiver Details, 4=Review
+  // Multi-step flow: 1=Recipient, 2=Amount, 3=Payment Method (with substeps 3.1 and 3.2), 4=Review
   const [step, setStep] = useState<number>(1);
-  const [subStep, setSubStep] = useState<number>(0); // 0 or 1 for half-steps within step 3
-  // Recipient phone
+  const [subStep, setSubStep] = useState<number>(0); // Substep within step 3 (0=payment, 1=receiver)
+  // Recipient info
   const [recipientPhoneCode, setRecipientPhoneCode] = useState<string>('+84');
   const [recipientPhone, setRecipientPhone] = useState<string>('');
+  const [recipientName, setRecipientName] = useState<string>('');
+  const [recipientAccountNumber, setRecipientAccountNumber] = useState<string>('');
+  const [transferContent, setTransferContent] = useState<string>('');
+  // Bank transfer details (wire transfer) - SAFE to store
+  const [bankAccountNumber, setBankAccountNumber] = useState<string>('');
+  const [bankTransitNumber, setBankTransitNumber] = useState<string>('');
+  const [bankInstitutionNumber, setBankInstitutionNumber] = useState<string>('');
+  // Draft restoration indicator
+  const [draftRestored, setDraftRestored] = useState(false);
+  // Flag to prevent saving during initial restoration
+  const [isRestoringFromDraft, setIsRestoringFromDraft] = useState(true);
 
   // Customer-specific extra margin based on amountFrom (CAD)
   // Rules:
@@ -150,19 +163,119 @@ export default function Transfer() {
   // Effective rate used for calculations = base backend rate (includes +200 margin) + customer extra margin
   const effectiveRate = useMemo(() => (typeof rate === 'number' ? Number(rate) + Number(extraMargin) : null), [rate, extraMargin]);
 
-  // Persist step in localStorage
+  // ============================================
+  // SAFE DATA PERSISTENCE (localStorage)
+  // ============================================
+  // Save non-sensitive form data to localStorage
+  // SECURITY: NEVER save card details (card number, CVV, expiration)
   useEffect(() => {
-    try { localStorage.setItem('transfer.step', String(step)); } catch {}
-  }, [step]);
+    // Don't save during initial restoration to avoid overwriting the draft
+    if (isRestoringFromDraft) return;
+    
+    try {
+      const transferDraft = {
+        step,
+        amountFrom,
+        amountTo,
+        transferMethod,
+        recipientPhoneCode,
+        recipientPhone,
+        recipientName,
+        recipientAccountNumber,
+        transferContent,
+        selectedBank,
+        customBankName,
+        // Bank transfer info (wire) - SAFE to store
+        bankAccountNumber,
+        bankTransitNumber,
+        bankInstitutionNumber,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('transfer.draft', JSON.stringify(transferDraft));
+    } catch (error) {
+      console.warn('Failed to save transfer draft:', error);
+    }
+  }, [step, amountFrom, amountTo, transferMethod, recipientPhoneCode, recipientPhone, recipientName, recipientAccountNumber, transferContent, selectedBank, customBankName, bankAccountNumber, bankTransitNumber, bankInstitutionNumber, isRestoringFromDraft]);
+
+  // Restore form data from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('transfer.step');
-      if (saved) {
-        const n = parseInt(saved, 10);
-        if (!isNaN(n) && n >= 1 && n <= 4) setStep(n);
+      
+      const saved = localStorage.getItem('transfer.draft');
+      
+      // If no draft exists, start fresh at step 1
+      if (!saved) {
+        setStep(1);
+        setIsRestoringFromDraft(false); // Done restoring
+        return;
       }
-    } catch {}
-  }, []);
+      
+      const draft = JSON.parse(saved);
+      const timestamp = new Date(draft.timestamp);
+      const hoursSinceLastEdit = (Date.now() - timestamp.getTime()) / (1000 * 60 * 60);
+      
+      // Clear old drafts (4+ hours)
+      if (hoursSinceLastEdit >= 4) {
+        localStorage.removeItem('transfer.draft');
+        setStep(1);
+        setIsRestoringFromDraft(false); // Done restoring
+        return;
+      }
+      
+      // Restore all form data (non-sensitive only)
+      if (draft.amountFrom) setAmountFrom(draft.amountFrom);
+      if (draft.amountTo) setAmountTo(draft.amountTo);
+      if (draft.transferMethod) setTransferMethod(draft.transferMethod);
+      if (draft.recipientPhoneCode) setRecipientPhoneCode(draft.recipientPhoneCode);
+      if (draft.recipientPhone) setRecipientPhone(draft.recipientPhone);
+      if (draft.recipientName) setRecipientName(draft.recipientName);
+      if (draft.recipientAccountNumber) setRecipientAccountNumber(draft.recipientAccountNumber);
+      if (draft.transferContent) setTransferContent(draft.transferContent);
+      if (draft.selectedBank) setSelectedBank(draft.selectedBank);
+      if (draft.customBankName) setCustomBankName(draft.customBankName);
+      
+      // Restore bank transfer details (wire) - SAFE to store
+      if (draft.bankAccountNumber) setBankAccountNumber(draft.bankAccountNumber);
+      if (draft.bankTransitNumber) setBankTransitNumber(draft.bankTransitNumber);
+      if (draft.bankInstitutionNumber) setBankInstitutionNumber(draft.bankInstitutionNumber);
+      
+      // Restore to the exact step where they left off
+      // Security rule: Never restore to step 4 (review) - requires fresh validation
+      // Maximum step allowed to restore is step 3
+      
+      const savedStep = draft.step || 1;
+      
+      // If they were at step 4 (review), take them back to step 3 (payment method)
+      if (savedStep === 4) {
+        setStep(3);
+      } else {
+        // Otherwise restore exactly where they were (1, 2, or 3)
+        setStep(savedStep);
+      }
+      
+      // Show restoration notification
+      setDraftRestored(true);
+      setTimeout(() => setDraftRestored(false), 8000);
+      
+      // Allow saving from now on
+      setIsRestoringFromDraft(false);
+      
+    } catch (error) {
+      console.warn('Failed to restore transfer draft:', error);
+      // On error, start fresh
+      setStep(1);
+      setIsRestoringFromDraft(false); // Done restoring
+    }
+  }, []); // Only run on mount
+
+  // Clear draft after successful submission
+  const clearTransferDraft = () => {
+    try {
+      localStorage.removeItem('transfer.draft');
+    } catch (error) {
+      console.warn('Failed to clear transfer draft:', error);
+    }
+  };
 
   // Auto-calc receive amount (CAD -> VND)
   useEffect(() => {
@@ -236,8 +349,98 @@ export default function Transfer() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await new Promise(r => setTimeout(r, 800));
-      alert('Transfer submitted (placeholder)');
+
+      // Ensure we have a valid exchange rate
+      const finalExchangeRate = effectiveRate || rate || 0;
+      
+      if (!finalExchangeRate || finalExchangeRate <= 0) {
+        alert('Exchange rate is not available. Please refresh the page and try again.');
+        setSubmitting(false);
+        return;
+      }
+      
+      // Prepare request data
+      const requestData = {
+        userId: user?.id,
+        userEmail: user?.email,
+        userPhone: {
+          countryCode: recipientPhoneCode,
+          phoneNumber: recipientPhone
+        },
+        amountSent: parseFloat(amountFrom.replace(/,/g, '')),
+        amountReceived: parseFloat(amountTo.replace(/,/g, '')),
+        exchangeRate: finalExchangeRate,
+        currencyFrom: 'CAD',
+        currencyTo: 'VND',
+        transferFee: 0, // Calculate based on your fee structure
+        sendingMethod: {
+          type: transferMethod,
+          // Include bank transfer details if wire transfer
+          ...(transferMethod === 'wire' && {
+            bankTransfer: {
+              institutionNumber: bankInstitutionNumber,
+              transitNumber: bankTransitNumber,
+              accountNumber: bankAccountNumber
+            }
+          })
+        },
+        recipientBank: {
+          bankName: selectedBank === 'Others' ? customBankName : selectedBank,
+          accountNumber: recipientAccountNumber,
+          accountHolderName: recipientName,
+          transferContent: transferContent
+        },
+        termAndServiceAccepted: agreedToTerms
+      };
+
+
+      // Submit to backend
+      const response = await fetch('http://localhost:5000/api/requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      console.log('Response status:', response.status);
+
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || 'Failed to submit transfer request');
+      }
+
+      // Clear the draft after successful submission
+      clearTransferDraft();
+      
+      // Reset form
+      setStep(1);
+      setSubStep(0);
+      setAmountFrom('');
+      setAmountTo('');
+      setTransferMethod('e-transfer');
+      setRecipientPhoneCode('+84');
+      setRecipientPhone('');
+      setRecipientName('');
+      setRecipientAccountNumber('');
+      setTransferContent('');
+      setSelectedBank('');
+      setCustomBankName('');
+      setBankAccountNumber('');
+      setBankTransitNumber('');
+      setBankInstitutionNumber('');
+      setAgreedToTerms(false);
+      setDraftRestored(false);
+
+      // Redirect to receipt page with hash
+      window.location.href = `/transfers/receipt/${data.receiptHash}`;
+
+    } catch (error: any) {
+      console.error('Transfer submission error:', error);
+      alert(`Failed to submit transfer: ${error.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -299,6 +502,36 @@ export default function Transfer() {
             </section>
 
             <main className="main-content lt-md2:!pt-[46px] lt-md2:!pb-[36px] lt-md2:!px-[18px]">
+              {/* Draft restored notification - only show if step > 1 */}
+              {draftRestored && step > 1 && (
+                <div className="alert alert-info d-flex align-items-center mb-4 mx-auto" style={{ maxWidth: '860px' }} role="alert">
+                  <svg 
+                    width="24" 
+                    height="24" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="me-2"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <div className="flex-grow-1">
+                    <strong>Welcome back!</strong>Please continue where you are left off!
+                  </div>
+                  <button 
+                    type="button" 
+                    className="btn-close ms-2" 
+                    onClick={() => setDraftRestored(false)}
+                    aria-label="Close"
+                  ></button>
+                </div>
+              )}
+              
               {/* Progress bar + Back */}
               <div className="progress lt-phone:!py-[6px] lt-phone:!pr-[6px] lt-phone:!pl-[88px] lt-phone:!min-h-[40px]" role="region" aria-label="Transfer progress">
                 <button 
@@ -795,15 +1028,36 @@ export default function Transfer() {
                               <div className="form-group two-col wire lt-phone:!grid-cols-1">
                                 <div>
                                   <label>Account #</label>
-                                  <input type="text" name="senderBankAccount" placeholder="e.g., 0123498765" required />
+                                  <input 
+                                    type="text" 
+                                    name="senderBankAccount" 
+                                    placeholder="e.g., 0123498765" 
+                                    value={bankAccountNumber}
+                                    onChange={(e) => setBankAccountNumber(e.target.value)}
+                                    required 
+                                  />
                                 </div>
                                 <div>
                                   <label>Transit Number</label>
-                                  <input type="text" name="senderTransitNumber" placeholder="e.g., 012" required />
+                                  <input 
+                                    type="text" 
+                                    name="senderTransitNumber" 
+                                    placeholder="e.g., 012" 
+                                    value={bankTransitNumber}
+                                    onChange={(e) => setBankTransitNumber(e.target.value)}
+                                    required 
+                                  />
                                 </div>
                                 <div>
                                   <label>Institution Number</label>
-                                  <input type="text" name="senderInstitutionNumber" placeholder="e.g., 01234" required />
+                                  <input 
+                                    type="text" 
+                                    name="senderInstitutionNumber" 
+                                    placeholder="e.g., 01234" 
+                                    value={bankInstitutionNumber}
+                                    onChange={(e) => setBankInstitutionNumber(e.target.value)}
+                                    required 
+                                  />
                                 </div>
                               </div>
                             )}
@@ -842,7 +1096,14 @@ export default function Transfer() {
 
                         <div className="form-group">
                           <label>Recipient Full Name</label>
-                          <input type="text" name="receiverName" placeholder="Recipient Full Name" required />
+                          <input 
+                            type="text" 
+                            name="receiverName" 
+                            placeholder="Recipient Full Name" 
+                            value={recipientName}
+                            onChange={(e) => setRecipientName(e.target.value)}
+                            required 
+                          />
                         </div>
 
                         <div className="form-group">
@@ -874,7 +1135,7 @@ export default function Transfer() {
 
                         <div className="form-group">
                           <label>Receiver Bank:</label>
-                          <div className="custom-bank-select">
+                          <div className={`custom-bank-select ${bankDropdownOpen ? 'dropdown-open' : ''}`}>
                             <button
                               type="button"
                               className="bank-select-trigger"
@@ -882,12 +1143,18 @@ export default function Transfer() {
                             >
                               {selectedBank ? (
                                 <div className="bank-option-display">
-                                  <img 
-                                    src={vietnameseBanks.find(b => b.value === selectedBank)?.icon} 
-                                    alt=""
-                                    className="bank-icon"
-                                  />
-                                  <span>{vietnameseBanks.find(b => b.value === selectedBank)?.label}</span>
+                                  {selectedBank === 'Others' ? (
+                                    <span>{customBankName || 'Others'}</span>
+                                  ) : (
+                                    <>
+                                      <img 
+                                        src={vietnameseBanks.find(b => b.value === selectedBank)?.icon} 
+                                        alt=""
+                                        className="bank-icon"
+                                      />
+                                      <span>{vietnameseBanks.find(b => b.value === selectedBank)?.label}</span>
+                                    </>
+                                  )}
                                 </div>
                               ) : (
                                 <span className="placeholder">Select a Bank</span>
@@ -908,26 +1175,61 @@ export default function Transfer() {
                                     onClick={() => {
                                       setSelectedBank(bank.value);
                                       setBankDropdownOpen(false);
+                                      if (bank.value !== 'Others') {
+                                        setCustomBankName(''); // Clear custom name if not Others
+                                      }
                                     }}
                                   >
-                                    <img src={bank.icon} alt="" className="bank-icon" />
+                                    {bank.icon ? (
+                                      <img src={bank.icon} alt="" className="bank-icon" />
+                                    ) : (
+                                      <span className="bank-icon-placeholder"></span>
+                                    )}
                                     <span>{bank.label}</span>
                                   </button>
                                 ))}
                               </div>
                             )}
                           </div>
-                          <input type="hidden" name="receiverBank" value={selectedBank} required />
+                          <input type="hidden" name="receiverBank" value={selectedBank === 'Others' ? customBankName : selectedBank} required />
                         </div>
+
+                        {/* Show custom bank name input if "Others" is selected */}
+                        {selectedBank === 'Others' && (
+                          <div className="form-group">
+                            <label>Bank Name</label>
+                            <input 
+                              type="text" 
+                              name="customBankName" 
+                              placeholder="Enter bank name" 
+                              value={customBankName}
+                              onChange={(e) => setCustomBankName(e.target.value)}
+                              required 
+                            />
+                          </div>
+                        )}
 
                         <div className="form-group">
                           <label>Account #</label>
-                          <input type="text" name="receiverBankAccount" placeholder="Account Number" required />
+                          <input 
+                            type="text" 
+                            name="receiverBankAccount" 
+                            placeholder="Account Number" 
+                            value={recipientAccountNumber}
+                            onChange={(e) => setRecipientAccountNumber(e.target.value)}
+                            required 
+                          />
                         </div>
 
                         <div className="form-group">
                           <label>Content</label>
-                          <input type="text" name="transferContent" placeholder="Message to recipient (Optional)" />
+                          <input 
+                            type="text" 
+                            name="transferContent" 
+                            placeholder="Message to recipient (Optional)" 
+                            value={transferContent}
+                            onChange={(e) => setTransferContent(e.target.value)}
+                          />
                         </div>
                       </div>
                     </section>
@@ -984,6 +1286,9 @@ export default function Transfer() {
                         return <div><strong>They receive:</strong> {amountTo || '0'} VNĐ</div>;
                       })()}
                       <div><strong>Method:</strong> {transferMethod}</div>
+                      <div><strong>Recipient:</strong> {recipientName || '-'}</div>
+                      <div><strong>Bank:</strong> {selectedBank === 'Others' ? customBankName || 'Others' : selectedBank}</div>
+                      <div><strong>Account #:</strong> {recipientAccountNumber || '-'}</div>
                     </div>
                     
                     <div className="form-group checkbox-row">

@@ -33,7 +33,7 @@
     "firstName": "Tên",
     "lastName": "Họ",
     "confirmPassword": "Xác nhận mật khẩu",
-    "referralCode": "Mã giới thiệu (Tùy chọn)",
+    "referralCode": "Mã giới thiệu (Nếu Có)",
     "createNewAccount": "Tạo tài khoản mới",
     "creating": "Đang tạo...",
     "accountCreated": "Tài khoản đã được tạo!",
