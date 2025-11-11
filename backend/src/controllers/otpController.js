@@ -102,7 +102,7 @@ exports.requestPhoneOtp2 = async (req, res) => {
     if (user.phoneVerified) return res.json({ ok:true, message:'Already verified' });
 
     const { code, ttl } = await issueOtp(user.id, 'phone-verify', OTP_LENGTH);
-    // TODO: integrate SMS provider; for now log in dev
+    // integrate SMS provider; for now log in dev
     const devSkip = (process.env.SMS_DEV_MODE || 'true').toLowerCase() === 'true';
     if (devSkip) {
       console.log('[OTP][PHONE][DEV] Code for', user.phone, '=>', code);
@@ -154,7 +154,7 @@ exports.requestPhoneOtp = async (req, res) => {
 
   const code = generateNumericOtp(OTP_LENGTH);
   const otpToken = createOtpToken(user.id, 'phone', code);
-    // TODO: integrate SMS provider (Twilio, etc.)
+    // integrate SMS provider (Twilio, etc.)
     console.log('[OTP][PHONE] Code for', user.phone, '=>', code);
   return res.json({ ok:true, message:'OTP sent', destination: maskDestination(user.phone), expiresIn: OTP_TTL_SECONDS, otpToken });
   } catch (e) {
