@@ -159,11 +159,11 @@ export default function Transfer() {
   // Rules:
   // - amount < 300 CAD => +0 VND
   // - amount >= 300 and < 1000 => +50 VND
-  // - amount >= 1000 => + 150 VND
+  // - amount >= 1000 => + 100 VND
   const extraMargin = useMemo(() => {
     const val = parseFloat((amountFrom || '').toString());
     if (isNaN(val) || val <= 0) return 0;
-    if (val >= 1000) return 150;
+    if (val >= 1000) return 100;
     if (val >= 300) return 50;
     return 0;
   }, [amountFrom]);
@@ -516,7 +516,7 @@ export default function Transfer() {
                   <ul className="rate-modal-list">
                     <li>Send less than $300 CAD → Standard rate</li>
                     <li>Send $300 - $999 CAD → Extra <strong>+50 VND/CAD</strong></li>
-                    <li>Send $1,000+ CAD → Extra <strong>+150 VND/CAD</strong> with no transfer fee applied!</li>
+                    <li>Send $1,000+ CAD → Extra <strong>+100 VND/CAD</strong> with no transfer fee applied!</li>
                   </ul>
                   <p className="rate-modal-p">Your current bonus: <strong>+{extraMargin} VND</strong></p>
                   <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
@@ -566,7 +566,7 @@ export default function Transfer() {
                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
                   </svg>
                   <div className="flex-grow-1">
-                    <strong>Welcome back!</strong>Please continue where you are left off!
+                    <strong>Welcome back!</strong> Continue where you are left off!
                   </div>
                   <button 
                     type="button" 
@@ -737,7 +737,7 @@ export default function Transfer() {
                           {rate && (
                             <span className="label-inline-info">
 
-                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate + 150)} VND <strong>Best Rate</strong>
+                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate + 100)} VND <strong>Best Rate</strong>
                               <button
                                 type="button"
                                 aria-label="Rate details"

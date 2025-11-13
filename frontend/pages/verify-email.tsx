@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { getAuthToken } from '../lib/auth';
 import { useLanguage } from '../context/LanguageContext';
+import RequireAuth from '../components/RequireAuth';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -14,53 +15,80 @@ export default function VerifyEmailPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [statusType, setStatusType] = useState<'success' | 'error' | null>(null);
   const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [showCodeInput, setShowCodeInput] = useState(false);
+
+  // Check and restore countdown from localStorage
+  useEffect(() => {
+    const checkCountdown = () => {
+      try {
+        const expiryStr = localStorage.getItem('otp_request_expiry');
+        if (expiryStr) {
+          const expiryTime = parseInt(expiryStr, 10);
+          const now = Date.now();
+          if (expiryTime > now) {
+            const remaining = Math.ceil((expiryTime - now) / 1000);
+            setCountdown(remaining);
+            // Ensure the OTP input remains visible while countdown is active (e.g., after refresh)
+            setShowCodeInput(true);
+          } else {
+            localStorage.removeItem('otp_request_expiry');
+          }
+        }
+      } catch {}
+    };
+    checkCountdown();
+  }, []);
+
+  // Countdown timer
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          try {
+            localStorage.removeItem('otp_request_expiry');
+          } catch {}
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   useEffect(() => {
-    // Check if user is already verified and redirect to dashboard
+    // Check user's email verification status from database
     (async () => {
       try {
         const token = getAuthToken();
         if (token) {
           const resp = await fetch(`/api/users/me`, { headers: { Authorization: `Bearer ${token}` } });
           const data = await resp.json();
+          
           if (data?.user?.emailVerified) {
             // User's email is already verified, redirect to transfers
             router.replace('/transfers');
+            return;
+          }
+          
+          // User not verified - prefill email from database
+          if (data?.user?.email) {
+            setEmail(data.user.email);
+            setEmailLocked(true);
             return;
           }
         }
       } catch (e) {
         console.error('Error checking email verification status:', e);
       }
-    })();
-
-    // Prefill email: priority order => query param -> localStorage -> authenticated user
-    const qEmail = (router.query.email as string) || '';
-    if (qEmail) {
-      setEmail(qEmail);
-      setEmailLocked(true);
-      try { localStorage.setItem('pending_verify_email', qEmail); } catch {}
-      return;
-    }
-    try {
-      const stored = localStorage.getItem('pending_verify_email');
-      if (stored) {
-        setEmail(stored);
+      
+      // No authenticated user - check for email in query param
+      const qEmail = (router.query.email as string) || '';
+      if (qEmail) {
+        setEmail(qEmail);
         setEmailLocked(true);
-        return;
       }
-    } catch {}
-    // Fallback to authenticated user's email
-    (async () => {
-      try {
-        const token = getAuthToken();
-        const resp = await fetch(`/api/users/me`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
-        const data = await resp.json();
-        if (data?.user?.email) {
-          setEmail(data.user.email);
-          setEmailLocked(true);
-        }
-      } catch {}
     })();
   }, [router.query.email]);
 
@@ -81,11 +109,20 @@ export default function VerifyEmailPage() {
         await router.replace('/dashboard');
         return;
       }
-      
-      if (!resp.ok || !data?.otpToken) throw new Error(data?.message || t('auth.failedToRequestCode'));
-      setOtpToken(data.otpToken);
+
+      // Consider any 2xx response as success for showing OTP input (backend may omit otpToken)
+      if (!resp.ok) throw new Error(data?.message || t('auth.failedToRequestCode'));
+      setOtpToken(String(data?.otpToken || ''));
       setStatus(t('auth.codeSent'));
       setStatusType('success');
+      setShowCodeInput(true);
+
+      // Set 60-second countdown and save expiry to localStorage
+      const expiryTime = Date.now() + 60000; // 60 seconds
+      try {
+        localStorage.setItem('otp_request_expiry', expiryTime.toString());
+      } catch {}
+      setCountdown(60);
     } catch (e: any) {
       setStatus(e?.message || t('auth.failedToRequestCode'));
       setStatusType('error');
@@ -113,7 +150,7 @@ export default function VerifyEmailPage() {
       }
       
       if (!resp.ok) throw new Error(data?.message || t('auth.verificationFailed'));
-      try { localStorage.removeItem('pending_verify_email'); } catch {}
+      
       const next = (router.query.next as string) || '/';
       await router.replace(next);
     } catch (e: any) {
@@ -125,7 +162,7 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <>
+    <RequireAuth>
       <Head>
         <title>{t('auth.verifyEmail')}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -176,8 +213,10 @@ export default function VerifyEmailPage() {
               <label htmlFor="email">{t('auth.emailAddress')}</label>
               <span className="input-border" />
             </div>
-            <button className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} onClick={request} disabled={loading || !email}>
-              <span className="btn-text">{loading ? t('auth.sending') : t('auth.sendCode')}</span>
+            <button className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} onClick={request} disabled={loading || !email || countdown > 0}>
+              <span className="btn-text">
+                {loading ? t('auth.sending') : countdown > 0 ? `${countdown}s` : t('auth.sendCode')}
+              </span>
               <div className="btn-loader" aria-hidden>
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                   <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />
@@ -188,30 +227,34 @@ export default function VerifyEmailPage() {
               </div>
             </button>
 
-            <div className="input-group">
-              <input
-                id="code"
-                placeholder=" "
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-              />
-              <label htmlFor="code">{t('auth.sixDigitCode')}</label>
-              <span className="input-border" />
-            </div>
-            <button className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} onClick={verify} disabled={loading || !code}>
-              <span className="btn-text">{loading ? t('auth.verifying') : t('auth.verify')}</span>
-              <div className="btn-loader" aria-hidden>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />
-                  <path d="M16 9a7 7 0 01-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <animateTransform attributeName="transform" type="rotate" dur="1s" values="0 9 9;360 9 9" repeatCount="indefinite" />
-                  </path>
-                </svg>
-              </div>
-            </button>
+            {showCodeInput && (
+              <>
+                <div className="input-group">
+                  <input
+                    id="code"
+                    placeholder=" "
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                  />
+                  <label htmlFor="code">{t('auth.sixDigitCode')}</label>
+                  <span className="input-border" />
+                </div>
+                <button className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} onClick={verify} disabled={loading || !code}>
+                  <span className="btn-text">{loading ? t('auth.verifying') : t('auth.verify')}</span>
+                  <div className="btn-loader" aria-hidden>
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                      <path d="M16 9a7 7 0 01-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <animateTransform attributeName="transform" type="rotate" dur="1s" values="0 9 9;360 9 9" repeatCount="indefinite" />
+                      </path>
+                    </svg>
+                  </div>
+                </button>
+              </>
+            )}
 
             {status && (
               <div className={`status ${statusType || 'success'}`} role="status" aria-live="polite">{status}</div>
@@ -219,6 +262,6 @@ export default function VerifyEmailPage() {
           </div>
         </div>
       </div>
-    </>
+    </RequireAuth>
   );
 }

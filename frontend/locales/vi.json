@@ -12,8 +12,10 @@
     "back": "Quay lại",
     "next": "Tiếp theo",
     "loading": "Đang tải...",
+    "sending": "Đang gửi…",
     "error": "Lỗi tải trang",
-    "success": "Thành công"
+    "success": "Thành công",
+    "backToLogin": "Quay lại đăng nhập"   
   },
   "auth": {
     "welcome": "Chào mừng! Vui lòng đăng nhập để tiếp tục",
@@ -43,6 +45,11 @@
     "verifyEmailSubtitle": "Chúng tôi sẽ gửi mã 6 chữ số đến hộp thư của bạn",
     "sendCode": "Gửi mã",
     "sending": "Đang gửi…",
+    "resetYourPassword": "Đặt lại mật khẩu",
+    "resetPasswordIntro": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi liên kết đặt lại mật khẩu",
+    "checkYourEmail": "Vui lòng kiểm tra địa chỉ email",
+    "resetEmailSent": "Nếu có tài khoản với email đó, chúng tôi đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra hộp thư đến.",
+    "sendReset": "Gửi liên kết đặt lại",
     "sixDigitCode": "Mã xác minh 6 chữ số",
     "verify": "Xác minh",
     "verifying": "Đang xác minh…",

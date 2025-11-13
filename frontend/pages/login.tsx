@@ -21,11 +21,21 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
   const [errors, setErrors] = useState<{
     email?: string;
     phone?: string;
     password?: string;
   }>({});
+
+  // Check for OAuth errors in query params
+  useEffect(() => {
+    if (router.query.error === 'oauth_failed') {
+      setOauthError('Google sign-in failed. Please try again.');
+    } else if (router.query.error === 'auth_processing_failed') {
+      setOauthError('Authentication processing failed. Please try again.');
+    }
+  }, [router.query.error]);
 
   // If user is already authenticated, redirect away from /login
   useEffect(() => {
@@ -78,6 +88,11 @@ export default function LoginPage() {
       });
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
+        // Show specific error for Google-only accounts
+        if (resp.status === 403 && data?.message?.includes('Google')) {
+          setErrors({ email: data.message, password: '' });
+          return;
+        }
         throw new Error(data?.message || "Login failed");
       }
       const data = await resp.json();
@@ -218,6 +233,19 @@ export default function LoginPage() {
             <h1>{t('auth.signIn')}</h1>
             <p>{t('auth.welcome')}</p>
           </div>
+
+          {oauthError && (
+            <div className="error-message" style={{ 
+              padding: '12px 16px', 
+              marginBottom: '16px', 
+              backgroundColor: 'var(--cui-danger-bg-subtle, #f8d7da)', 
+              color: 'var(--cui-danger-text, #842029)',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}>
+              {oauthError}
+            </div>
+          )}
 
           <form
             className="login-form auth-form"
@@ -365,7 +393,7 @@ export default function LoginPage() {
                 <a href="/register" className="forgot-link">
                   {t('common.register')}
                 </a>
-                <a href="#" className="forgot-link">
+                <a href="/forget-pass" className="forgot-link">
                   {t('auth.forgotPassword')}
                 </a>
               </div>
@@ -416,7 +444,7 @@ export default function LoginPage() {
             <button
               type="button"
               className="social-btn"
-              onClick={() => alert("Google OAuth coming soon")}
+              onClick={() => { window.location.href = '/api/auth/google' }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
                 <path

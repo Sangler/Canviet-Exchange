@@ -5,6 +5,7 @@ import { useColorModes } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilMoon, cilSun } from '@coreui/icons';
 import { useLanguage } from '../context/LanguageContext';
+import { setAuthToken } from '../lib/auth';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -77,9 +78,13 @@ export default function RegisterPage() {
         const data = await resp.json().catch(() => ({}));
         throw new Error(data?.message || 'Registration failed');
       }
+      const data = await resp.json();
+      const { token } = data;
+      if (token) {
+        // Store token in sessionStorage (non-persistent like login without "remember me")
+        setAuthToken(token, { persistent: false });
+      }
       setSuccess(true);
-      // Do NOT auto-send email OTP; redirect to verify-email with prefilled email
-      try { localStorage.setItem('pending_verify_email', email.trim()); } catch {}
       await new Promise((r) => setTimeout(r, 250));
       void router.push(`/verify-email?email=${encodeURIComponent(email.trim())}&next=/login`);
     } catch (err: any) {
@@ -164,12 +169,7 @@ export default function RegisterPage() {
                   <span className="input-border" />
                   <span className="error-message">{errors.email}</span>
                 </div>
-                {/* <div className={`input-group ${errors.phone ? 'has-error' : ''}`}>
-                  <input type="tel" id="phone" placeholder=" " required value={phone} onChange={(e) => setPhone(e.target.value)} />
-                  <label htmlFor="phone">Phone number</label>
-                  <span className="input-border" />
-                  <span className="error-message">{errors.phone}</span>
-                </div> */}
+
                 <button type="submit" className={`submit-btn submit-btn--accent ${loading ? 'loading' : ''}`} disabled={loading}>
                   <span className="btn-text">{loading ? t('common.next') : t('auth.createNewAccount')}</span>
                   <div className="btn-loader" aria-hidden>
@@ -235,7 +235,6 @@ export default function RegisterPage() {
               </>
             )}
           </form>
-
 
           <div className="alt-link">
             <span>{t('auth.alreadyHaveAccount')} </span>

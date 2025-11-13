@@ -60,7 +60,7 @@ exports.requestEmailOtp = async (req, res) => {
     }
   } catch (e) {
     console.error('requestEmailOtp2 error', e);
-    return res.status(500).json({ ok:false, message:'Internal error' });
+    return res.status(500).json({ ok:false, message:'Unable to process your request. Please try again later.' });
   }
 };
 
@@ -88,7 +88,7 @@ exports.verifyEmailOtp = async (req, res) => {
     return res.json({ ok:true, message:'Email verified' });
   } catch (e) {
     console.error('verifyEmailOtp error', e);
-    return res.status(500).json({ ok:false, message:'Internal error' });
+    return res.status(500).json({ ok:false, message:'Unable to verify your code. Please try again.' });
   }
 };
 
@@ -112,7 +112,7 @@ exports.requestPhoneOtp2 = async (req, res) => {
     return res.json({ ok:true, message:'OTP sent', destination: maskDestination(user.phone), expiresIn: ttl });
   } catch (e) {
     console.error('requestPhoneOtp2 error', e);
-    return res.status(500).json({ ok:false, message:'Internal error' });
+    return res.status(500).json({ ok:false, message:'Unable to send verification code. Please try again later.' });
   }
 };
 
@@ -140,7 +140,7 @@ exports.verifyPhoneOtp2 = async (req, res) => {
     return res.json({ ok:true, message:'Phone verified' });
   } catch (e) {
     console.error('verifyPhoneOtp2 error', e);
-    return res.status(500).json({ ok:false, message:'Internal error' });
+    return res.status(500).json({ ok:false, message:'Unable to verify your code. Please try again.' });
   }
 };
 
@@ -159,7 +159,7 @@ exports.requestPhoneOtp = async (req, res) => {
   return res.json({ ok:true, message:'OTP sent', destination: maskDestination(user.phone), expiresIn: OTP_TTL_SECONDS, otpToken });
   } catch (e) {
     console.error('requestPhoneOtp error', e);
-    return res.status(500).json({ ok:false, message:'Internal error' });
+    return res.status(500).json({ ok:false, message:'Unable to send verification code. Please try again later.' });
   }
 };
 
@@ -187,6 +187,6 @@ exports.verifyPhoneOtp = async (req, res) => {
     return res.json({ ok:true, message:'Phone verified' });
   } catch (e) {
     console.error('verifyPhoneOtp error', e);
-    return res.status(500).json({ ok:false, message:'Internal error' });
+    return res.status(500).json({ ok:false, message:'Unable to verify your code. Please try again.' });
   }
 };

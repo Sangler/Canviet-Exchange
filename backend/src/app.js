@@ -44,6 +44,17 @@ app.use('/api/transfers', transfersRoutes)
 app.use('/api/requests', requestsRoutes)
 app.use('/api/fx', fxRoutes)
 
+// Compatibility redirect: if OAuth provider is configured with missing /api prefix
+app.get('/auth/google/callback', (req, res) => {
+  try {
+    const qsIndex = req.originalUrl.indexOf('?')
+    const qs = qsIndex >= 0 ? req.originalUrl.substring(qsIndex) : ''
+    return res.redirect(307, `/api/auth/google/callback${qs}`)
+  } catch (e) {
+    return res.status(404).send('Not Found')
+  }
+})
+
 // Dev-only SMTP verification endpoint
 if ((process.env.NODE_ENV || 'development') !== 'production') {
   app.get('/api/dev/smtp-verify', async (_req, res) => {
@@ -59,8 +70,8 @@ if ((process.env.NODE_ENV || 'development') !== 'production') {
 
   app.get('/api/dev/oauth-config', (_req, res) => {
     res.json({
-      googleConfigured: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
-      callbackUrl: process.env.GOOGLE_CALLBACK_URL || '/api/auth/google/callback',
+      googleConfigured: !!(process.env.GOOGLE_OAUTH_CLIENT_ID && process.env.GOOGLE_OAUTH_CLIENT_SECRET),
+      callbackUrl: process.env.GOOGLE_OAUTH_REDIRECT_URI || '/api/auth/google/callback',
       frontendUrl: process.env.FRONTEND_URL
     })
   })

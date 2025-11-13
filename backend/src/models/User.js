@@ -28,18 +28,14 @@ const userSchema = new mongoose.Schema({
     street: { type: String, lowercase: true },
     postalCode: { type: String, lowercase: true },
     city: { type: String, lowercase: true },
-    province: { type: String, lowercase: true },
+    province: { type: String },
     country: { type: String, lowercase: true }
   },
   employmentStatus: { type: String },
-  // Auth fields
-  passwordHash: { type: String, required: false }, // Optional for SSO users
-  googleId: { type: String, unique: true, sparse: true }, // Google OAuth ID
-  authProvider: { 
-    type: String, 
-    enum: ['local', 'google'], 
-    default: 'local' 
-  },
+
+  passwordHash: { type: String, required: false }, // Optional: OAuth users don't have passwords
+  authProvider: { type: String, enum: ['local', 'google'], default: 'local' }, // Track auth method
+  googleId: { type: String, unique: true, sparse: true }, // Google OAuth user ID
   emailVerified: {
     type: Boolean,
     default: false
@@ -85,7 +81,7 @@ const userSchema = new mongoose.Schema({
 
 // Explicit indexes to ensure uniqueness constraints are created in MongoDB
 userSchema.index({ email: 1 }, { unique: true })
-userSchema.index({ phone: 1 }, { unique: true, sparse: true })
+userSchema.index({ 'phone.phoneNumber': 1 }, { unique: true, sparse: true })
 userSchema.index({ googleId: 1 }, { unique: true, sparse: true })
 
 userSchema.set('toJSON', {

@@ -6,6 +6,9 @@ const {
   register,
   login,
   googleOAuth,
+  forgotPassword,
+  validateResetToken,
+  resetPassword,
 } = require("../controllers/authController");
 const { loginLimiter, registerLimiter } = require("../middleware/rateLimit");
 const {
@@ -34,11 +37,28 @@ router.get(
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: `${process.env.FRONTEND_URL}/login?error=oauth_failed`,
-    session: false,
-  }),
+  (req, res, next) => {
+    passport.authenticate("google", {
+      session: false,
+    }, (err, user, info) => {
+      if (err) {
+        console.error('Google OAuth error:', err)
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`)
+      }
+      if (!user) {
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`)
+      }
+      // Attach user to request and continue to controller
+      req.user = user
+      next()
+    })(req, res, next)
+  },
   googleOAuth
 );
+
+// Password reset routes
+router.post("/forgot-password", loginLimiter, forgotPassword);
+router.get("/reset-password/:token", validateResetToken);
+router.post("/reset-password/:token", resetPassword);
 
 module.exports = router;
