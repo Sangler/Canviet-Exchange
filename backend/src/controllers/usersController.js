@@ -80,40 +80,33 @@ exports.updateProfile = async (req, res) => {
     
     // Update phone if provided
     if (phone) {
-      // Parse phone into countryCode and phoneNumber
-      let countryCode = '';
-      let phoneNumber = '';
-      
-      if (phone.startsWith('+84')) {
-        countryCode = '+84';
-        phoneNumber = phone.substring(3);
-      } else if (phone.startsWith('+1')) {
-        countryCode = '+1';
-        phoneNumber = phone.substring(2);
-      } else {
-        // Default: extract digits and assume last 10 are phone number
-        const digits = phone.replace(/\D/g, '');
-        phoneNumber = digits.slice(-10);
-        countryCode = '+1'; // Default country code
+      // Simple parsing: frontend supplies two inputs concatenated (e.g. '+1' + '1234567890')
+      // Strategy: take only digits, and if leading '+' present use the digits before the last 10 as country code.
+      const raw = String(phone || '').trim();
+      const hasPlus = raw.startsWith('+');
+      const digits = raw.replace(/\D/g, '');
+
+      // phoneNumber is always the last 10 digits
+      const phoneNumber = digits.slice(-10);
+      let countryCode = '+1';
+
+      if (hasPlus) {
+        const ccDigits = digits.slice(0, digits.length - 10);
+        if (ccDigits.length > 0) countryCode = `+${ccDigits}`;
       }
-      
+
       // Validate phoneNumber is exactly 10 digits
-      if (phoneNumber.length !== 10) {
-        return res.status(400).json({ message: 'Phone number must be exactly 10 digits' })
+      if (!phoneNumber || phoneNumber.length !== 10) {
+        return res.status(400).json({ message: 'Phone number must be exactly 10 digits' });
       }
-      
+
       // Check if phone number is already in use by another user
-      const exists = await User.findOne({ 
-        'phone.phoneNumber': phoneNumber, 
-        _id: { $ne: userId } 
-      })
-      if (exists) return res.status(409).json({ message: 'Phone number already in use' })
-      
-      user.phone = {
-        countryCode,
-        phoneNumber
-      }
-      user.phoneVerified = false // Reset verification when phone changes
+      const exists = await User.findOne({ 'phone.phoneNumber': phoneNumber, _id: { $ne: userId } });
+      if (exists) return res.status(409).json({ message: 'Phone number already in use' });
+
+      // Persist according to schema
+      user.phone = { countryCode, phoneNumber };
+      user.phoneVerified = false; // Reset verification when phone changes
     }
     
     user.updatedAt = new Date()

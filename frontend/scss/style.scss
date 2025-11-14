@@ -1,3 +1,4 @@
+
 @use "@coreui/coreui/scss/coreui" as * with ( 
   $enable-deprecation-messages: false,
 );
@@ -6,6 +7,59 @@
 
 body {
   background-color: var(--cui-tertiary-bg);
+}
+
+// Shared alert styles (for all pages)
+.alert {
+  display: none;
+  min-height: 24px;
+  border-radius: 6px;
+  padding: 8px 16px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  font-size: 1rem;
+  align-items: center;
+}
+.alert.show {
+  display: block;
+}
+.alert-danger, .alert.error {
+  border: 1px solid #e57373;
+  color: #b71c1c;
+  background: #ffebee;
+  box-shadow: 0 2px 8px rgba(229,115,115,0.08);
+}
+.alert-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.alert-icon {
+  margin-right: 6px;
+}
+
+/* ---- Google Maps container and place picker ---- */
+.google-maps-container {
+  margin-bottom: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.place-picker-container {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+gmpx-place-picker {
+  width: 100%;
+  max-width: 400px;
+}
+
+gmp-map {
+  border-radius: 8px;
 }
 
 /* ---- Shared auth container and background ---- */
@@ -166,6 +220,7 @@ body {
   outline: none;
   box-shadow: 0 0 0 3px rgba(0,179,164,0.35), 0 10px 24px rgba(0,179,164,0.25);
 }
+
 
 /* ---- Shared helpers ---- */
 .divider { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; color: #64748b !important; font-size: 12px; }

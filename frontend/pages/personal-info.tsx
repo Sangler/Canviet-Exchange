@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useColorModes } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilSun, cilMoon } from '@coreui/icons';
 import Head from 'next/head';
+import Script from 'next/script';
 import RequireAuth from '../components/RequireAuth';
 import { getAuthToken, logout } from '../lib/auth';
 
@@ -15,13 +16,13 @@ interface MeResponse {
   };
 }
 
-export default function PersonalInfoPage() {
+export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) {
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<MeResponse['user'] | null>(null);
   // Form state (prefill with user once loaded)
-  const [country, setCountry] = useState<string>('');
+  const [country, setCountry] = useState<string>('Canada');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [preferredName, setPreferredName] = useState('');
@@ -34,6 +35,20 @@ export default function PersonalInfoPage() {
   const [province, setProvince] = useState('');
   const [employmentStatus, setEmploymentStatus] = useState('');
   const [saving, setSaving] = useState(false);
+  const errorRef = useRef<HTMLDivElement | null>(null);
+
+  const surfaceError = useCallback((message: string) => {
+    console.log('[surfaceError] called with:', message);
+    setError(message);
+    setTimeout(() => {
+      console.log('[surfaceError] error state after setError:', errorRef.current, message);
+    }, 100);
+    try {
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch {
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* ignore */ }
+    }
+  }, []);
 
   useEffect(() => {
     // Restore saved theme with light as default fallback
@@ -72,40 +87,10 @@ export default function PersonalInfoPage() {
         setCity(addr.city || '');
         setPostalCode(addr.postalCode || '');
         setCountry(addr.country || 'Canada');
-        // Auto-select province by comparing DB value with option values.
-        const dbProv = (addr.province || '').toString();
-        if (dbProv) {
-          // List of option values present in the select (as rendered in this component)
-          const optionValues = [
-            'Ontario','Quebec','Alberta','British Columbia','Manitoba','Saskatchewan','Nova Scotia','New Brunswick','Newfoundland and Labrador','Prince Edward Island'
-          ];
-
-          // Direct exact match
-          if (optionValues.includes(dbProv)) {
-            setProvince(dbProv);
-          } else {
-            // Case-insensitive match
-            const found = optionValues.find(o => o.toLowerCase() === dbProv.toLowerCase());
-            if (found) {
-              setProvince(found);
-            } else {
-              // Basic normalization and common-name mapping (e.g., 'British Columbia' -> 'BC')
-              const norm = dbProv.toLowerCase().trim();
-              const mappings: Record<string,string> = {
-                'british columbia': 'British Columbia',
-                'bc': 'British Columbia',
-                'newfoundland & labrador': 'Newfoundland and Labrador',
-                'newfoundland and labrador': 'Newfoundland and Labrador',
-                'prince edward island': 'Prince Edward Island',
-                'nova scotia': 'Nova Scotia'
-              };
-              if (mappings[norm]) setProvince(mappings[norm]);
-              else setProvince(dbProv); // fallback: keep DB value (will appear as non-matching value)
-            }
-          }
-        } else {
-          setProvince('');
-        }
+        // Normalize province/state values coming from the DB to friendly display names.
+        // Clear province on load so Google Places autocomplete will populate it when the user selects an address.
+        // If you prefer to preserve DB values, replace with: setProvince(addr.province || '');
+        setProvince('');
         // DOB parse to YYYY-MM-DD
         if (u.dateOfBirth) {
           const d = new Date(u.dateOfBirth);
@@ -120,12 +105,137 @@ export default function PersonalInfoPage() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [setColorMode]);
 
   // Persist theme choice
   useEffect(() => {
     try { localStorage.setItem('theme.mode', colorMode || 'light'); } catch {}
   }, [colorMode]);
+
+  // Autocomplete: address input ref
+  const addressInputRef = useRef<HTMLInputElement | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  const [scriptStatus, setScriptStatus] = useState<'pending'|'loaded'|'error'>('pending');
+
+  // Initialize Google Places Autocomplete when script is loaded.
+  // We avoid exposing a global callback and remove polling; use the Script onLoad handler instead.
+  const initCalledRef = useRef(false);
+  const retryRef = useRef(0);
+  const timeoutsRef = useRef<number[]>([]);
+
+  const initAutocompleteOnce = useCallback(() => {
+    if (initCalledRef.current) return;
+    const googleAny: any = (window as any).google;
+    if (!googleAny || !googleAny.maps || !googleAny.maps.places) {
+      // If the script failed earlier, don't retry.
+      if (scriptStatus === 'error') {
+        console.debug('[maps] scriptStatus=error, not retrying init');
+        return;
+      }
+      // Retry with exponential backoff (max 5 attempts)
+      const maxRetries = 5;
+      if (retryRef.current >= maxRetries) {
+        console.debug('[maps] init retries exhausted');
+        return;
+      }
+      const delay = 500 * Math.pow(2, retryRef.current); // 500ms, 1s, 2s, 4s, ...
+      retryRef.current += 1;
+      const t = window.setTimeout(() => {
+        try { initAutocompleteOnce(); } catch (e) { console.debug('[maps] retry init failed', e); }
+      }, delay) as unknown as number;
+      timeoutsRef.current.push(t);
+      console.debug('[maps] google not available, scheduling retry', retryRef.current, 'in', delay, 'ms');
+      return;
+    }
+    if (!addressInputRef.current) return;
+    initCalledRef.current = true;
+    try {
+      // Create map if a container exists
+      if (mapContainerRef.current && !mapRef.current) {
+        mapRef.current = new googleAny.maps.Map(mapContainerRef.current, {
+          center: { lat: 43.6532, lng: -79.3832 }, // Toronto default
+          zoom: 13,
+          mapTypeControl: false,
+        });
+      }
+
+      // Create a marker (will be positioned when a place is selected)
+      if (mapRef.current && !markerRef.current) {
+        markerRef.current = new googleAny.maps.Marker({ map: mapRef.current });
+      }
+
+      const autocomplete = new googleAny.maps.places.Autocomplete(addressInputRef.current, {
+        types: ['address'],
+        componentRestrictions: { country: country && country.length === 2 ? country : 'ca' }
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place) return;
+        // parse address components
+        const comps = place.address_components || [];
+        let streetNumber = '';
+        let route = '';
+        let cityVal = '';
+        let provinceVal = '';
+        let postal = '';
+        let countryVal = '';
+
+        comps.forEach((c: any) => {
+          const types = c.types || [];
+          if (types.includes('street_number')) streetNumber = c.long_name || '';
+          if (types.includes('route')) route = c.long_name || '';
+          if (types.includes('locality')) cityVal = c.long_name || '';
+          if (types.includes('administrative_area_level_1')) provinceVal = c.long_name || '';
+          if (types.includes('postal_code')) postal = c.long_name || '';
+          if (types.includes('country')) countryVal = c.long_name || '';
+        });
+
+        const fullStreet = `${streetNumber} ${route}`.trim() || place.formatted_address || '';
+        if (fullStreet) setStreet(fullStreet);
+        if (cityVal) setCity(cityVal);
+        if (postal) setPostalCode(postal);
+        if (provinceVal) setProvince(provinceVal);
+        if (countryVal) setCountry(countryVal);
+
+        // Update map & marker
+        try {
+          if (place.geometry) {
+            if (place.geometry.viewport && mapRef.current) {
+              mapRef.current.fitBounds(place.geometry.viewport);
+            } else if (place.geometry.location && mapRef.current) {
+              mapRef.current.setCenter(place.geometry.location);
+              mapRef.current.setZoom(17);
+            }
+            if (markerRef.current && place.geometry.location) {
+              markerRef.current.setPosition(place.geometry.location);
+              markerRef.current.setVisible(true);
+            }
+          }
+        } catch (err) {
+          // ignore map update errors
+        }
+      });
+    } catch (err) {
+      console.error('[maps] initAutocompleteOnce error', err);
+    }
+  }, [country]);
+
+  useEffect(() => {
+    // If Google is already loaded by the time this mounts, initialize immediately.
+    if ((window as any).google?.maps?.places) {
+      try { initAutocompleteOnce(); } catch (e) { console.error('[maps] init error in useEffect', e); }
+    }
+    // Cleanup any scheduled retries on unmount
+    return () => {
+      try {
+        timeoutsRef.current.forEach((t) => clearTimeout(t));
+        timeoutsRef.current = [];
+      } catch {}
+    };
+  }, [initAutocompleteOnce]);
 
   const months: string[] = [];
 
@@ -133,6 +243,14 @@ export default function PersonalInfoPage() {
     e.preventDefault();
     try {
       setSaving(true);
+      setError(null);
+      const trimmedFirst = firstName.trim();
+      const trimmedLast = lastName.trim();
+      if (!trimmedFirst || !trimmedLast) {
+        surfaceError('Please enter your legal first and last name.');
+        setSaving(false);
+        return;
+      }
       // Build payload
       let dobIso: string | undefined = undefined;
       if (dob) {
@@ -142,30 +260,80 @@ export default function PersonalInfoPage() {
           dobIso = new Date(Date.UTC(yyyy, mm - 1, dd)).toISOString();
         }
       }
+      if (!dobIso) {
+        surfaceError('Please provide your date of birth.');
+        setSaving(false);
+        return;
+      }
       
       // Combine phone country code and phone number
       const fullPhone = phone ? `${phoneCountryCode}${phone}` : '';
+
+      if (!phone || phone.length !== 10) {
+        surfaceError('Phone number must be exactly 10 digits.');
+        setSaving(false);
+        return;
+      }
+
+      const trimmedStreet = street.trim();
+      const trimmedPostal = postalCode.trim();
+      const trimmedCity = city.trim();
+      const trimmedProvince = province.trim();
+      const trimmedCountry = country.trim();
+
+      if (!trimmedStreet || !trimmedPostal || !trimmedCity || !trimmedCountry) {
+        surfaceError('Please complete your address (street, city, postal code, country).');
+        setSaving(false);
+        return;
+      }
+
+      if (!trimmedProvince) {
+        surfaceError('Please select your province.');
+        setSaving(false);
+        return;
+      }
+
+      if (!employmentStatus) {
+        surfaceError('Please choose your employment status.');
+        setSaving(false);
+        return;
+      }
       
       const payload: any = {
         phone: fullPhone,
         dateOfBirth: dobIso,
         address: {
-          street,
-          postalCode,
-          city,
-          province,
-          country,
+          street: trimmedStreet,
+          postalCode: trimmedPostal,
+          city: trimmedCity,
+          province: trimmedProvince,
+          country: trimmedCountry,
         },
         employmentStatus,
       };
       const token = getAuthToken();
+      // Debug: log outgoing payload to help diagnose 400 errors
+      try { console.debug('POST /api/users/profile payload:', payload); } catch {}
       const resp = await fetch(`/api/users/profile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
         body: JSON.stringify(payload),
       });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok || !data?.ok) throw new Error(data?.message || 'Failed to save profile');
+
+      // Attempt to parse JSON, fall back to raw text so we can show server error messages
+      let data: any = null;
+      let rawText: string | null = null;
+      try {
+        data = await resp.json();
+      } catch (jsonErr) {
+        try { rawText = await resp.text(); } catch (tErr) { rawText = null; }
+      }
+
+      if (!resp.ok || !(data && data.ok)) {
+        const serverMessage = (data && data.message) ? data.message : rawText;
+        console.error('POST /api/users/profile failed', { status: resp.status, serverMessage, data, rawText });
+        throw new Error(serverMessage || `Failed to save profile (status ${resp.status})`);
+      }
       // On success, redirect to transfers
       window.location.href = '/transfers';
     } catch (err: any) {
@@ -180,9 +348,23 @@ export default function PersonalInfoPage() {
       <>
         <Head>
           <title>Introduction</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
+        {/* Load Google Maps JS with Places library. Key is provided server-side via getServerSideProps */}
+        <Script
+          src={`https://maps.googleapis.com/maps/api/js?key=${googleKey || ''}&libraries=places`}
+          strategy="afterInteractive"
+          onLoad={() => {
+            console.debug('[maps] loaded afterInteractive (onLoad)');
+            setScriptStatus('loaded');
+            try { initAutocompleteOnce(); } catch (e) { console.error('[maps] init error onLoad', e); }
+          }}
+          onError={(err) => {
+            console.error('[maps] script failed to load', err);
+            setScriptStatus('error');
+            setError('Map failed to load. Please check your API key and referrer restrictions.');
+          }}
+        />
   <div className="auth-container bg-auth pt-10 pb-16">
     <div className="auth-card personal-info pi-card-centered">
           <a href="/transfers" className="back-btn page" aria-label="Back to transfers" title="Back">
@@ -215,7 +397,27 @@ export default function PersonalInfoPage() {
               <p className="pi-sub">We need a few details to complete your profile.</p>
             </div>
 
-            {error && <div className="alert error" role="alert">{error}</div>}
+            <div
+              className={`alert alert-danger${error ? ' show' : ''}`}
+              role="alert"
+              ref={errorRef}
+              aria-live="assertive"
+              style={{ display: error ? undefined : 'none', minHeight: 24 }}
+            >
+              <span className="alert-content">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="alert-icon" aria-hidden>
+                  <circle cx="12" cy="12" r="10" stroke="#e57373" strokeWidth="2" fill="#ffcdd2" />
+                  <path d="M12 8v4m0 4h.01" stroke="#b71c1c" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                {error}
+              </span>
+            </div>
+            {/* (debug UI removed) */}
+            {scriptStatus === 'error' && (
+              <div className="alert alert-danger" role="alert" style={{ marginBottom: 12 }}>
+                Map failed to load. Please check that your Google Maps API key allows requests from <code>http://localhost:3000/*</code> (or your dev origin). See your <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Google Cloud Console</a>.
+              </div>
+            )}
             {loading && <div className="loading">Loading profile…</div>}
             {!loading && (
               <>
@@ -225,11 +427,11 @@ export default function PersonalInfoPage() {
                   <div className="grid-1">
                     <div className="field-group">
                       <label htmlFor="firstName">Full legal first and middle name(s)</label>
-                      <input id="firstName" className="themed" value={firstName} onChange={(e)=> setFirstName(e.target.value)} />
+                      <input id="firstName" className="themed" value={firstName} onChange={(e)=> setFirstName(e.target.value)} required />
                     </div>
                     <div className="field-group">
                       <label htmlFor="lastName">Full legal last name(s)</label>
-                      <input id="lastName" className="themed" value={lastName} onChange={(e)=> setLastName(e.target.value)} />
+                      <input id="lastName" className="themed" value={lastName} onChange={(e)=> setLastName(e.target.value)} required />
                     </div>
                     <div className="field-group">
                       <label htmlFor="preferredName">Preferred name (optional) <span className="hint">ⓘ</span></label>
@@ -255,6 +457,7 @@ export default function PersonalInfoPage() {
                       onClick={(e) => {
                         try { (e.target as HTMLInputElement & { showPicker?: () => void }).showPicker?.(); } catch { /* ignore */ }
                       }}
+                      required
                     />
                   </div>
                 </section>
@@ -287,7 +490,7 @@ export default function PersonalInfoPage() {
 
                 <section className="pi-section">
                   <label className="field-label" htmlFor="country">Country of residence</label>
-                  <select id="country" className="themed" value={country} onChange={(e)=> setCountry(e.target.value)}>
+                  <select id="country" className="themed" value={country} onChange={(e)=> setCountry(e.target.value)} required>
                     <option value="Canada">Canada</option>
                     {/* <option value="Vietnam">Vietnam</option> */}
                     {/* <option value="USA">United States</option> */}
@@ -296,23 +499,15 @@ export default function PersonalInfoPage() {
 
                 <section className="pi-section">
                   <h2>Address</h2>
-                  <div className="field-group"><label htmlFor="street">Home address</label><input id="street" className="themed" value={street} onChange={(e)=> setStreet(e.target.value)} /></div>
-                  <div className="field-group"><label htmlFor="city">City</label><input id="city" className="themed" value={city} onChange={(e)=> setCity(e.target.value)} /></div>
-                  <div className="field-group"><label htmlFor="postal">Postcode</label><input id="postal" className="themed" value={postalCode} onChange={(e)=> setPostalCode(e.target.value)} /></div>
-                  <div className="field-group"><label htmlFor="province">Province</label>
-                    <select id="province" className="themed" value={province} onChange={(e)=> setProvince(e.target.value)}>
-                      <option value="">Select province</option>
-                      <option value="Ontario">Ontario</option>
-                      <option value="Quebec">Quebec</option>
-                      <option value="Alberta">Alberta</option>
-                      <option value="British Columbia">British Columbia</option>
-                      <option value="Manitoba">Manitoba</option>
-                      <option value="Saskatchewan">Saskatchewan</option>
-                      <option value="Nova Scotia">Nova Scotia</option>
-                      <option value="New Brunswick">New Brunswick</option>
-                      <option value="Newfoundland and Labrador">Newfoundland and Labrador</option>
-                      <option value="Prince Edward Island">Prince Edward Island</option>
-                    </select>
+                  <div className="field-group"><label htmlFor="street">Home address</label><input id="street" ref={addressInputRef} placeholder="Start typing your address" className="themed" value={street} onChange={(e)=> setStreet(e.target.value)} required /></div>
+                  <div className="field-group">
+                    <div ref={mapContainerRef} style={{ width: '100%', height: 260, borderRadius: 8, overflow: 'hidden', marginTop: 12 }} />
+                  </div>
+                  <div className="field-group"><label htmlFor="city">City</label><input id="city" className="themed" value={city} onChange={(e)=> setCity(e.target.value)} required /></div>
+                  <div className="field-group"><label htmlFor="postal">Postcode</label><input id="postal" className="themed" value={postalCode} onChange={(e)=> setPostalCode(e.target.value)} required /></div>
+                  <div className="field-group">
+                    <label htmlFor="province">Province / State</label>
+                    <input id="province" className="themed" value={province} onChange={(e)=> setProvince(e.target.value)} required />
                   </div>
 
                 </section>
@@ -321,7 +516,7 @@ export default function PersonalInfoPage() {
                   <h2>Additional information</h2>
                   <div className="field-group">
                     <label htmlFor="employment">Employment Status</label>
-                    <select id="employment" className="themed" value={employmentStatus} onChange={(e)=> setEmploymentStatus(e.target.value)}>
+                    <select id="employment" className="themed" value={employmentStatus} onChange={(e)=> setEmploymentStatus(e.target.value)} required>
                       <option value="">Select</option>
                       <option value="Student">Student</option>
                       <option value="Employed">Employed</option>
@@ -353,4 +548,12 @@ export default function PersonalInfoPage() {
       </>
     </RequireAuth>
   );
+}
+
+export async function getServerSideProps() {
+  return {
+    props: {
+      googleKey: process.env.GOOGLE_MAP_API_KEY || null,
+    },
+  };
 }

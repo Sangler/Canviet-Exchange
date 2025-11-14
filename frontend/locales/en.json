@@ -14,7 +14,8 @@
     "loading": "Loading...",
     "sending": "Sending…",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "backToLogin": "Back to Login"
   },
   "auth": {
     "welcome": "Welcome! Please sign in to continue",

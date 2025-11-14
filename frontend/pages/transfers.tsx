@@ -33,13 +33,13 @@ export default function Transfer() {
   const [bankDropdownOpen, setBankDropdownOpen] = useState<boolean>(false);
   
   const vietnameseBanks = [
-    { value: 'vietcombank', label: 'Vietcombank', icon: '/bank-icons/vietcombank.png' },
-    { value: 'agribank', label: 'Agribank', icon: '/bank-icons/agribank.png' },
-    { value: 'techcombank', label: 'Techcombank', icon: '/bank-icons/techcombank.png' },
-    { value: 'mb', label: 'MB Bank', icon: '/bank-icons/mb.png' },
-    { value: 'acb', label: 'ACB', icon: '/bank-icons/acb.png' },
-    { value: 'vietinbank', label: 'VietinBank', icon: '/bank-icons/vietinbank.png' },
-    { value: 'shinhan', label: 'Shinhan Bank', icon: '/bank-icons/shinhan.png' },
+    { value: 'Vietcombank', label: 'Vietcombank', icon: '/bank-icons/vietcombank.png' },
+    { value: 'Agribank', label: 'Agribank', icon: '/bank-icons/agribank.png' },
+    { value: 'Techcombank', label: 'Techcombank', icon: '/bank-icons/techcombank.png' },
+    { value: 'MB', label: 'MB Bank', icon: '/bank-icons/mb.png' },
+    { value: 'ACB', label: 'ACB', icon: '/bank-icons/acb.png' },
+    { value: 'Vietinbank', label: 'VietinBank', icon: '/bank-icons/vietinbank.png' },
+    { value: 'Shinhan', label: 'Shinhan Bank', icon: '/bank-icons/shinhan.png' },
     { value: 'Others', label: 'Others', icon: undefined },
   ];
   

@@ -62,32 +62,41 @@ export default function VerifyEmailPage() {
     (async () => {
       try {
         const token = getAuthToken();
-        if (token) {
-          const resp = await fetch(`/api/users/me`, { headers: { Authorization: `Bearer ${token}` } });
-          const data = await resp.json();
-          
-          if (data?.user?.emailVerified) {
-            // User's email is already verified, redirect to transfers
-            router.replace('/transfers');
-            return;
-          }
-          
-          // User not verified - prefill email from database
-          if (data?.user?.email) {
-            setEmail(data.user.email);
+
+        // If there is no auth token, do not call /api/users/me to avoid backend 401 noise.
+        if (!token) {
+          const qEmail = (router.query.email as string) || '';
+          if (qEmail) {
+            setEmail(qEmail);
             setEmailLocked(true);
-            return;
           }
+          return;
+        }
+
+        // Authenticated: fetch profile and react accordingly
+        const resp = await fetch(`/api/users/me`, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await resp.json();
+
+        if (data?.user?.emailVerified) {
+          // User's email is already verified, redirect to transfers
+          router.replace('/transfers');
+          return;
+        }
+
+        // User not verified - prefill email from database
+        if (data?.user?.email) {
+          setEmail(data.user.email);
+          setEmailLocked(true);
+          return;
         }
       } catch (e) {
         console.error('Error checking email verification status:', e);
-      }
-      
-      // No authenticated user - check for email in query param
-      const qEmail = (router.query.email as string) || '';
-      if (qEmail) {
-        setEmail(qEmail);
-        setEmailLocked(true);
+        // On error, fall back to query param if present
+        const qEmail = (router.query.email as string) || '';
+        if (qEmail) {
+          setEmail(qEmail);
+          setEmailLocked(true);
+        }
       }
     })();
   }, [router.query.email]);
@@ -104,14 +113,19 @@ export default function VerifyEmailPage() {
       });
       const data = await resp.json();
       
-      // Handle already verified email
-      if (data?.code === 'EMAIL_ALREADY_VERIFIED') {
-        await router.replace('/dashboard');
+      // Handle already verified email: backend may return ok + message 'Already verified'
+      const alreadyVerified = data?.code === 'EMAIL_ALREADY_VERIFIED' || (data?.ok && typeof data?.message === 'string' && data.message.toLowerCase().includes('already verified'));
+      if (alreadyVerified) {
+        // Show a friendly failure message and do not show OTP input or start countdown
+        setStatus(t('auth.failedToRequestCode'));
+        setStatusType('error');
         return;
       }
 
-      // Consider any 2xx response as success for showing OTP input (backend may omit otpToken)
+      // Consider any non-2xx response as an error
       if (!resp.ok) throw new Error(data?.message || t('auth.failedToRequestCode'));
+
+      // Treat success as OTP issued (backend may omit otpToken in some flows)
       setOtpToken(String(data?.otpToken || ''));
       setStatus(t('auth.codeSent'));
       setStatusType('success');
