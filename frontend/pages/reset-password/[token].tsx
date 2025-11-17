@@ -108,27 +108,19 @@ export default function ResetPasswordPage() {
         <div className="auth-card">
           {/* Language switcher and theme toggle */}
           <div className="top-right">
-            <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-              <a 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); setLanguage('en'); }} 
-                style={{ 
-                  textDecoration: 'none', 
-                  color: 'inherit',
-                  fontWeight: language === 'en' ? 'bold' : 'normal'
-                }}
+            <span className="inline-lang">
+              <a
+                href="#"
+                onClick={(e) => { e.preventDefault(); setLanguage('en'); }}
+                className={language === 'en' ? 'lang-link active' : 'lang-link'}
               >
                 EN
               </a>
               <span aria-hidden>|</span>
-              <a 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); setLanguage('vi'); }} 
-                style={{ 
-                  textDecoration: 'none', 
-                  color: 'inherit',
-                  fontWeight: language === 'vi' ? 'bold' : 'normal'
-                }}
+              <a
+                href="#"
+                onClick={(e) => { e.preventDefault(); setLanguage('vi'); }}
+                className={language === 'vi' ? 'lang-link active' : 'lang-link'}
               >
                 VI
               </a>
@@ -153,8 +145,8 @@ export default function ResetPasswordPage() {
           </div>
 
           {validating ? (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <div className="btn-loader" style={{ display: 'inline-block' }}>
+            <div className="text-center-pad">
+              <div className="btn-loader btn-loader-inline">
                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                   <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" opacity="0.25" />
                   <path d="M36 20a16 16 0 01-16 16" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
@@ -162,21 +154,14 @@ export default function ResetPasswordPage() {
                   </path>
                 </svg>
               </div>
-              <p style={{ marginTop: '16px', color: '#666' }}>Validating reset link...</p>
+              <p className="muted mt-12">Validating reset link...</p>
             </div>
           ) : !tokenValid ? (
-            <div style={{ 
-              background: '#fee', 
-              color: '#c33', 
-              padding: '20px', 
-              borderRadius: '8px', 
-              marginBottom: '20px',
-              textAlign: 'center'
-            }}>
-              <h3 style={{ marginTop: 0 }}>Invalid Reset Link</h3>
+            <div className="oauth-error-lg">
+              <h3 className="no-mt">Invalid Reset Link</h3>
               <p>{tokenError}</p>
-              <p style={{ marginTop: '20px' }}>
-                <a href="/forget-pass" className="submit-btn submit-btn--accent" style={{ display: 'inline-block', textDecoration: 'none' }}>
+              <p className="mt-20">
+                <a href="/forget-pass" className="submit-btn submit-btn--accent btn-inline-block">
                   Request New Link
                 </a>
               </p>
@@ -185,21 +170,12 @@ export default function ResetPasswordPage() {
             <div className="success-message" role="status" aria-live="polite">
               <h3>Password Reset Successfully!</h3>
               <p>You can now log in with your new password.</p>
-              <p style={{ color: '#666', fontSize: '14px', marginTop: '16px' }}>Redirecting to login...</p>
+              <p className="muted mt-12">Redirecting to login...</p>
             </div>
           ) : (
             <form className="auth-form" noValidate onSubmit={onSubmit}>
               {error && (
-                <div style={{ 
-                  background: '#fee', 
-                  color: '#c33', 
-                  padding: '12px', 
-                  borderRadius: '4px', 
-                  marginBottom: '16px',
-                  fontSize: '14px'
-                }}>
-                  {error}
-                </div>
+                <div className="oauth-error">{error}</div>
               )}
 
               <div className={`input-group ${error && !password ? 'has-error' : ''}`}>

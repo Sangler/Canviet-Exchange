@@ -55,14 +55,7 @@ export default function OAuthCallback() {
   }, [router, router.isReady])
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      minHeight: '100vh',
-      flexDirection: 'column',
-      gap: '1rem'
-    }}>
+    <div className="page-center-flex">
       <div>{status}</div>
       <div className="spinner" aria-label="Loading">⏳</div>
     </div>

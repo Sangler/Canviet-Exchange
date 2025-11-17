@@ -29,7 +29,15 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
   const [dob, setDob] = useState(''); // YYYY-MM-DD
   const [phone, setPhone] = useState('');
   const [phoneCountryCode, setPhoneCountryCode] = useState('+1');
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [phoneOtpCode, setPhoneOtpCode] = useState('');
+  const [otpCountdown, setOtpCountdown] = useState(0);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [showChangeNumber, setShowChangeNumber] = useState(false);
   const [street, setStreet] = useState('');
+  const [addressLine2, setAddressLine2] = useState('');
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [province, setProvince] = useState('');
@@ -81,15 +89,17 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
           setPhone(u.phone.phoneNumber);
         }
         
+        // Load phone verification status from database
+        setPhoneVerified(!!(u as any).phoneVerified);
+        
         setEmploymentStatus(u.employmentStatus || '');
         const addr = u.address || {};
         setStreet(addr.street || '');
+        setAddressLine2((addr as any).addressLine2 || '');
         setCity(addr.city || '');
         setPostalCode(addr.postalCode || '');
         setCountry(addr.country || 'Canada');
-        // Normalize province/state values coming from the DB to friendly display names.
         // Clear province on load so Google Places autocomplete will populate it when the user selects an address.
-        // If you prefer to preserve DB values, replace with: setProvince(addr.province || '');
         setProvince('');
         // DOB parse to YYYY-MM-DD
         if (u.dateOfBirth) {
@@ -111,6 +121,15 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
   useEffect(() => {
     try { localStorage.setItem('theme.mode', colorMode || 'light'); } catch {}
   }, [colorMode]);
+
+  // Countdown timer for OTP (UI-only, resets on page refresh)
+  useEffect(() => {
+    if (otpCountdown <= 0) return;
+    const timer = setInterval(() => {
+      setOtpCountdown(prev => prev > 0 ? prev - 1 : 0);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpCountdown]);
 
   // Autocomplete: address input ref
   const addressInputRef = useRef<HTMLInputElement | null>(null);
@@ -239,6 +258,101 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
 
   const months: string[] = [];
 
+  const handleChangeNumber = () => {
+    setShowChangeNumber(false);
+    setPhoneVerified(false);
+    setPhoneOtpSent(false);
+    setPhoneOtpCode('');
+    setPhone('');
+    setError(null);
+  };
+
+  const requestPhoneOtp = async () => {
+    if (!phone || phone.length !== 10) {
+      surfaceError('Please enter a valid 10-digit phone number');
+      return;
+    }
+    
+    setSendingOtp(true);
+    setError(null);
+    try {
+      const token = getAuthToken();
+      const fullPhone = `${phoneCountryCode}${phone}`;
+      const resp = await fetch(`/api/otp/phone/request`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify({ phone: fullPhone }),
+      });
+      
+      const data = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(data?.message || 'Failed to send verification code');
+      }
+      
+      setPhoneOtpSent(true);
+      setOtpCountdown(60); // Start UI countdown (resets on refresh)
+      setError(null);
+    } catch (err: any) {
+      surfaceError(err?.message || 'Failed to send verification code');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const verifyPhoneOtp = async () => {
+    if (!phoneOtpCode || phoneOtpCode.length !== 6) {
+      surfaceError('Please enter the 6-digit code');
+      return;
+    }
+    
+    setVerifyingOtp(true);
+    setError(null);
+    try {
+      const token = getAuthToken();
+      const fullPhone = `${phoneCountryCode}${phone}`;
+      const resp = await fetch(`/api/otp/phone/verify`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify({ 
+          phone: fullPhone, 
+          code: phoneOtpCode
+        }),
+      });
+      
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data?.message || 'Verification failed');
+      
+      // Reload user data to get the saved phone number from database
+      const meResp = await fetch(`/api/users/me`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
+      const meData: MeResponse = await meResp.json();
+      if (meData.user) {
+        setUser(meData.user);
+        setPhoneVerified(!!(meData.user as any).phoneVerified);
+        // Update phone from database
+        if (meData.user.phone && typeof meData.user.phone === 'object') {
+          setPhoneCountryCode(meData.user.phone.countryCode || '+1');
+          setPhone(meData.user.phone.phoneNumber || '');
+        }
+      }
+      
+      setPhoneOtpSent(false);
+      setPhoneOtpCode('');
+      setShowChangeNumber(true);
+      setError(null);
+    } catch (err: any) {
+      surfaceError(err?.message || 'Invalid verification code');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -275,11 +389,26 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         return;
       }
 
+      if (!phoneVerified) {
+        surfaceError('Please verify your phone number before continuing.');
+        setSaving(false);
+        return;
+      }
+
       const trimmedStreet = street.trim();
       const trimmedPostal = postalCode.trim();
       const trimmedCity = city.trim();
       const trimmedProvince = province.trim();
       const trimmedCountry = country.trim();
+
+      // Validate postal code (Canadian format: A1A 1A1 or A1A1A1 -> 6 alphanumeric chars)
+      const postalNormalized = trimmedPostal.replace(/\s+/g, '').toUpperCase();
+      const postalRegex = /^[A-Z]\d[A-Z]\d[A-Z]\d$/;
+      if (!postalRegex.test(postalNormalized) || postalNormalized.length !== 6) {
+        surfaceError('Postal code must be in format A1A 1A1 (letters and digits, 6 characters).');
+        setSaving(false);
+        return;
+      }
 
       if (!trimmedStreet || !trimmedPostal || !trimmedCity || !trimmedCountry) {
         surfaceError('Please complete your address (street, city, postal code, country).');
@@ -300,7 +429,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       }
       
       const payload: any = {
-        phone: fullPhone,
         dateOfBirth: dobIso,
         address: {
           street: trimmedStreet,
@@ -402,7 +530,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
               role="alert"
               ref={errorRef}
               aria-live="assertive"
-              style={{ display: error ? undefined : 'none', minHeight: 24 }}
             >
               <span className="alert-content">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="alert-icon" aria-hidden>
@@ -414,7 +541,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
             </div>
             {/* (debug UI removed) */}
             {scriptStatus === 'error' && (
-              <div className="alert alert-danger" role="alert" style={{ marginBottom: 12 }}>
+              <div className="alert alert-danger" role="alert">
                 Map failed to load. Please check that your Google Maps API key allows requests from <code>http://localhost:3000/*</code> (or your dev origin). See your <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Google Cloud Console</a>.
               </div>
             )}
@@ -465,7 +592,12 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                 <section className="pi-section">
                   <h2>Phone number</h2>
                   <div className="phone-row">
-                    <select className="code themed" value={phoneCountryCode} onChange={(e)=> setPhoneCountryCode(e.target.value)}>
+                    <select 
+                      className="code themed" 
+                      value={phoneCountryCode} 
+                      onChange={(e)=> setPhoneCountryCode(e.target.value)}
+                      disabled={phoneVerified}
+                    >
                       <option value="+1">+1</option>
                       <option value="+84">+84</option>
                     </select>
@@ -477,15 +609,114 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                         const value = e.target.value.replace(/\D/g, '');
                         if (value.length <= 10) {
                           setPhone(value);
+                          // Reset verification if phone changes
+                          if (phoneVerified || phoneOtpSent) {
+                            setPhoneVerified(false);
+                            setPhoneOtpSent(false);
+                            setPhoneOtpCode('');
+                          }
                         }
                       }} 
                       placeholder="Your phone" 
                       maxLength={10}
                       pattern="[0-9]{10}"
                       required
+                      disabled={phoneVerified}
                     />
+                     {phoneVerified && (
+                    <>
+                      <div className="phone-verified-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                          <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Phone number verified
+                      </div>
+                    </>
+                  )}
                   </div>
-                  {phone && <button type="button" className="link-btn" onClick={()=> alert('Change number flow TBD')}>Change phone number</button>}
+
+                  {phoneVerified && (
+                    <div className="field-group no-mt">
+                      <button type="button" className="link-btn" onClick={handleChangeNumber}>
+                        Change phone number
+                      </button>
+                    </div>
+                  )}
+                  
+                  {!phoneVerified && !phoneOtpSent && (
+                    <button 
+                      type="button" 
+                      className="submit-btn submit-btn--accent mt-12" 
+                      onClick={requestPhoneOtp}
+                      disabled={!phone || phone.length !== 10 || otpCountdown > 0 || sendingOtp}
+                    >
+                      <span className="btn-text">
+                        {sendingOtp ? 'Sending...' : otpCountdown > 0 ? `Wait ${otpCountdown}s` : 'Send verification code'}
+                      </span>
+                      {sendingOtp && (
+                        <div className="btn-loader" aria-hidden>
+                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                            <path d="M16 9a7 7 0 01-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <animateTransform attributeName="transform" type="rotate" dur="1s" values="0 9 9;360 9 9" repeatCount="indefinite" />
+                            </path>
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  )}
+                  
+                  {phoneOtpSent && !phoneVerified && (
+                    <>
+                      <div className="field-group mt-12">
+                        <label htmlFor="phoneOtpCode">Verification code</label>
+                        <input
+                          id="phoneOtpCode"
+                          className="themed"
+                          placeholder="Enter 6-digit code"
+                          value={phoneOtpCode}
+                          onChange={(e) => setPhoneOtpCode(e.target.value.replace(/\D/g, ''))}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={6}
+                        />
+                      </div>
+                      
+                      <div className="otp-actions">
+                        <button 
+                          type="button" 
+                          className="submit-btn submit-btn--accent flex-1" 
+                          onClick={verifyPhoneOtp}
+                          disabled={phoneOtpCode.length !== 6 || verifyingOtp}
+                        >
+                          <span className="btn-text">
+                            {verifyingOtp ? 'Verifying...' : 'Verify code'}
+                          </span>
+                          {verifyingOtp && (
+                            <div className="btn-loader" aria-hidden>
+                              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                                <path d="M16 9a7 7 0 01-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <animateTransform attributeName="transform" type="rotate" dur="1s" values="0 9 9;360 9 9" repeatCount="indefinite" />
+                                </path>
+                              </svg>
+                            </div>
+                          )}
+                        </button>
+                        <button 
+                          type="button" 
+                          className="submit-btn submit-btn--secondary flex-1" 
+                          onClick={requestPhoneOtp}
+                          disabled={otpCountdown > 0 || sendingOtp}
+                        >
+                          {otpCountdown > 0 ? `Resend (${otpCountdown}s)` : 'Resend code'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                  
+                 
                 </section>
 
                 <section className="pi-section">
@@ -501,13 +732,38 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                   <h2>Address</h2>
                   <div className="field-group"><label htmlFor="street">Home address</label><input id="street" ref={addressInputRef} placeholder="Start typing your address" className="themed" value={street} onChange={(e)=> setStreet(e.target.value)} required /></div>
                   <div className="field-group">
-                    <div ref={mapContainerRef} style={{ width: '100%', height: 260, borderRadius: 8, overflow: 'hidden', marginTop: 12 }} />
+                    <label htmlFor="addressLine2">Address Line 2</label>
+                    <input
+                      id="addressLine2"
+                      placeholder="Apt, suite, unit, building, floor (optional)"
+                      className="themed"
+                      value={addressLine2}
+                      onChange={(e)=> setAddressLine2(e.target.value)}
+                    />
                   </div>
-                  <div className="field-group"><label htmlFor="city">City</label><input id="city" className="themed" value={city} onChange={(e)=> setCity(e.target.value)} required /></div>
-                  <div className="field-group"><label htmlFor="postal">Postcode</label><input id="postal" className="themed" value={postalCode} onChange={(e)=> setPostalCode(e.target.value)} required /></div>
+                  <div className="field-group">
+                    <div ref={mapContainerRef} className="map-container" />
+                  </div>
+                  <div className="field-group">
+                    <label htmlFor="city">City</label>
+                    <input id="city" className="themed" value={city} onChange={(e)=> setCity(e.target.value)} required disabled />
+                  </div>
+                  <div className="field-group">
+                    <label htmlFor="postal">Postcode</label>
+                    <input
+                      id="postal"
+                      className="themed"
+                      value={postalCode}
+                      onChange={(e)=> setPostalCode(e.target.value)}
+                      required
+                      disabled
+                      pattern="[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d"
+                      title="Postal code format: A1A 1A1 (letters and digits)"
+                    />
+                  </div>
                   <div className="field-group">
                     <label htmlFor="province">Province / State</label>
-                    <input id="province" className="themed" value={province} onChange={(e)=> setProvince(e.target.value)} required />
+                    <input id="province" className="themed" value={province} onChange={(e)=> setProvince(e.target.value)} required disabled />
                   </div>
 
                 </section>

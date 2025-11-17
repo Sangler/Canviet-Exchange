@@ -104,27 +104,19 @@ export default function RegisterPage() {
     <div className="auth-card register">
           {/* Language switcher and theme toggle */}
           <div className="top-right">
-            <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-              <a 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); setLanguage('en'); }} 
-                style={{ 
-                  textDecoration: 'none', 
-                  color: 'inherit',
-                  fontWeight: language === 'en' ? 'bold' : 'normal'
-                }}
+            <span className="inline-lang">
+              <a
+                href="#"
+                onClick={(e) => { e.preventDefault(); setLanguage('en'); }}
+                className={language === 'en' ? 'lang-link active' : 'lang-link'}
               >
                 EN
               </a>
               <span aria-hidden>|</span>
-              <a 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); setLanguage('vi'); }} 
-                style={{ 
-                  textDecoration: 'none', 
-                  color: 'inherit',
-                  fontWeight: language === 'vi' ? 'bold' : 'normal'
-                }}
+              <a
+                href="#"
+                onClick={(e) => { e.preventDefault(); setLanguage('vi'); }}
+                className={language === 'vi' ? 'lang-link active' : 'lang-link'}
               >
                 VI
               </a>

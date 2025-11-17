@@ -38,30 +38,6 @@ body {
   margin-right: 6px;
 }
 
-/* ---- Google Maps container and place picker ---- */
-.google-maps-container {
-  margin-bottom: 20px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.place-picker-container {
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-
-gmpx-place-picker {
-  width: 100%;
-  max-width: 400px;
-}
-
-gmp-map {
-  border-radius: 8px;
-}
-
 /* ---- Shared auth container and background ---- */
 .auth-container {
   min-height: 100vh;
@@ -422,6 +398,51 @@ button[disabled] { opacity:.7; cursor:wait; }
 /* Progress bar */
 .progress { position:relative; max-width:860px; margin:0 auto 20px; padding:8px 8px 8px 48px; display:flex; align-items:center; min-height:48px; }
 .back-btn { position:absolute; left:8px; top:50%; transform:translateY(-50%); display:inline-flex; align-items:center; gap:6px; background:transparent; border:none; color:#334155; padding:6px 8px; border-radius:8px; cursor:pointer; }
+
+/* Utilities used to replace inline styles in TSX files */
+.mt-12 { margin-top: 12px !important; }
+.mt-8 { margin-top: 8px !important; }
+.mt-20 { margin-top: 20px !important; }
+.flex-1 { flex: 1 1 0%; }
+.inline-lang { display: inline-flex; gap: 8px; align-items: center; }
+.lang-link { text-decoration: none; color: inherit; }
+.lang-link.active { font-weight: 700; }
+.btn-inline-block { display: inline-block; text-decoration: none; }
+.oauth-error { background: #fee; color: #c33; padding: 12px; border-radius: 4px; margin-bottom: 16px; font-size: 14px; }
+
+/* Phone verification UI */
+.otp-actions { display: flex; gap: 8px; margin-top: 12px; }
+.phone-verified-box {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: var(--cui-success-bg-subtle, #d1e7dd);
+  color: var(--cui-success-text, #0f5132);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.link-btn { margin-top: 8px; font-size: 14px; text-decoration: underline; cursor: pointer; border: none; background: none; color: var(--cui-primary, #0d6efd); padding: 0; }
+
+.map-container { width: 100%; height: 360px; border-radius: 8px; overflow: hidden; margin-top: 12px; }
+/* Small icon helper used in home hero flags */
+.icon-small { width: 28px; height: auto; vertical-align: middle; }
+
+/* Centered page flex helper (used by oauth callback) */
+.page-center-flex { display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column; gap: 1rem; }
+
+/* Alert width helper */
+.alert-maxwide { max-width: 860px; margin-left: auto; margin-right: auto; }
+
+.label-inline-info { color: #059669; font-weight: 500; }
+
+.btn-loader-inline { display: inline-block; }
+.muted { color: #666; }
+.link-underline { color: #0369a1; text-decoration: underline; }
+.no-mt { margin-top: 0 !important; }
+.text-center-pad { text-align: center; padding: 40px 0; }
+.oauth-error-lg { background: #fee; color: #c33; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+.ml-12 { margin-left: 12px !important; }
 .back-btn:hover:not(:disabled) { background:#e2e8f0; }
 .back-btn:disabled { opacity:.45; cursor:not-allowed; }
 .back-btn .back-icon { width:24px; height:24px; }

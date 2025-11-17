@@ -1,33 +1,28 @@
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendOtpEmail } = require('../services/email');
 const { issueOtp, verifyOtp } = require('../services/otp');
 
+// Twilio SMS sender (simple wrapper)
+let twilioClient = null;
+try {
+  const twilio = require('twilio');
+  twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  console.log('[OTP] Twilio client initialized');
+} catch (e) {
+  console.warn('[OTP] Twilio SDK not available:', e.message);
+}
+
+async function sendSms(phone, code) {
+  if (!twilioClient) {
+    throw new Error('Twilio not configured');
+  }
+  const from = process.env.TWILIO_PHONE_NUMBER;
+  const body = `Your CanViet Exchange verification code is: ${code}`;
+  await twilioClient.messages.create({ from, to: phone, body });
+}
+
 const OTP_LENGTH = Number(process.env.OTP_LENGTH || 6);
 const OTP_TTL_SECONDS = Number(process.env.OTP_TTL_SECONDS || 300); // 5 min default
-const OTP_JWT_SECRET = process.env.OTP_JWT_SECRET || (process.env.JWT_SECRET || 'change-me');
-const OTP_PEPPER = process.env.OTP_PEPPER || '';
-// Optional min interval removed per requirement (no requestedAt fields)
-
-function generateNumericOtp(len) {
-  let code = '';
-  while (code.length < len) {
-    code += Math.floor(Math.random() * 10).toString();
-  }
-  return code.slice(0, len);
-}
-
-function otpHash(code) {
-  return crypto.createHash('sha256').update(String(code) + OTP_PEPPER).digest('hex');
-}
-
-function createOtpToken(userId, channel, code) {
-  const chash = otpHash(code);
-  const payload = { sub: userId, channel, chash };
-  const token = jwt.sign(payload, OTP_JWT_SECRET, { expiresIn: OTP_TTL_SECONDS });
-  return token;
-}
 
 function maskDestination(value) {
   if (!value) return '';
@@ -144,47 +139,102 @@ exports.verifyPhoneOtp2 = async (req, res) => {
   }
 };
 
+// Redis-backed flow: Phone OTP (request) - uses authenticated user
 exports.requestPhoneOtp = async (req, res) => {
   try {
-  const { phone } = req.body || {};
-  if (!phone) return res.status(400).json({ ok:false, message:'Phone required' });
-    const user = await User.findOne({ phone });
+    const { phone } = req.body || {};
+    if (!phone) return res.status(400).json({ ok:false, message:'Phone required' });
+    
+    // Get user from auth token instead of phone lookup (user may not have phone in DB yet)
+    const userId = req.auth?.sub || req.auth?.id;
+    if (!userId) return res.status(401).json({ ok:false, message:'Authentication required' });
+    
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ ok:false, message:'User not found' });
-    if (user.phoneVerified) return res.json({ ok:true, message:'Already verified' });
+    if (user.phoneVerified) return res.json({ ok:true, message:'Already verified', code: 'PHONE_ALREADY_VERIFIED' });
 
-  const code = generateNumericOtp(OTP_LENGTH);
-  const otpToken = createOtpToken(user.id, 'phone', code);
-    // integrate SMS provider (Twilio, etc.)
-    console.log('[OTP][PHONE] Code for', user.phone, '=>', code);
-  return res.json({ ok:true, message:'OTP sent', destination: maskDestination(user.phone), expiresIn: OTP_TTL_SECONDS, otpToken });
+    const { code, ttl } = await issueOtp(user.id, 'phone-verify', OTP_LENGTH);
+    
+    // Send SMS via Twilio
+    const devSkip = (process.env.SMS_DEV_MODE || 'false').toLowerCase() === 'true';
+    if (devSkip) {
+      console.log('[OTP][PHONE][DEV] Code for', phone, '=>', code);
+      return res.json({ ok:true, message:'OTP generated (SMS skipped in dev mode)', destination: maskDestination(phone), expiresIn: ttl, devMode: true, code });
+    }
+    
+    // Send via Twilio SMS
+    try {
+      await sendSms(phone, code);
+      console.log('[OTP][PHONE] SMS sent successfully to', maskDestination(phone));
+      return res.json({ ok:true, message:'OTP sent via SMS', destination: maskDestination(phone), expiresIn: ttl });
+    } catch (smsErr) {
+      console.error('[OTP][PHONE] SMS sending failed:', smsErr.message);
+      console.error('[OTP][PHONE] Error details:', {
+        code: smsErr.code,
+        status: smsErr.status,
+        moreInfo: smsErr.moreInfo
+      });
+      // Return generic error to user, but OTP is still stored in Redis
+      return res.status(500).json({ ok:false, message:'Failed to send SMS. Please check Twilio credentials or enable SMS_DEV_MODE.' });
+    }
   } catch (e) {
     console.error('requestPhoneOtp error', e);
+    // Check for Redis rate limit error
+    if (e.message && e.message.includes('already issued')) {
+      return res.status(429).json({ ok:false, message:'Code already sent. Please wait before requesting another.' });
+    }
     return res.status(500).json({ ok:false, message:'Unable to send verification code. Please try again later.' });
   }
 };
 
+// Redis-backed flow: Phone OTP (verify) - uses authenticated user
 exports.verifyPhoneOtp = async (req, res) => {
   try {
-    const { phone, code, otpToken } = req.body || {};
-    if (!phone || !code || !otpToken) return res.status(400).json({ ok:false, message:'Phone, code and otpToken required' });
-    const user = await User.findOne({ phone });
+    const { phone, code } = req.body || {};
+    if (!phone || !code) return res.status(400).json({ ok:false, message:'Phone and code required' });
+    
+    // Get user from auth token
+    const userId = req.auth?.sub || req.auth?.id;
+    if (!userId) return res.status(401).json({ ok:false, message:'Authentication required' });
+    
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ ok:false, message:'User not found' });
-    if (user.phoneVerified) return res.json({ ok:true, message:'Already verified' });
-    let decoded;
-    try {
-      decoded = jwt.verify(otpToken, OTP_JWT_SECRET);
-    } catch (e) {
-      return res.status(401).json({ ok:false, message:'Invalid or expired otpToken' });
-    }
-    if (decoded.sub !== String(user.id) || decoded.channel !== 'phone') {
-      return res.status(400).json({ ok:false, message:'Token does not match user/channel' });
-    }
-    const valid = decoded.chash === otpHash(code);
-    if (!valid) return res.status(401).json({ ok:false, message:'Invalid code' });
+    if (user.phoneVerified) return res.json({ ok:true, message:'Already verified', code: 'PHONE_ALREADY_VERIFIED' });
 
+    const result = await verifyOtp(user.id, 'phone-verify', String(code));
+    if (!result.ok) {
+      const map = {
+        'expired-or-missing': 410,
+        'too-many-attempts': 429,
+        invalid: 401,
+        'concurrent-update': 409,
+      };
+      return res.status(map[result.reason] || 400).json({ ok:false, message: result.reason });
+    }
+    
+    // Parse phone number (format: +1xxxxxxxxxx)
+    const raw = String(phone || '').trim();
+    const digits = raw.replace(/\D/g, '');
+    const phoneNumber = digits.slice(-10);
+    const ccDigits = digits.slice(0, digits.length - 10);
+    const countryCode = ccDigits.length > 0 ? `+${ccDigits}` : '+1';
+    
+    // Validate phone number format
+    if (!phoneNumber || phoneNumber.length !== 10) {
+      return res.status(400).json({ ok:false, message:'Invalid phone number format' });
+    }
+    
+    // Check if phone number is already in use by another user
+    const exists = await User.findOne({ 'phone.phoneNumber': phoneNumber, _id: { $ne: userId } });
+    if (exists) {
+      return res.status(409).json({ ok:false, message:'Phone number already in use by another account' });
+    }
+    
+    // Save phone number and mark as verified
+    user.phone = { countryCode, phoneNumber };
     user.phoneVerified = true;
     await user.save();
-    return res.json({ ok:true, message:'Phone verified' });
+    return res.json({ ok:true, message:'Phone verified and saved' });
   } catch (e) {
     console.error('verifyPhoneOtp error', e);
     return res.status(500).json({ ok:false, message:'Unable to verify your code. Please try again.' });

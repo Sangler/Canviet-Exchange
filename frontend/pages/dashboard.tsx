@@ -81,7 +81,7 @@ export default function DashboardPage() {
                   <tr key={r._id}>
                     <td className="mono hidden sm:table-cell">
                       {receiptHash ? (
-                        <a href={`/transfers/receipt/${receiptHash}`} style={{ color: '#0369a1', textDecoration: 'underline' }}>
+                        <a href={`/transfers/receipt/${receiptHash}`} className="link-underline">
                           {r._id.slice(-6)}
                         </a>
                       ) : (

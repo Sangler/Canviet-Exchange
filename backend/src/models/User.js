@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema({
   dateOfBirth: { type: Date, default: null },
   address: {
     street: { type: String, lowercase: true },
+    addressLine2: { type: String, lowercase: true, required: false },
     postalCode: { type: String, lowercase: true },
     city: { type: String, lowercase: true },
     province: { type: String },

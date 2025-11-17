@@ -53,11 +53,11 @@ export default function ForgetPassPage() {
       <div className="auth-container bg-auth">
         <div className="auth-card">
           <div className="top-right">
-            <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+            <span className="inline-lang">
               <a
                 href="#"
                 onClick={(e) => { e.preventDefault(); setLanguage('en'); }}
-                style={{ textDecoration: 'none', color: 'inherit', fontWeight: language === 'en' ? 'bold' : 'normal' }}
+                className={language === 'en' ? 'lang-link active' : 'lang-link'}
               >
                 EN
               </a>
@@ -65,7 +65,7 @@ export default function ForgetPassPage() {
               <a
                 href="#"
                 onClick={(e) => { e.preventDefault(); setLanguage('vi'); }}
-                style={{ textDecoration: 'none', color: 'inherit', fontWeight: language === 'vi' ? 'bold' : 'normal' }}
+                className={language === 'vi' ? 'lang-link active' : 'lang-link'}
               >
                 VI
               </a>
@@ -93,8 +93,8 @@ export default function ForgetPassPage() {
             <div className="success-message" role="status" aria-live="polite">
               <h3>{t('auth.checkYourEmail') || 'Check Your Email'}</h3>
               <p>{t('auth.resetEmailSent') || "If an account with that email exists, we've sent a password reset link. Please check your inbox."}</p>
-              <p style={{ marginTop: '20px' }}>
-                <a href="/login" className="submit-btn submit-btn--accent" style={{ display: 'inline-block', textDecoration: 'none' }}>
+              <p className="mt-20">
+                <a href="/login" className="submit-btn submit-btn--accent btn-inline-block">
                   {t('common.backToLogin') || 'Back to Login'}
                 </a>
               </p>
@@ -102,9 +102,7 @@ export default function ForgetPassPage() {
           ) : (
             <form className="auth-form" noValidate onSubmit={onSubmit}>
               {error && (
-                <div style={{ background: '#fee', color: '#c33', padding: '12px', borderRadius: '4px', marginBottom: '16px', fontSize: '14px' }}>
-                  {error}
-                </div>
+                <div className="oauth-error">{error}</div>
               )}
 
               <div className={`input-group ${error && !email ? 'has-error' : ''}`}>
@@ -127,10 +125,10 @@ export default function ForgetPassPage() {
                 </span>
               </div>
 
-              <div style={{ marginTop: 8 }}>
+              <div className="mt-8">
                 <button type="submit" className="submit-btn submit-btn--accent" disabled={loading}>
                   {loading ? (
-                    <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+                    <span className="inline-lang">
                       <CSpinner size="sm" />
                       {t('common.sending') || 'Sending…'}
                     </span>
@@ -138,7 +136,7 @@ export default function ForgetPassPage() {
                     t('auth.sendReset') || 'Send Reset Email'
                   )}
                 </button>
-                <a href="/login" className="forgot-link" style={{ marginLeft: 12 }}>
+                <a href="/login" className="forgot-link ml-12">
                   {t('common.backToLogin') || 'Back to Login'}
                 </a>
               </div>

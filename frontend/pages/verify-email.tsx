@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { getAuthToken } from '../lib/auth';
+import { getAuthToken, logout } from '../lib/auth';
 import { useLanguage } from '../context/LanguageContext';
 import RequireAuth from '../components/RequireAuth';
 
@@ -18,41 +18,11 @@ export default function VerifyEmailPage() {
   const [countdown, setCountdown] = useState(0);
   const [showCodeInput, setShowCodeInput] = useState(false);
 
-  // Check and restore countdown from localStorage
-  useEffect(() => {
-    const checkCountdown = () => {
-      try {
-        const expiryStr = localStorage.getItem('otp_request_expiry');
-        if (expiryStr) {
-          const expiryTime = parseInt(expiryStr, 10);
-          const now = Date.now();
-          if (expiryTime > now) {
-            const remaining = Math.ceil((expiryTime - now) / 1000);
-            setCountdown(remaining);
-            // Ensure the OTP input remains visible while countdown is active (e.g., after refresh)
-            setShowCodeInput(true);
-          } else {
-            localStorage.removeItem('otp_request_expiry');
-          }
-        }
-      } catch {}
-    };
-    checkCountdown();
-  }, []);
-
-  // Countdown timer
+  // Countdown timer (UI-only, resets on page refresh)
   useEffect(() => {
     if (countdown <= 0) return;
     const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          try {
-            localStorage.removeItem('otp_request_expiry');
-          } catch {}
-          return 0;
-        }
-        return prev - 1;
-      });
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(timer);
   }, [countdown]);
@@ -131,11 +101,7 @@ export default function VerifyEmailPage() {
       setStatusType('success');
       setShowCodeInput(true);
 
-      // Set 60-second countdown and save expiry to localStorage
-      const expiryTime = Date.now() + 60000; // 60 seconds
-      try {
-        localStorage.setItem('otp_request_expiry', expiryTime.toString());
-      } catch {}
+      // Set 60-second countdown (UI-only, server enforces rate limit via Redis)
       setCountdown(60);
     } catch (e: any) {
       setStatus(e?.message || t('auth.failedToRequestCode'));
@@ -183,20 +149,32 @@ export default function VerifyEmailPage() {
       </Head>
   <div className="auth-container bg-auth">
     <div className="auth-card">
+            {/* Back button placed top-left using existing .back-btn.page styles */}
+            <button
+              type="button"
+              className="back-btn page"
+              title={t('button.BackToLogin')}
+              onClick={() => logout('/login')}
+              aria-label={t('button.BackToLogin')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           <div className="top-right">
-            <span style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
-              <a 
-                href="#" 
+            <span className="inline-lang">
+              <a
+                href="#"
                 onClick={(e) => { e.preventDefault(); setLanguage('en'); }}
-                style={{ textDecoration: 'none', color: 'inherit', fontWeight: language === 'en' ? 'bold' : 'normal' }}
+                className={language === 'en' ? 'lang-link active' : 'lang-link'}
               >
                 EN
               </a>
               <span aria-hidden="true">|</span>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 onClick={(e) => { e.preventDefault(); setLanguage('vi'); }}
-                style={{ textDecoration: 'none', color: 'inherit', fontWeight: language === 'vi' ? 'bold' : 'normal' }}
+                className={language === 'vi' ? 'lang-link active' : 'lang-link'}
               >
                 VI
               </a>

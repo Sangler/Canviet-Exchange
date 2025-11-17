@@ -92,5 +92,12 @@
     "title": "Thông tin cá nhân",
     "updateProfile": "Cập nhật hồ sơ của bạn",
     "saveChanges": "Lưu thay đổi"
+  },
+    "button": {
+    "addNew": "Thêm",
+    "edit": "Chỉnh sửa",
+    "delete": "Xóa",
+    "view": "Xem chi tiết",
+    "BackToLogin": "Quay lại đăng nhập"
   }
 }

@@ -44,13 +44,13 @@ export default function Home() {
                       <img 
                         src="/flags/Flag_of_Canada.png" 
                         alt="Canada" 
-                        style={{ width: '28px', height: 'auto', verticalAlign: 'middle' }} 
+                        className="icon-small" 
                       />
                       {' '}to Vietnam{' '}
                       <img 
                         src="/flags/Flag_of_Vietnam.png" 
                         alt="Vietnam" 
-                        style={{ width: '28px', height: 'auto', verticalAlign: 'middle' }} 
+                        className="icon-small" 
                       />
                       {' '}with transparent rates and fast delivery.
                     </p>

@@ -158,13 +158,13 @@ export default function Transfer() {
   // Customer-specific extra margin based on amountFrom (CAD)
   // Rules:
   // - amount < 300 CAD => +0 VND
-  // - amount >= 300 and < 1000 => +50 VND
-  // - amount >= 1000 => + 100 VND
+  // - amount >= 300 and < 1000 => +40 VND
+  // - amount >= 1000 => + 90 VND
   const extraMargin = useMemo(() => {
     const val = parseFloat((amountFrom || '').toString());
     if (isNaN(val) || val <= 0) return 0;
-    if (val >= 1000) return 100;
-    if (val >= 300) return 50;
+    if (val >= 1000) return 90;
+    if (val >= 300) return 40;
     return 0;
   }, [amountFrom]);
 
@@ -515,8 +515,8 @@ export default function Transfer() {
                   <p className="rate-modal-p">Plus, you get a bonus rate when you send more:</p>
                   <ul className="rate-modal-list">
                     <li>Send less than $300 CAD → Standard rate</li>
-                    <li>Send $300 - $999 CAD → Extra <strong>+50 VND/CAD</strong></li>
-                    <li>Send $1,000+ CAD → Extra <strong>+100 VND/CAD</strong> with no transfer fee applied!</li>
+                    <li>Send $300 - $999 CAD → Extra <strong>+40 VND/CAD</strong></li>
+                    <li>Send $1,000+ CAD → Extra <strong>+90 VND/CAD</strong> with no transfer fee applied!</li>
                   </ul>
                   <p className="rate-modal-p">Your current bonus: <strong>+{extraMargin} VND</strong></p>
                   <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
@@ -549,7 +549,7 @@ export default function Transfer() {
             <main className="main-content lt-md2:!pt-[46px] lt-md2:!pb-[36px] lt-md2:!px-[18px]">
               {/* Draft restored notification - only show if step > 1 */}
               {draftRestored && step > 1 && (
-                <div className="alert alert-info d-flex align-items-center mb-4 mx-auto" style={{ maxWidth: '860px' }} role="alert">
+                <div className="alert alert-info d-flex align-items-center mb-4 mx-auto alert-maxwide" role="alert">
                   <svg 
                     width="24" 
                     height="24" 
@@ -737,7 +737,7 @@ export default function Transfer() {
                           {rate && (
                             <span className="label-inline-info">
 
-                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate + 100)} VND <strong>Best Rate</strong>
+                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate + 90)} VND <strong>Best Rate</strong>
                               <button
                                 type="button"
                                 aria-label="Rate details"
@@ -753,7 +753,7 @@ export default function Transfer() {
                             </span>
                           )}
                           {amountFrom && parseFloat(amountFrom) > 0 && effectiveRate && (
-                            <span className="label-inline-info" style={{ color: '#059669', fontWeight: 500 }}>
+                            <span className="label-inline-info">
                               Your rate: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND
                             </span>
                           )}
@@ -764,7 +764,7 @@ export default function Transfer() {
                             name="amountFrom"
                             placeholder="Enter amount"
                             min={20}
-                            max={10000}
+                            max={9999}
                             step="0.01"
                             required
                             value={amountFrom}

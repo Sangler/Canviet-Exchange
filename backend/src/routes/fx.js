@@ -127,7 +127,7 @@ router.get('/cad-vnd', async (_req, res) => {
     const cadToVnd = usdVndData.rate / cadPerUsd;
 
     // Apply business margin of +30 VND
-    const withMargin = cadToVnd + 30;
+    const withMargin = cadToVnd + 25;
 
 
     return res.json({ 
