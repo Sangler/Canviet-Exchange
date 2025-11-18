@@ -126,7 +126,6 @@ router.get('/receipt/:hash', optionalAuth, async (req, res) => {
   } catch (err) {
     logger.error('[Requests] Error fetching receipt:', err);
     logger.error('[Requests] Error stack:', err.stack);
-    logger.error('[Requests] Error message:', err.message);
     return res.status(500).json({
       ok: false,
       message: 'Failed to retrieve receipt',

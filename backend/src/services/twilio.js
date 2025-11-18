@@ -65,10 +65,25 @@ async function issuePhoneOtp(phone, opts = {}) {
 
   // attempt SMS send if configured
   const from = process.env.TWILIO_PHONE_NUMBER
+  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID
   const body = `Your verification code is: ${code}`
   if (sendSms && twilioClient) {
     try {
-      await twilioClient.messages.create({ from, to: phone, body })
+      const messageOptions = {
+        to: phone,
+        body
+      }
+      
+      // Use Messaging Service SID if available (for production), otherwise use from number
+      if (messagingServiceSid) {
+        messageOptions.messagingServiceSid = messagingServiceSid
+      } else if (from) {
+        messageOptions.from = from
+      } else {
+        throw new Error('Neither TWILIO_MESSAGING_SERVICE_SID nor TWILIO_PHONE_NUMBER is configured')
+      }
+      
+      await twilioClient.messages.create(messageOptions)
     } catch (err) {
       // If SMS sending fails, delete the key so caller may retry
       await redis.del(key)

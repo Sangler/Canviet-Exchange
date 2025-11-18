@@ -47,16 +47,38 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
 
   const surfaceError = useCallback((message: string) => {
     console.log('[surfaceError] called with:', message);
-    setError(message);
+    // Clear error first, then set it to ensure useEffect triggers even if the message is the same
+    setError(null);
+    // Use microtask to ensure state update is processed
+    Promise.resolve().then(() => {
+      setError(message);
+    });
+    // Keep a small debug snapshot for devs (not relied upon for scrolling)
     setTimeout(() => {
       console.log('[surfaceError] error state after setError:', errorRef.current, message);
     }, 100);
-    try {
-      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } catch {
-      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* ignore */ }
-    }
   }, []);
+
+  // When `error` changes, ensure the alert is visible and scrolled into view.
+  // Using requestAnimationFrame ensures the DOM has updated before we attempt to scroll.
+  useEffect(() => {
+    if (!error) return;
+    const raf = window.requestAnimationFrame(() => {
+      try {
+        if (errorRef.current) {
+          // Make sure the alert can be programmatically focused for screen readers
+          errorRef.current.tabIndex = -1;
+          errorRef.current.focus({ preventScroll: true });
+          errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } catch (e) {
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+      }
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [error]);
 
   useEffect(() => {
     // Restore saved theme with light as default fallback
@@ -476,23 +498,31 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       <>
         <Head>
           <title>Introduction</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
+          <meta name="mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         </Head>
         {/* Load Google Maps JS with Places library. Key is provided server-side via getServerSideProps */}
-        <Script
-          src={`https://maps.googleapis.com/maps/api/js?key=${googleKey || ''}&libraries=places`}
-          strategy="afterInteractive"
-          onLoad={() => {
-            console.debug('[maps] loaded afterInteractive (onLoad)');
-            setScriptStatus('loaded');
-            try { initAutocompleteOnce(); } catch (e) { console.error('[maps] init error onLoad', e); }
-          }}
-          onError={(err) => {
-            console.error('[maps] script failed to load', err);
-            setScriptStatus('error');
-            setError('Map failed to load. Please check your API key and referrer restrictions.');
-          }}
-        />
+        {googleKey ? (
+          <Script
+            src={`https://maps.googleapis.com/maps/api/js?key=${googleKey}&libraries=places&loading=async&v=weekly`}
+            strategy="afterInteractive"
+            onLoad={() => {
+              console.debug('[maps] loaded afterInteractive (onLoad)');
+              setScriptStatus('loaded');
+              // Add small delay to ensure Google Maps is fully initialized on iOS
+              setTimeout(() => {
+                try { initAutocompleteOnce(); } catch (e) { console.error('[maps] init error onLoad', e); }
+              }, 100);
+            }}
+            onError={(err) => {
+              console.error('[maps] script failed to load', err);
+              setScriptStatus('error');
+              setError('Map failed to load. Please check your internet connection and try again.');
+            }}
+          />
+        ) : null}
   <div className="auth-container bg-auth pt-10 pb-16">
     <div className="auth-card personal-info pi-card-centered">
           <a href="/transfers" className="back-btn page" aria-label="Back to transfers" title="Back">
@@ -529,6 +559,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
               className={`alert alert-danger${error ? ' show' : ''}`}
               role="alert"
               ref={errorRef}
+              tabIndex={-1}
               aria-live="assertive"
             >
               <span className="alert-content">
@@ -632,6 +663,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                         </svg>
                         Phone number verified
                       </div>
+                    
                     </>
                   )}
                   </div>

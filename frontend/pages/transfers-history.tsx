@@ -1,5 +1,5 @@
 import React from 'react'
-import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components'
+import {  AppSidebar, AppFooter, AppHeader } from '../components'
 import RequireAuth from '../components/RequireAuth'
 import DashboardPage from './dashboard'
 

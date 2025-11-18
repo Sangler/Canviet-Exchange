@@ -6,6 +6,7 @@ import '../styles/globals.css'
 import '../scss/style.scss'
 import { AuthProvider } from '../context/AuthContext'
 import { LanguageProvider } from '../context/LanguageContext'
+import BrowserCompatibilityWarning from '../components/BrowserCompatibilityWarning'
 
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -16,6 +17,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     <Provider store={store}>
       <LanguageProvider>
         <AuthProvider>
+          <BrowserCompatibilityWarning />
           <Component {...pageProps} />
         </AuthProvider>
       </LanguageProvider>

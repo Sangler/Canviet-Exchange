@@ -424,7 +424,24 @@ button[disabled] { opacity:.7; cursor:wait; }
 }
 .link-btn { margin-top: 8px; font-size: 14px; text-decoration: underline; cursor: pointer; border: none; background: none; color: var(--cui-primary, #0d6efd); padding: 0; }
 
-.map-container { width: 100%; height: 360px; border-radius: 8px; overflow: hidden; margin-top: 12px; }
+.map-container { 
+  width: 100%; 
+  height: 360px; 
+  border-radius: 8px; 
+  overflow: hidden; 
+  margin-top: 12px; 
+  position: relative;
+  background: #f1f5f9;
+  /* iOS Safari fixes */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.map-container > div {
+  width: 100% !important;
+  height: 100% !important;
+}
 /* Small icon helper used in home hero flags */
 .icon-small { width: 28px; height: auto; vertical-align: middle; }
 
@@ -871,8 +888,11 @@ blockquote a:hover { text-decoration:underline; }
 .lang-switch { display:inline-flex; align-items:center; gap:8px; color:#64748b; }
 .lang-switch a { color:#2563eb; text-decoration:none; }
 .lang-switch a:hover { text-decoration:underline; }
-.mode-btn { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; color:#64748b; border:1px solid #cbd5e1; background:#f8fafc; border-radius:10px; }
+.mode-btn { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; color:#64748b; border:1px solid #cbd5e1; background:#f8fafc; border-radius:10px; cursor:pointer; transition:all 0.2s ease; -webkit-tap-highlight-color:transparent; font-size:0; line-height:0; }
+
+
 .mode-btn:hover { color:#0f172a; background:#e2e8f0; }
+.mode-btn:active { transform:scale(0.95); }
 .pi-title { font-size:26px; margin:10px 0 4px; background: linear-gradient(90deg,#1e40af,#0891b2); -webkit-background-clip:text; background-clip: text; color:transparent; font-weight:700; letter-spacing:.5px; opacity:0; transform: translateY(6px); animation: fadeUp 520ms cubic-bezier(.21,.72,.25,1) 120ms forwards; will-change: transform, opacity; }
 .pi-sub { margin:0; font-size:14px; color:#64748b; opacity:0; transform: translateY(6px); animation: fadeUp 520ms cubic-bezier(.21,.72,.25,1) 220ms forwards; will-change: transform, opacity; }
 .logo-img.page { opacity: 0; transform: translateY(8px) scale(.96); animation: logoPop 560ms cubic-bezier(.18,.89,.32,1.28) 20ms forwards; will-change: transform, opacity; }
@@ -934,6 +954,18 @@ select.themed { padding-right: 36px; }
   .grid-1 { grid-template-columns: 1fr; }
   .phone-row { flex-direction: column; align-items: stretch; }
   .phone-row .code { width: 100%; }
+    .browser-warning-content {
+    padding: 12px 16px;
+  }
+  
+  .browser-warning-text {
+    font-size: 13px;
+  }
+  
+  .browser-warning-icon {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 /* ---- Payment method dropdown styles ---- */
@@ -1703,3 +1735,89 @@ color: #94a3b8 !important;
   }
 }
 
+/* ============================================
+   Browser Compatibility Warning Banner
+   ============================================ */
+.browser-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #78350f;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+  animation: slideDown 0.4s ease-out;
+}
+
+.browser-warning-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 20px;
+}
+
+.browser-warning-icon {
+  flex-shrink: 0;
+  color: #92400e;
+}
+
+.browser-warning-text {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.browser-warning-dismiss {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: #92400e;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.browser-warning-dismiss:hover {
+  background: rgba(146, 64, 14, 0.1);
+  transform: scale(1.1);
+}
+
+.browser-warning-dismiss:active {
+  transform: scale(0.95);
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Dark mode support for warning */
+[data-coreui-theme="dark"] .browser-warning {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  color: #fef3c7;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+}
+
+[data-coreui-theme="dark"] .browser-warning-icon,
+[data-coreui-theme="dark"] .browser-warning-dismiss {
+  color: #fef3c7;
+}
+
+[data-coreui-theme="dark"] .browser-warning-dismiss:hover {
+  background: rgba(254, 243, 199, 0.15);
+}

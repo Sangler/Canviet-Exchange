@@ -395,6 +395,37 @@ export default function Transfer() {
     setSubmitting(true);
     try {
 
+      // Check KYC status before allowing transfer submission
+      const kycResponse = await fetch('http://localhost:5000/api/kyc/status', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const kycData = await kycResponse.json();
+      
+      if (!kycResponse.ok || !kycData.ok) {
+        alert('Failed to verify KYC status. Please try again.');
+        setSubmitting(false);
+        return;
+      }
+
+      // If KYC not verified, redirect to Shufti Pro verification
+      if (kycData.kycStatus !== 'verified') {
+        const confirmVerify = window.confirm(
+          'You need to complete identity verification (KYC) before submitting transfers.\n\n' +
+          'Click OK to proceed to verification.'
+        );
+        
+        if (confirmVerify && kycData.verificationUrl) {
+          window.open(kycData.verificationUrl, '_blank');
+        }
+        
+        setSubmitting(false);
+        return;
+      }
+
       // Ensure we have a valid exchange rate
       const finalExchangeRate = effectiveRate || rate || 0;
       

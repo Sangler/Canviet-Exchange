@@ -184,7 +184,10 @@ export default function LoginPage() {
     <>
       <Head>
         <title>CanVIet Exchange Service Login</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </Head>
   <div className="auth-container bg-auth">
     <div className="auth-card">

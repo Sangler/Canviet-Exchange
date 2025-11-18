@@ -1,0 +1,19 @@
+# Browsers that we support
+
+# Global usage statistics
+> 0.5%
+last 2 versions
+not dead
+
+# Mobile browsers - target older iOS and Android
+iOS >= 11
+Android >= 6
+
+# Desktop browsers
+Chrome >= 60
+Firefox >= 60
+Safari >= 11
+Edge >= 79
+
+# Exclude old IE
+not IE 11

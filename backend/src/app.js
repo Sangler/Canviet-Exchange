@@ -12,6 +12,7 @@ const otpRoutes = require('./routes/otp')
 const transfersRoutes = require('./routes/transfers')
 const requestsRoutes = require('./routes/requests')
 const fxRoutes = require('./routes/fx')
+const kycRoutes = require('./routes/kyc')
 const User = require('./models/User')
 const { connectMongo } = require('./db/mongoose')
 const logger = require('./utils/logger')
@@ -43,6 +44,7 @@ app.use('/api/otp', otpRoutes)
 app.use('/api/transfers', transfersRoutes)
 app.use('/api/requests', requestsRoutes)
 app.use('/api/fx', fxRoutes)
+app.use('/api/kyc', kycRoutes)
 
 // Compatibility redirect: if OAuth provider is configured with missing /api prefix
 app.get('/auth/google/callback', (req, res) => {

@@ -53,6 +53,7 @@ exports.register = async (req, res) => {
       passwordHash,
       authProvider: 'local', // Mark as traditional registration
     })
+    
   const token = createToken({ sub: user.id, email: user.email, role: user.role })
     return res.json({ token, user: user.toJSON() })
   } catch (err) {
@@ -78,12 +79,13 @@ exports.login = async (req, res) => {
     if (!user && phone) user = await User.findOne({ phone })
     if (!user) return res.status(401).json({ message: 'Invalid credentials' })
 
-    // SECURITY RULE: Block password login for users who have upgraded to Google auth
-    if (user.authProvider === 'google') {
-      return res.status(403).json({ message: 'This account already authenticated with Google. Please Continue with Google instead.' })
+    // SECURITY RULE: If logging in with phone, verify that phone is verified
+    if (phone && (!user.phone || !user.phoneVerified)) {
+      return res.status(401).json({ message: 'Invalid credentials' })
     }
 
-    // Check if user has a password hash (required for local auth)
+    // Check if user has a password hash (required for password login)
+    // Google users who have set a password via reset flow can login with email/password
     if (!user.passwordHash) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
@@ -153,10 +155,6 @@ exports.forgotPassword = async (req, res) => {
       return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' })
     }
 
-    // SECURITY RULE: Only allow password reset for local auth users
-    if (user.authProvider === 'google') {
-      return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' })
-    }
 
     // Generate JWT token with 15m expiry
     const resetToken = jwt.sign(
@@ -201,10 +199,6 @@ exports.validateResetToken = async (req, res) => {
       return res.status(400).json({ valid: false, message: 'Invalid token' })
     }
 
-    // Check authProvider (extra security)
-    if (user.authProvider === 'google') {
-      return res.status(400).json({ valid: false, message: 'Invalid token' })
-    }
 
     return res.json({ valid: true, email: user.email })
   } catch (err) {
@@ -243,10 +237,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Invalid token' })
     }
 
-    // Check authProvider
-    if (user.authProvider === 'google') {
-      return res.status(403).json({ message: 'Cannot reset password for Google accounts' })
-    }
+    // This enables them to login with email/password OR continue using Google OAuth
 
     // Hash new password using same method as register
     const salt = await bcrypt.genSalt(10)
