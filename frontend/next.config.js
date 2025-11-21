@@ -16,9 +16,8 @@ const nextConfig = {
   transpilePackages: ['@coreui/react', '@coreui/coreui'],
 
   async rewrites() {
-    const backend = process.env.BACKEND_URL && /^https?:\/\//.test(process.env.BACKEND_URL)
-      ? process.env.BACKEND_URL.replace(/\/$/, '')
-      : 'http://localhost:5000';
+    // Use NEXT_PUBLIC_API_URL in production; fall back to localhost for dev
+    const backend = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '');
     return [
       {
         source: '/api/:path*',

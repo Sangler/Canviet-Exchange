@@ -4,6 +4,7 @@ const { getRedisClient } = require('./redis')
 const PEPPER = process.env.OTP_PEPPER || ''
 const OTP_TTL_SEC = Number(process.env.OTP_TTL_SEC || process.env.OTP_TTL_SECONDS || 300)
 const MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5)
+const logger = require('../utils/logger')
 
 class OtpService {
   constructor() {
@@ -51,6 +52,15 @@ class OtpService {
       throw new Error('OTP already issued; please wait before requesting another')
     }
     await c.set(attemptsKey, '0', { EX: this.ttl })
+    // Log issuance; include code only in dev or when explicitly allowed
+    const devMode = (process.env.SMS_DEV_MODE || 'false').toLowerCase() === 'true'
+    const logCodes = (process.env.LOG_OTP_CODES || 'false').toLowerCase() === 'true'
+    const masked = String(subject).length > 4 ? `${String(subject).slice(0,2)}***${String(subject).slice(-2)}` : String(subject)
+    if (devMode || logCodes) {
+      logger.infoMeta('[otp.service] OTP issued', { subject: masked, purpose, code, ttl: this.ttl })
+    } else {
+      logger.info(`[otp.service] OTP issued for ${masked} purpose=${purpose}`)
+    }
     return { code, ttl: this.ttl }
   }
 
@@ -82,8 +92,10 @@ class OtpService {
     }
     const execRes = await multi.exec()
     if (execRes === null) {
+      logger.warn('[otp.service] verify exec returned null (concurrent update)')
       return { ok: false, reason: 'concurrent-update' }
     }
+    if (!ok) logger.warn('[otp.service] invalid otp attempt', { subject, purpose })
     return ok ? { ok: true } : { ok: false, reason: 'invalid' }
   }
 }

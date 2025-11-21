@@ -282,7 +282,7 @@ export default function Transfer() {
       // Fetch full user profile to get address
       const fetchUserAddress = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/users/me`, {
+          const response = await fetch(`/api/users/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -396,7 +396,7 @@ export default function Transfer() {
     try {
 
       // Check KYC status before allowing transfer submission
-      const kycResponse = await fetch('http://localhost:5000/api/kyc/status', {
+      const kycResponse = await fetch('/api/kyc/status', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -411,15 +411,37 @@ export default function Transfer() {
         return;
       }
 
-      // If KYC not verified, redirect to Shufti Pro verification
+      // If KYC not verified, create verification request and redirect
       if (kycData.kycStatus !== 'verified') {
         const confirmVerify = window.confirm(
           'You need to complete identity verification (KYC) before submitting transfers.\n\n' +
-          'Click OK to proceed to verification.'
+          'Click OK to start the verification process.'
         );
         
-        if (confirmVerify && kycData.verificationUrl) {
-          window.open(kycData.verificationUrl, '_blank');
+        if (confirmVerify) {
+          try {
+            // Create new verification request
+            const verifyResponse = await fetch('/api/kyc/create-verification', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (verifyResponse.ok && verifyData.verificationUrl) {
+              // Open Shufti Pro verification in new tab
+              window.open(verifyData.verificationUrl, '_blank');
+              alert('Please complete the verification process in the new window. Once completed, you can submit your transfer.');
+            } else {
+              alert(verifyData.message || 'Failed to create verification request. Please try again.');
+            }
+          } catch (verifyError) {
+            console.error('Verification creation error:', verifyError);
+            alert('Failed to start verification process. Please try again.');
+          }
         }
         
         setSubmitting(false);
@@ -470,8 +492,8 @@ export default function Transfer() {
       };
 
 
-      // Submit to backend
-      const response = await fetch('http://localhost:5000/api/requests', {
+      // Submit to backend (use relative path so Next.js rewrites/proxy forwards to backend)
+      const response = await fetch('/api/requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1444,8 +1466,6 @@ export default function Transfer() {
                   </section>
                 )}
               </div>
-
-            {/* Modal styles moved to frontend/scss/style.scss */}
 
               <section className="features scroll-reveal">
                 <h3>Why choose us</h3>

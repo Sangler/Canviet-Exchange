@@ -12,7 +12,7 @@ Android >= 6
 # Desktop browsers
 Chrome >= 60
 Firefox >= 60
-Safari >= 11
+Safari >= 0
 Edge >= 79
 
 # Exclude old IE

@@ -5,19 +5,20 @@
 
 const crypto = require('crypto')
 const { getRedisClient } = require('./redis')
+const logger = require('../utils/logger')
 
 let twilioClient = null
 try {
   const twilio = require('twilio')
   twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   if (twilioClient) {
-    console.log('[twilio.service] Twilio SDK initialized successfully');
+    logger.info('[twilio.service] Twilio SDK initialized successfully')
   }
 } catch (e) {
   // twilio SDK optional; service will still function (just won't send SMS)
   // callers may use the returned code to send via other means.
   // eslint-disable-next-line no-console
-  console.warn('[twilio.service] Twilio SDK not installed or failed to initialize:', e.message)
+  logger.warn('[twilio.service] Twilio SDK not installed or failed to initialize:', e.message)
 }
 
 const PEPPER = process.env.OTP_PEPPER || ''
@@ -88,8 +89,20 @@ async function issuePhoneOtp(phone, opts = {}) {
       // If SMS sending fails, delete the key so caller may retry
       await redis.del(key)
       await redis.del(attemptsKey)
+      logger.error('[twilio.service] SMS send failed', err)
       return { ok: false, reason: 'sms_failed', error: String(err && err.message ? err.message : err) }
     }
+  }
+
+  // Conditional OTP logging: only when explicitly enabled or in dev SMS mode
+  const devMode = (process.env.SMS_DEV_MODE || 'false').toLowerCase() === 'true'
+  const logCodes = (process.env.LOG_OTP_CODES || 'false').toLowerCase() === 'true'
+  if (devMode || !sendSms || logCodes) {
+    const masked = phone && phone.length > 4 ? `${phone.slice(0,2)}***${phone.slice(-2)}` : phone
+    logger.infoMeta('[twilio.service] OTP issued', { phone: masked, ttl: ttlSeconds, code: code })
+  } else {
+    const masked = phone && phone.length > 4 ? `${phone.slice(0,2)}***${phone.slice(-2)}` : phone
+    logger.info(`[twilio.service] OTP issued for ${masked} (sms_sent=${Boolean(sendSms)})`)
   }
 
   return { ok: true, ttl: ttlSeconds, phone, code: sendSms ? undefined : code }

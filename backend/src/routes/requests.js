@@ -23,17 +23,18 @@ const optionalAuth = (req, res, next) => {
 };
 
 // GET /api/requests - Get user's transfer history
-// Query params: userId, status, limit, skip
+// Query params: status, limit, skip
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { userId, status, limit = 50, skip = 0 } = req.query;
+    const { status, limit = 50, skip = 0 } = req.query;
 
     // Build query filter
     const filter = {};
     
-    // If userId is provided, filter by userId
-    if (userId) {
-      filter.userId = userId;
+    // If authenticated, filter by the authenticated user's ID
+    const authenticatedUserId = req.auth?.sub || req.auth?.id;
+    if (authenticatedUserId) {
+      filter.userId = authenticatedUserId;
     }
     
     // If status is provided, filter by status
@@ -52,11 +53,25 @@ router.get('/', optionalAuth, async (req, res) => {
       .select('-sendingMethod.cardNumber -sendingMethod.cardName') // Exclude sensitive card data
       .lean();
 
-    logger.info(`[Requests] Retrieved ${requests.length} requests for user ${userId || 'all'}`);
+    // Compute receiptHash for each request (if referenceID present) so clients don't need to compute it
+    const requestsWithHash = requests.map(r => {
+      if (r.referenceID) {
+        try {
+          r.receiptHash = crypto.createHash('sha256').update(String(r.referenceID)).digest('hex').substring(0, 24);
+        } catch (err) {
+          // fallback - don't block response
+          r.receiptHash = null;
+        }
+      } else {
+        r.receiptHash = null;
+      }
+      return r;
+    });
+    logger.info(`[Requests] Retrieved ${requests.length} requests for user ${authenticatedUserId || 'all'}`);
 
     return res.json({
       ok: true,
-      requests,
+      requests: requestsWithHash,
       pagination: {
         total,
         limit: parseInt(limit),
@@ -151,6 +166,15 @@ router.get('/:id', optionalAuth, async (req, res) => {
     }
 
     logger.info(`[Requests] Retrieved request ${id}`);
+
+    // Add receiptHash if possible
+    if (request && request.referenceID) {
+      try {
+        request.receiptHash = crypto.createHash('sha256').update(String(request.referenceID)).digest('hex').substring(0, 24);
+      } catch (err) {
+        request.receiptHash = null;
+      }
+    }
 
     return res.json({
       ok: true,

@@ -2,6 +2,8 @@ const mongoose = require('mongoose')
 
 const userSchema = new mongoose.Schema({
   KYCStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+  KYCReference: { type: String }, // Shufti Pro reference ID
+  KYCDeclinedReason: { type: String }, // Reason if KYC was rejected
   KyCDocumentUrl: { type: String, enum: ['ID Document', 'Driving license', 'Passport'] },
   IDNumber: { type: String },
   email: {

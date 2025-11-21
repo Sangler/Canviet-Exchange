@@ -121,8 +121,8 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         setCity(addr.city || '');
         setPostalCode(addr.postalCode || '');
         setCountry(addr.country || 'Canada');
-        // Clear province on load so Google Places autocomplete will populate it when the user selects an address.
-        setProvince('');
+        // Populate province from database if available
+        setProvince(addr.province || '');
         // DOB parse to YYYY-MM-DD
         if (u.dateOfBirth) {
           const d = new Date(u.dateOfBirth);
@@ -316,7 +316,9 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       }
       
       setPhoneOtpSent(true);
-      setOtpCountdown(60); // Start UI countdown (resets on refresh)
+      // Start UI countdown using server-provided TTL when available
+      const expires = typeof data?.expiresIn === 'number' ? Number(data.expiresIn) : 60
+      setOtpCountdown(expires);
       setError(null);
     } catch (err: any) {
       surfaceError(err?.message || 'Failed to send verification code');
@@ -401,7 +403,26 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         setSaving(false);
         return;
       }
-      
+      // Ensure user is at least 18 years old
+      try {
+        const dobDate = new Date(dobIso);
+        const now = new Date();
+        let age = now.getUTCFullYear() - dobDate.getUTCFullYear();
+        const monthDiff = now.getUTCMonth() - dobDate.getUTCMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && now.getUTCDate() < dobDate.getUTCDate())) {
+          age -= 1;
+        }
+        if (age < 18) {
+          surfaceError('You must be at least 18 years old.');
+          setSaving(false);
+          return;
+        }
+      } catch (e) {
+        // If parsing fails, treat as invalid DOB
+        surfaceError('Please provide a valid date of birth.');
+        setSaving(false);
+        return;
+      }
       // Combine phone country code and phone number
       const fullPhone = phone ? `${phoneCountryCode}${phone}` : '';
 

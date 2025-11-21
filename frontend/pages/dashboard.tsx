@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getAuthToken } from '../lib/auth';
 
 type RequestItem = {
   _id: string;
@@ -15,17 +16,8 @@ type RequestItem = {
     accountHolderName?: string;
     accountNumber?: string;
   };
+  receiptHash?: string | null;
 };
-
-// Generate receipt hash from referenceID using Web Crypto API
-async function generateReceiptHash(referenceID: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(referenceID);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex.substring(0, 24);
-}
 
 export default function DashboardPage() {
   const [data, setData] = useState<RequestItem[]>([]);
@@ -35,17 +27,17 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/requests');
+        const token = getAuthToken();
+        const res = await fetch('/api/requests', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         const json = await res.json();
         const requests = json.requests || [];
         setData(requests);
-        
-        // Pre-compute all receipt hashes
+        // Server now provides `receiptHash` on each request when available; store in `hashes` map for backward compatibility
         const hashMap: Record<string, string> = {};
         for (const req of requests) {
-          if (req.referenceID) {
-            hashMap[req._id] = await generateReceiptHash(req.referenceID);
-          }
+          if (req.receiptHash) hashMap[req._id] = req.receiptHash;
         }
         setHashes(hashMap);
       } finally {
@@ -80,13 +72,9 @@ export default function DashboardPage() {
                 return (
                   <tr key={r._id}>
                     <td className="mono hidden sm:table-cell">
-                      {receiptHash ? (
-                        <a href={`/transfers/receipt/${receiptHash}`} className="link-underline">
-                          {r._id.slice(-6)}
-                        </a>
-                      ) : (
-                        r._id.slice(-6)
-                      )}
+                      <a href={`/transfers/receipt/${receiptHash}`} className="link-underline">
+                        {r._id.slice(-6)}
+                      </a>
                     </td>
                     <td>{new Date(r.createdAt).toLocaleString()}</td>
                     <td>{r.amountSent} {r.fromCurrency}</td>

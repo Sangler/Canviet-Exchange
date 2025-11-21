@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
-const { checkKycStatus, updateKycStatus, shuftiWebhook } = require('../controllers/kycController');
+const { createVerification, checkKycStatus, updateKycStatus, shuftiWebhook } = require('../controllers/kycController');
+
+// Create new verification request with Shufti Pro
+router.post('/create-verification', authMiddleware, createVerification);
 
 // Check KYC status for authenticated user
 router.get('/status', authMiddleware, checkKycStatus);
