@@ -1,0 +1,121 @@
+const express = require('express');
+const router = express.Router();
+const Stripe = require('stripe');
+const authMiddleware = require('../middleware/auth');
+
+// Initialize Stripe with secret key
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error('❌ STRIPE_SECRET_KEY is not set in environment variables!');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+
+/**
+ * POST /api/payments/create-intent
+ * Creates a Stripe PaymentIntent for the transfer amount
+ * 
+ * Expected request body:
+ * {
+ *   amount: number (CAD amount in dollars, e.g., 100.50)
+ * }
+ * 
+ * Returns:
+ * {
+ *   clientSecret: string (used by Stripe Payment Element on frontend)
+ * }
+ */
+router.post('/create-intent', authMiddleware, async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    // Validation
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ 
+        error: 'Invalid amount. Amount must be greater than 0.' 
+      });
+    }
+
+    // Convert dollars to cents (Stripe requires amount in smallest currency unit)
+    const amountInCents = Math.round(amount * 100);
+
+    // Create PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountInCents,
+      currency: 'cad',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        userId: req.auth?.id || req.auth?.userId || 'unknown',
+        userEmail: req.auth?.email || 'unknown'
+      }
+    });
+
+    // Return client secret for frontend
+    res.json({ 
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating payment intent:', error);
+    console.error('Error details:', {
+      message: error.message,
+      type: error.type,
+      code: error.code,
+      stack: error.stack
+    });
+    res.status(500).json({ 
+      error: 'Failed to create payment intent',
+      details: error.message 
+    });
+  }
+});
+
+/**
+ * POST /api/payments/confirm
+ * Verifies payment status before allowing transfer submission
+ * 
+ * Expected request body:
+ * {
+ *   paymentIntentId: string
+ * }
+ * 
+ * Returns:
+ * {
+ *   status: string ('succeeded', 'pending', 'failed'),
+ *   paymentIntent: object (Stripe PaymentIntent object)
+ * }
+ */
+router.post('/confirm', authMiddleware, async (req, res) => {
+  try {
+    const { paymentIntentId } = req.body;
+
+    if (!paymentIntentId) {
+      return res.status(400).json({ 
+        error: 'Payment intent ID is required' 
+      });
+    }
+
+    // Retrieve payment intent from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    res.json({
+      status: paymentIntent.status,
+      paymentIntent: {
+        id: paymentIntent.id,
+        amount: paymentIntent.amount / 100, // Convert back to dollars
+        currency: paymentIntent.currency,
+        status: paymentIntent.status
+      }
+    });
+
+  } catch (error) {
+    console.error('Error confirming payment:', error);
+    res.status(500).json({ 
+      error: 'Failed to confirm payment',
+      details: error.message 
+    });
+  }
+});
+
+module.exports = router;

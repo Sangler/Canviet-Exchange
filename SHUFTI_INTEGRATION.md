@@ -3,13 +3,18 @@
 ## Overview
 Complete integration with Shufti Pro API for KYC/AML verification in the CanViet Exchange platform.
 
+**For callback/redirect setup after KYC completion, see [KYC_CALLBACK_SETUP.md](./KYC_CALLBACK_SETUP.md)**
+
 ## Configuration
 
 ### Environment Variables (.env)
 ```env
-SHUFTI_CLIENT_ID=e400544149e47b70664d815854888faf5cc09447cf976cb9744e808277a150b4
-SHUFTI_SECRET_KEY=SbdVvcdkkW36zsBftxbaSHiNJMvO6ILM
+SHUFTI_CLIENT_ID=your_client_id_here
+SHUFTI_SECRET_KEY=your_secret_key_here
+FRONTEND_URL=http://localhost:3000  # For redirect after KYC
 ```
+
+**Important**: Never commit real credentials to git. Use `.env` files (already in `.gitignore`).
 
 ## API Endpoints
 

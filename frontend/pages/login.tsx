@@ -420,6 +420,7 @@ export default function LoginPage() {
                 </svg>
               </div>
             </button>
+            <p className="form-note small text-medium-emphasis mt-3 text-center">By using our services, you agree to our <a href="/terms-and-conditions" className="text-link">terms &amp; conditions</a></p>
           </form>
 
           <div className="divider">

@@ -6,6 +6,13 @@ import AppFooter from '../components/AppFooter';
 import { useAuth } from '../context/AuthContext';
 import CIcon from '@coreui/icons-react';
 import { cilArrowCircleLeft } from '@coreui/icons';
+import { useRouter } from 'next/router';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import StripePaymentForm from '../components/StripePaymentForm';
+
+// Load Stripe (only once, outside component)
+const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || '');
 
 type TransactionHistory = {
   _id: string;
@@ -22,10 +29,14 @@ type TransactionHistory = {
 };
 
 export default function Transfer() {
+  const router = useRouter();
   const { user, token } = useAuth();
   // Transaction history
   const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState<boolean>(true);
+  
+  // KYC success notification
+  const [kycSuccess, setKycSuccess] = useState(false);
   
   // Bank selection
   const [selectedBank, setSelectedBank] = useState<string>('');
@@ -59,7 +70,7 @@ export default function Transfer() {
       if (manual) setRateLoading(true);
       setRateError(null);
       // Prefer direct ExchangeRate-API fetch; fallback to backend endpoint if needed
-      const apiKey = process.env.NEXT_PUBLIC_EXCHANGE_API_KEY || '';
+      const apiKey = process.env.EXCHANGE_API_KEY || '';
       let nextRate: number | null = null;
       let fetchedAt: string | null = null;
 
@@ -126,9 +137,19 @@ export default function Transfer() {
   const [amountFrom, setAmountFrom] = useState<string>('');
   const [amountTo, setAmountTo] = useState<string>('');
   const [activeInput, setActiveInput] = useState<'from' | 'to'>('from'); // Track which input user is editing
+  const lastComputedToRef = useRef<number>(NaN);
+  const lastComputedFromRef = useRef<number>(NaN);
+  const isUpdatingRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [transferMethod, setTransferMethod] = useState<string>('e-transfer');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  
+  // Stripe payment state
+  const [clientSecret, setClientSecret] = useState<string>('');
+  const [paymentIntentId, setPaymentIntentId] = useState<string>('');
+  const [paymentStatus, setPaymentStatus] = useState<string>('pending');
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  
   // Multi-step flow: 1=Recipient, 2=Amount, 3=Payment Method (with substeps 3.1 and 3.2), 4=Review
   const [step, setStep] = useState<number>(1);
   const [subStep, setSubStep] = useState<number>(0); // Substep within step 3 (0=payment, 1=receiver)
@@ -138,7 +159,7 @@ export default function Transfer() {
   const [recipientName, setRecipientName] = useState<string>('');
   const [recipientAccountNumber, setRecipientAccountNumber] = useState<string>('');
   const [transferContent, setTransferContent] = useState<string>('');
-  // Bank transfer details (wire transfer) - SAFE to store
+  // EFT details (EFT transfer) - SAFE to store
   const [bankAccountNumber, setBankAccountNumber] = useState<string>('');
   const [bankTransitNumber, setBankTransitNumber] = useState<string>('');
   const [bankInstitutionNumber, setBankInstitutionNumber] = useState<string>('');
@@ -155,16 +176,51 @@ export default function Transfer() {
   // Flag to prevent saving during initial restoration
   const [isRestoringFromDraft, setIsRestoringFromDraft] = useState(true);
 
+  // Check for KYC success URL parameter
+  useEffect(() => {
+    if (router.query.kycSuccess === 'true') {
+      setKycSuccess(true);
+      
+      // Remove the URL parameter without page reload
+      const { kycSuccess: _, ...rest } = router.query;
+      router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+      
+      // Auto-dismiss after 10 seconds
+      setTimeout(() => setKycSuccess(false), 10000);
+    }
+  }, [router.query.kycSuccess]);
+
+  // Create payment intent when user selects card payment
+  useEffect(() => {
+    const isCardPayment = transferMethod === 'debit' || transferMethod === 'credit';
+    
+    // Only create payment intent if:
+    // 1. Card payment selected
+    // 2. We're on step 3 (payment method step)
+    // 3. We don't already have a client secret
+    // 4. Amount is valid
+    if (isCardPayment && step === 3 && !clientSecret && amountFrom && parseFloat(amountFrom.replace(/,/g, '')) > 0) {
+      createPaymentIntent();
+    }
+    
+    // Reset payment state when switching away from card payments
+    if (!isCardPayment) {
+      setClientSecret('');
+      setPaymentIntentId('');
+      setPaymentStatus('pending');
+    }
+  }, [transferMethod, step, amountFrom]);
+
   // Customer-specific extra margin based on amountFrom (CAD)
   // Rules:
   // - amount < 300 CAD => +0 VND
-  // - amount >= 300 and < 1000 => +40 VND
-  // - amount >= 1000 => + 90 VND
+  // - amount >= 300 and < 1000 => +50 VND
+  // - amount >= 1000 => + 100 VND
   const extraMargin = useMemo(() => {
     const val = parseFloat((amountFrom || '').toString());
     if (isNaN(val) || val <= 0) return 0;
-    if (val >= 1000) return 90;
-    if (val >= 300) return 40;
+    if (val >= 1000) return 100;
+    if (val >= 300) return 50;
     return 0;
   }, [amountFrom]);
 
@@ -193,7 +249,7 @@ export default function Transfer() {
         transferContent,
         selectedBank,
         customBankName,
-        // Bank transfer info (wire) - SAFE to store
+        // EFT info (EFT transfer) - SAFE to store
         bankAccountNumber,
         bankTransitNumber,
         bankInstitutionNumber,
@@ -242,7 +298,7 @@ export default function Transfer() {
       if (draft.selectedBank) setSelectedBank(draft.selectedBank);
       if (draft.customBankName) setCustomBankName(draft.customBankName);
       
-      // Restore bank transfer details (wire) - SAFE to store
+      // Restore EFT details (EFT) - SAFE to store
       if (draft.bankAccountNumber) setBankAccountNumber(draft.bankAccountNumber);
       if (draft.bankTransitNumber) setBankTransitNumber(draft.bankTransitNumber);
       if (draft.bankInstitutionNumber) setBankInstitutionNumber(draft.bankInstitutionNumber);
@@ -324,26 +380,23 @@ export default function Transfer() {
 
   // Auto-calc receive amount (CAD -> VND)
   useEffect(() => {
-    if (activeInput !== 'from') return;
+    if (activeInput !== 'from' || isUpdatingRef.current) return;
     const val = parseFloat(amountFrom.replace(/,/g, ''));
     if (!isNaN(val) && effectiveRate && effectiveRate > 0) {
       // Do NOT apply fee in Step 2. Show gross VND based on full amount using effectiveRate (includes extra margin).
-      setAmountTo(new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(val * effectiveRate));
+      const rawNext = val * effectiveRate;
+      const nextNum = Math.round(rawNext);
+      if (lastComputedToRef.current !== nextNum) {
+        isUpdatingRef.current = true;
+        lastComputedToRef.current = nextNum;
+        setAmountTo(new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(rawNext));
+        setTimeout(() => { isUpdatingRef.current = false; }, 0);
+      }
     } else {
+      lastComputedToRef.current = NaN;
       setAmountTo('');
     }
   }, [amountFrom, effectiveRate, activeInput]);
-
-  // Auto-calc send amount (VND -> CAD)
-  useEffect(() => {
-    if (activeInput !== 'to') return;
-    const val = parseFloat(amountTo.replace(/,/g, ''));
-    if (!isNaN(val) && effectiveRate && effectiveRate > 0) {
-      setAmountFrom((val / effectiveRate).toFixed(2));
-    } else {
-      setAmountFrom('');
-    }
-  }, [amountTo, effectiveRate, activeInput]);
 
   function formatCurrencyInput(e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') {
     const raw = e.target.value || '';
@@ -369,14 +422,6 @@ export default function Transfer() {
       
       setActiveInput('from');
       setAmountFrom(display);
-    } else {
-      // VND: No decimals, limit to 9 digits, format with commas, remove leading zeros
-      const cleaned = raw.replace(/[^0-9]/g, '');
-      const limited = cleaned.slice(0, 9);
-      const withoutLeadingZeros = limited.replace(/^0+/, '') || '0';
-      const formatted = withoutLeadingZeros === '0' ? '' : new Intl.NumberFormat('en-US').format(parseInt(withoutLeadingZeros, 10));
-      setActiveInput('to');
-      setAmountTo(formatted);
     }
   }
 
@@ -389,6 +434,61 @@ export default function Transfer() {
     e.preventDefault();
     setStep(4);
   }
+
+  // Create Stripe PaymentIntent when user selects card payment
+  async function createPaymentIntent() {
+    if (!amountFrom || parseFloat(amountFrom.replace(/,/g, '')) <= 0) {
+      alert('Please enter a valid amount before proceeding with card payment.');
+      return;
+    }
+
+    setPaymentProcessing(true);
+    try {
+      const response = await fetch('/api/payments/create-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          amount: parseFloat(amountFrom.replace(/,/g, ''))
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.clientSecret) {
+        throw new Error(data.error || 'Failed to create payment intent');
+      }
+
+      setClientSecret(data.clientSecret);
+      setPaymentIntentId(data.paymentIntentId);
+      setPaymentStatus('pending');
+    } catch (error) {
+      console.error('Payment intent creation error:', error);
+      alert('Failed to initialize payment. Please try again.');
+      // Reset back to e-transfer if payment init fails
+      setTransferMethod('e-transfer');
+    } finally {
+      setPaymentProcessing(false);
+    }
+  }
+
+  // Handle successful payment confirmation
+  function handlePaymentSuccess(confirmedPaymentIntentId: string) {
+    setPaymentIntentId(confirmedPaymentIntentId);
+    setPaymentStatus('succeeded');
+    alert('Payment successful! Please complete the recipient details.');
+    // Move to next substep (receiver details)
+    setSubStep(1);
+  }
+
+  // Handle payment errors
+  function handlePaymentError(errorMessage: string) {
+    alert(`Payment failed: ${errorMessage}`);
+    setPaymentStatus('failed');
+  }
+
 
   async function onTransferSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -420,6 +520,27 @@ export default function Transfer() {
         
         if (confirmVerify) {
           try {
+            // Save current transfer form state to localStorage before redirecting to KYC
+            const transferDraft = {
+              amountFrom,
+              amountTo,
+              transferMethod,
+              recipientPhoneCode,
+              recipientPhone,
+              recipientName,
+              recipientAccountNumber,
+              transferContent,
+              selectedBank,
+              customBankName,
+              bankAccountNumber,
+              bankTransitNumber,
+              bankInstitutionNumber,
+              agreedToTerms,
+              savedAt: new Date().toISOString(),
+              pendingKyc: true // Flag to indicate this draft is waiting for KYC completion
+            };
+            localStorage.setItem('pendingTransferDraft', JSON.stringify(transferDraft));
+            
             // Create new verification request
             const verifyResponse = await fetch('/api/kyc/create-verification', {
               method: 'POST',
@@ -473,8 +594,8 @@ export default function Transfer() {
         transferFee: 0, // Calculate based on your fee structure
         sendingMethod: {
           type: transferMethod,
-          // Include bank transfer details if wire transfer
-          ...(transferMethod === 'wire' && {
+          // Include EFT details if EFT transfer
+          ...(transferMethod === 'EFT' && {
             bankTransfer: {
               institutionNumber: bankInstitutionNumber,
               transitNumber: bankTransitNumber,
@@ -488,7 +609,12 @@ export default function Transfer() {
           accountHolderName: recipientName,
           transferContent: transferContent
         },
-        termAndServiceAccepted: agreedToTerms
+        termAndServiceAccepted: agreedToTerms,
+        // Include Stripe payment information if card payment
+        ...(isCard && paymentIntentId && {
+          paymentIntentId: paymentIntentId,
+          paymentStatus: paymentStatus
+        })
       };
 
 
@@ -545,7 +671,7 @@ export default function Transfer() {
   }
 
   const isCard = transferMethod === 'debit' || transferMethod === 'credit';
-  const isBank = transferMethod === 'e-transfer' || transferMethod === 'wire';
+  const isBank = transferMethod === 'e-transfer' || transferMethod === 'EFT';
   const rateStr = typeof effectiveRate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate) : null;
   const baseRateStr = typeof rate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate) : null;
   const [showRateModal, setShowRateModal] = useState(false);
@@ -561,15 +687,12 @@ export default function Transfer() {
               <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="Exchange rate details" onClick={() => setShowRateModal(false)}>
                 <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
                   <h3 className="rate-modal-title">How we calculate your exchange rate</h3>
-                  <p className="rate-modal-p">
-                    Current's rate: {baseRateStr ? <strong>{baseRateStr} VND</strong> : <em>not available</em>}
-                  </p>
 
-                  <p className="rate-modal-p">Plus, you get a bonus rate when you send more:</p>
+
                   <ul className="rate-modal-list">
                     <li>Send less than $300 CAD → Standard rate</li>
-                    <li>Send $300 - $999 CAD → Extra <strong>+40 VND/CAD</strong></li>
-                    <li>Send $1,000+ CAD → Extra <strong>+90 VND/CAD</strong> with no transfer fee applied!</li>
+                    <li>Send $300 - $999 CAD → Extra <strong>+50 VND/CAD</strong></li>
+                    <li>Send $1,000+ CAD → Extra <strong>+100 VND/CAD</strong> with no transfer fee applied!</li>
                   </ul>
                   <p className="rate-modal-p">Your current bonus: <strong>+{extraMargin} VND</strong></p>
                   <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
@@ -668,6 +791,35 @@ export default function Transfer() {
               </div>
 
               <div className="grid">
+                {/* KYC Success Notification */}
+                {kycSuccess && (
+                  <div className="alert alert-success d-flex align-items-center mb-4 mx-auto alert-maxwide" role="alert">
+                    <svg 
+                      width="24" 
+                      height="24" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="me-2"
+                    >
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <div className="flex-grow-1">
+                      <strong>Identity Verified!</strong> Your KYC verification is complete. Please review your transfer details and submit.
+                    </div>
+                    <button 
+                      type="button" 
+                      className="btn-close ms-2" 
+                      onClick={() => setKycSuccess(false)}
+                      aria-label="Close"
+                    ></button>
+                  </div>
+                )}
+                
                 {/* Step 1 */}
                 {step === 1 && (
                   <section id="new-recipient" className="card exchange-form scroll-reveal">
@@ -790,10 +942,11 @@ export default function Transfer() {
                           {rate && (
                             <span className="label-inline-info">
 
-                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate + 90)} VND <strong>Best Rate</strong>
+                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate + 100)} VND <strong>Best Rate</strong>
                               <button
                                 type="button"
                                 aria-label="Rate details"
+                                title="Get a quote!"
                                 onClick={() => setShowRateModal(true)}
                                 className="rate-info-btn"
                               >
@@ -844,7 +997,8 @@ export default function Transfer() {
                             name="amountTo"
                             placeholder="Enter VND amount"
                             value={amountTo}
-                            onChange={(e) => formatCurrencyInput(e, 'to')}
+                            readOnly
+                            disabled
                             inputMode="numeric"
                             pattern="[0-9,]*"
                             aria-label="They receive"
@@ -967,132 +1121,25 @@ export default function Transfer() {
                           </div>
                         </div>
 
-                        {isCard && (
-                          <>
-                            <div className="form-group">
-                              <label>Card number</label>
-                              <div className="currency-input">
-                                <input type="text" name="cardNumber" inputMode="numeric" pattern="[0-9\s-]*" maxLength={19} placeholder="1234 5678 9012 3456" required />
-                                <div className="currency-suffix card-brands" aria-hidden="true">
-                                  <span className="brand visa">VISA</span>
-                                  <span className="brand mc">MC</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="form-group two-col lt-phone:!grid-cols-1">
-                              <div>
-                                <label>Expiration date</label>
-                                <div className="expiry-group">
-                                  <input type="text" name="expMonth" inputMode="numeric" pattern="[0-9]{2}" maxLength={2} placeholder="MM" required />
-                                  <span className="slash">/</span>
-                                  <input type="text" name="expYear" inputMode="numeric" pattern="[0-9]{2}" maxLength={2} placeholder="YY" required />
-                                </div>
-                              </div>
-                              <div>
-                                <label>Security code</label>
-                                <input type="text" name="cvc" inputMode="numeric" pattern="[0-9]{3,4}" maxLength={4} placeholder="e.g., 123" required />
-                              </div>
-                            </div>
-
-                            <div className="form-group">
-                              <label>Your exact name on card</label>
-                              <input type="text" name="cardName" placeholder="Full name on card" required />
-                            </div>
-
-                            <div className="form-group">
-                              <label>Card nickname (optional)</label>
-                              <input type="text" name="cardNickname" placeholder="e.g., My card" />
-                            </div>
-
-                            <h4>Billing address</h4>
-                            <div className="form-group checkbox-row">
-                              <label className="checkbox">
-                                <input 
-                                  type="checkbox" 
-                                  name="useHomeAddress" 
-                                  checked={useHomeAddress}
-                                  onChange={(e) => setUseHomeAddress(e.target.checked)}
-                                />
-                                <span>Use home address</span>
-                              </label>
-                            </div>
-
-                            <div className="form-group">
-                              <label>Street address</label>
-                              <input 
-                                type="text" 
-                                name="street" 
-                                value={billingStreet}
-                                readOnly
-                                disabled
+                        {isCard && clientSecret && (
+                          <div className="stripe-payment-wrapper">
+                            <Elements stripe={stripePromise} options={{ clientSecret }}>
+                              <StripePaymentForm
+                                onPaymentSuccess={handlePaymentSuccess}
+                                onPaymentError={handlePaymentError}
+                                isProcessing={paymentProcessing}
+                                setIsProcessing={setPaymentProcessing}
                               />
-                            </div>
-                            <div className="form-group">
-                              <label>Apartment, suite, unit, etc. (optional)</label>
-                              <input 
-                                type="text" 
-                                name="unit" 
-                                value={billingUnit}
-                                readOnly
-                                disabled
-                              />
-                            </div>
-                            <div className="form-group two-col lt-phone:!grid-cols-1">
-                              <div>
-                                <label>City</label>
-                                <input 
-                                  type="text" 
-                                  name="city" 
-                                  value={billingCity}
-                                  readOnly
-                                  disabled
-                                />
-                              </div>
-                              <div>
-                                <label>Province/State</label>
-                                <input 
-                                  type="text" 
-                                  name="province" 
-                                  value={billingProvince}
-                                  readOnly
-                                  disabled
-                                />
-                              </div>
-                            </div>
-                            <div className="form-group two-col lt-phone:!grid-cols-1">
-                              <div>
-                                <label>Postal code</label>
-                                <input 
-                                  type="text" 
-                                  name="postal" 
-                                  value={billingPostal}
-                                  readOnly
-                                  disabled
-                                />
-                              </div>
-                              <div>
-                                <label>Country</label>
-                                <input 
-                                  type="text" 
-                                  name="country" 
-                                  value={billingCountry}
-                                  readOnly
-                                  disabled
-                                />
-                              </div>
-                            </div>
+                            </Elements>
+                          </div>
+                        )}
 
-                            <div className="form-group delivery-notice">
-                              <p className="notice-text">
-                                <strong>Expected delivery:</strong> 24-48 business hours
-                              </p>
-                              <p className="notice-subtext">
-                                Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
-                                Consider that your transfer might take longer than expected—this is normal!
-                              </p>
-                            </div>
-                          </>
+                        {isCard && !clientSecret && (
+                          <div className="form-group">
+                            <p className="text-center">
+                              {paymentProcessing ? 'Initializing secure payment...' : 'Loading payment form...'}
+                            </p>
+                          </div>
                         )}
                       </form>
                     </section>
@@ -1141,8 +1188,8 @@ export default function Transfer() {
                               <input
                                 type="radio"
                                 name="bankMethod"
-                                value="wire"
-                                checked={transferMethod === 'wire'}
+                                value="EFT"
+                                checked={transferMethod === 'EFT'}
                                 onChange={(e)=>setTransferMethod(e.target.value)}
                               />
                               <div className="radio-content">
@@ -1150,7 +1197,7 @@ export default function Transfer() {
                                   <rect x="2" y="4" width="28" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
                                   <circle cx="22" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
                                 </svg>
-                                <span className="payment-label">Bank Transfer</span><strong>RECOMMENDED</strong>
+                                <span className="payment-label">EFT</span><strong>RECOMMENDED</strong>
                               </div>
                             </label>
                           </div>
@@ -1163,8 +1210,8 @@ export default function Transfer() {
                               <input type="email" value={user?.email || ''} disabled />
                             </div>
 
-                            {transferMethod === 'wire' && (
-                              <div className="form-group two-col wire lt-phone:!grid-cols-1">
+                            {transferMethod === 'EFT' && (
+                              <div className="form-group two-col eft lt-phone:!grid-cols-1">
                                 <div>
                                   <label>Account #</label>
                                   <input 
@@ -1458,8 +1505,24 @@ export default function Transfer() {
                     <div className="review-actions">
                       <button type="button" className="btn ghost" onClick={() => setStep(3)}>Back</button>
                       <form onSubmit={onTransferSubmit}>
-                        <button type="submit" className="btn primary" disabled={submitting || !agreedToTerms}>
-                          {submitting ? 'Submitting…' : 'Submit Transfer'}
+                        <button 
+                          type="submit" 
+                          className={`btn primary ${user?.kycStatus === 'verified' ? 'kyc-verified-btn' : ''}`}
+                          disabled={submitting || !agreedToTerms}
+                        >
+                          {user?.kycStatus === 'verified' && (
+                            <svg 
+                              className="me-2" 
+                              width="20" 
+                              height="20" 
+                              viewBox="0 0 24 24" 
+                              fill="currentColor"
+                              style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                            >
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                          )}
+                          {submitting ? 'Submitting…' : user?.kycStatus === 'verified' ? 'Submit Transfer (Verified)' : 'Submit Transfer'}
                         </button>
                       </form>
                     </div>

@@ -222,6 +222,22 @@ router.post('/', authMiddleware, async (req, res) => {
       .substring(0, 24);
 
     // Create new request
+    // Normalize sendingMethod.type to ensure consistent storage
+    let normalizedSendingMethod = sendingMethod || {};
+    try {
+      const stype = (sendingMethod && sendingMethod.type) ? String(sendingMethod.type).trim() : '';
+      const lower = stype.toLowerCase();
+      // Treat common variants as EFT and store canonical 'EFT'
+      if (lower === 'eft' || lower === 'e-transfer' || lower === 'etransfer' || lower === 'e_transfer') {
+        normalizedSendingMethod = { ...sendingMethod, type: 'EFT' };
+      } else {
+        // Preserve original casing/value if it's already valid
+        normalizedSendingMethod = { ...sendingMethod };
+      }
+    } catch (normErr) {
+      normalizedSendingMethod = sendingMethod || {};
+    }
+
     const newRequest = new Request({
       userId,
       userEmail,
@@ -233,7 +249,7 @@ router.post('/', authMiddleware, async (req, res) => {
       currencyFrom: currencyFrom || 'CAD',
       currencyTo: currencyTo || 'VND',
       transferFee: transferFee || 0,
-      sendingMethod,
+      sendingMethod: normalizedSendingMethod,
       recipientBank,
       termAndServiceAccepted,
       status: 'pending'

@@ -71,19 +71,10 @@ const requestSchema = new mongoose.Schema({
   sendingMethod: {
     type: {
       type: String,
-      enum: ['debit', 'credit', 'e-transfer', 'wire'],
+      enum: ['debit', 'credit', 'e-transfer', 'EFT'],
       required: true
     },
-    /*
-    cardNumber: {
-      type: String,
-      select: false // Hide by default for security
-    },
-    cardNickname: String,
-    cardName: String,
-    */
-   
-    // Bank details (for wire transfer)
+// For EFT payments
     bankTransfer: {
       institutionNumber: String,
       transitNumber: String,
@@ -127,7 +118,21 @@ const requestSchema = new mongoose.Schema({
   
   // Admin notes
   completedAt: Date,
-  createdAt: Date
+  createdAt: Date,
+  
+  // Stripe payment tracking
+  paymentIntentId: {
+    type: String,
+    index: true,
+    sparse: true,
+    required:false
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'succeeded', 'failed', 'refunded'],
+    default: 'pending',
+    required:false
+  }
   
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt

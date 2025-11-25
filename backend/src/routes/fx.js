@@ -57,7 +57,7 @@ async function fetchUsdcUsdFromCoinbase() {
 
 // Fetch USD/VND from exchange rate APIs
 async function fetchUsdVnd() {
-  const apiKey = process.env.NEXT_PUBLIC_EXCHANGE_API_KEY;
+  const apiKey = process.env.EXCHANGE_API_KEY;
   const candidates = [];
   
   if (apiKey) {

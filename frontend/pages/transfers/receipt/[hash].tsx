@@ -106,7 +106,6 @@ export default function ReceiptPage() {
 
   if (loading) {
     return (
-      <RequireAuth>
         <div className="wrapper d-flex flex-column min-vh-100">
           <AppSidebar />
           <div className="wrapper d-flex flex-column min-vh-100 bg-light dark:bg-slate-900">
@@ -124,13 +123,11 @@ export default function ReceiptPage() {
             <AppFooter />
           </div>
         </div>
-      </RequireAuth>
     );
   }
 
   if (error || !request) {
     return (
-      <RequireAuth>
         <div className="wrapper d-flex flex-column min-vh-100">
           <AppSidebar />
           <div className="wrapper d-flex flex-column min-vh-100 bg-light dark:bg-slate-900">
@@ -150,12 +147,10 @@ export default function ReceiptPage() {
             <AppFooter />
           </div>
         </div>
-      </RequireAuth>
     );
   }
 
   return (
-    <RequireAuth>
       <div className="wrapper d-flex flex-column min-vh-100">
         <AppSidebar />
         <div className="wrapper d-flex flex-column min-vh-100 bg-light dark:bg-slate-900">
@@ -231,7 +226,7 @@ export default function ReceiptPage() {
 
                 <hr />
 
- {/* Sender Information */}
+                {/* Sender Information */}
                 <h5 className="mb-3 dark:text-slate-200">Sender Information</h5>
                 <div className="row mb-3">
                   <div className="col-md-6">
@@ -303,52 +298,6 @@ export default function ReceiptPage() {
 
                 <hr />
 
-                {/* Sender Information */}
-                <h5 className="mb-3 dark:text-slate-200">Sender Information</h5>
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <small className="text-muted dark:text-slate-400">Email</small>
-                    <p className="mb-0 dark:text-slate-100">{request.userEmail}</p>
-                  </div>
-                  <div className="col-md-6">
-                    <small className="text-muted dark:text-slate-400">Phone</small>
-                    <p className="mb-0 dark:text-slate-100">
-                      {typeof request.userPhone === 'object' 
-                        ? `${request.userPhone.countryCode || ''}${request.userPhone.phoneNumber || ''}`
-                        : request.userPhone}
-                    </p>
-                  </div>
-                </div>
-
-                {request.sendingMethod.type === 'wire' && (request.sendingMethod.senderBankAccount || request.sendingMethod.bankTransfer) && (
-                  <>
-                    <div className="row mb-3">
-                      <div className="col-md-4">
-                        <small className="text-muted dark:text-slate-400">Account Number</small>
-                        <p className="mb-0 dark:text-slate-100">
-                          {request.sendingMethod.bankTransfer?.accountNumber || request.sendingMethod.senderBankAccount}
-                        </p>
-                      </div>
-                      <div className="col-md-4">
-                        <small className="text-muted dark:text-slate-400">Transit Number</small>
-                        <p className="mb-0 dark:text-slate-100">
-                          {request.sendingMethod.bankTransfer?.transitNumber || request.sendingMethod.senderTransitNumber}
-                        </p>
-                      </div>
-                      <div className="col-md-4">
-                        <small className="text-muted dark:text-slate-400">Institution Number</small>
-                        <p className="mb-0 dark:text-slate-100">
-                          {request.sendingMethod.bankTransfer?.institutionNumber || request.sendingMethod.senderInstitutionNumber}
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <hr />
-
-              
-
                 {/* Timestamps */}
                 <div className="row">
                   <div className="col-md-6">
@@ -387,7 +336,6 @@ export default function ReceiptPage() {
           <AppFooter />
         </div>
       </div>
-    </RequireAuth>
     
   );
 }

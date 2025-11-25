@@ -1,14 +1,10 @@
 import React from 'react';
-import AppSidebar from '../components/AppSidebar';
-import AppHeader from '../components/AppHeader';
-import AppFooter from '../components/AppFooter';
+
 
 export default function HelpPage() {
   return (
     <div>
-      <AppSidebar />
       <div className="wrapper d-flex flex-column min-vh-100">
-        <AppHeader />
         <div className="body flex-grow-1 px-4 py-4">
           <div className="container-lg">
             <div className="row justify-content-center">
@@ -19,7 +15,7 @@ export default function HelpPage() {
                     <p className="lead mb-5">
                       Welcome to CanViet Exchange Help Center. Find answers to frequently asked questions about sending money from Canada to Vietnam.
                     </p>
-
+          {/* TODO: Please add a form for user to submit their questions */}
                     {/* Getting Started */}
                     <section className="mb-5">
                       <h2 className="h3 mb-3">Getting Started</h2>
@@ -38,23 +34,11 @@ export default function HelpPage() {
                       <h2 className="h3 mb-3">Sending Money</h2>
                       
                       <div className="mb-4">
-                        <h3 className="h5 mb-2">How do I send money to Vietnam?</h3>
-                        <ol className="ps-3">
-                          <li>Log in to your account</li>
-                          <li>Click "New Transfer" or navigate to the Transfers page</li>
-                          <li>Enter the amount you want to send</li>
-                          <li>Add recipient's bank details in Vietnam</li>
-                          <li>Choose your payment method</li>
-                          <li>Review and confirm your transfer</li>
-                        </ol>
-                      </div>
-
-                      <div className="mb-4">
                         <h3 className="h5 mb-2">Why does my transfer take longer than expected?</h3>
                         <ul className="mb-0">
                           <li><strong>Card payments:</strong> 24-48 business hours</li>
                           <li><strong>E-Transfer:</strong> Within 24-48 hours</li>
-                          <li><strong>Bank Transfer:</strong> 5-7 business days</li>
+                          <li><strong>Electronic Funds Transfers (EFT):</strong> 5-7 business days</li>
                         </ul>
                         <p className="mt-2 mb-0">
                           <em>Note: Processing time may vary based on payment method, recipient bank, and other factors.</em>
@@ -64,26 +48,12 @@ export default function HelpPage() {
 
                     {/* Fees & Exchange Rates */}
                     <section className="mb-5">
-                      <h2 className="h3 mb-3">Fees & Exchange Rates</h2>
-                      
-                      <div className="mb-4">
-                        <h3 className="h5 mb-2">What are your fees?</h3>
-                        <p className="mb-0">
-                          <strong>Transfer Fee:</strong><br />
-                          • $1.50 CAD for transfers under $1,000<br />
-                          • FREE for transfers of $1,000 or more<br />
-                          <br />
-                          <strong>Additional Fees:</strong><br />
-                          • Credit card payments may incur a 2% processing fee<br />
-                          • No hidden fees - what you see is what you pay
-                        </p>
-                      </div>
 
                       <div className="mb-4">
                         <h3 className="h5 mb-2">How is your exchange rate calculated?</h3>
                         <p className="mb-0">
-                          We use real-time market rates from trusted sources (Coinbase, ExchangeRate-API) and add a small margin. 
-                          Our rate is calculated as: CAD → USDC → USD → VND to ensure accuracy and competitive pricing.
+                          We use stablecoin-backed dollar sent to Recipient region and sell it for native currency. Real-time market rates measured from trusted sources (Coinbase, ExchangeRate-API). 
+                          Our rate is calculated as: CAD → USDC → USD → VND to ensure accuracy and better pricing.
                         </p>
                       </div>
 
@@ -200,7 +170,6 @@ export default function HelpPage() {
             </div>
           </div>
         </div>
-        <AppFooter />
       </div>
     </div>
   );

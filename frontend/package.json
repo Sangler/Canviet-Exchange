@@ -18,6 +18,8 @@
     "@coreui/utils": "^2.0.2",
     "@popperjs/core": "^2.11.8",
     "@reduxjs/toolkit": "^2.0.0",
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.5.3",
     "chart.js": "^4.5.0",
     "classnames": "^2.5.1",
     "next": "^14.0.0",

@@ -1,7 +1,7 @@
 /**
  * Browser compatibility detection and user notifications
  * Supports older iOS (>= 11) and Android (>= 6) devices
- */
+**/
 
 export interface BrowserInfo {
   name: string;
@@ -196,3 +196,4 @@ export function dismissCompatibilityWarning(): void {
     sessionStorage.setItem('browser-warning-dismissed', 'true');
   }
 }
+

@@ -15,9 +15,14 @@ const nextConfig = {
   // Transpile modules for older browser compatibility
   transpilePackages: ['@coreui/react', '@coreui/coreui'],
 
+  // Expose environment variables to browser
+  env: {
+    STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+  },
+
   async rewrites() {
-    // Use NEXT_PUBLIC_API_URL in production; fall back to localhost for dev
-    const backend = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+    // Use API_URL in production; fall back to localhost for dev
+    const backend = (process.env.API_URL || 'http://localhost:5000').replace(/\/$/, '');
     return [
       {
         source: '/api/:path*',
