@@ -150,6 +150,9 @@ export default function Transfer() {
   const [paymentStatus, setPaymentStatus] = useState<string>('pending');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   
+  // KYC reminder popup state
+  const [showKycReminder, setShowKycReminder] = useState(false);
+  
   // Multi-step flow: 1=Recipient, 2=Amount, 3=Payment Method (with substeps 3.1 and 3.2), 4=Review
   const [step, setStep] = useState<number>(1);
   const [subStep, setSubStep] = useState<number>(0); // Substep within step 3 (0=payment, 1=receiver)
@@ -196,10 +199,10 @@ export default function Transfer() {
     
     // Only create payment intent if:
     // 1. Card payment selected
-    // 2. We're on step 3 (payment method step)
+    // 2. We're on step 2 (payment method step)
     // 3. We don't already have a client secret
     // 4. Amount is valid
-    if (isCardPayment && step === 3 && !clientSecret && amountFrom && parseFloat(amountFrom.replace(/,/g, '')) > 0) {
+    if (isCardPayment && step === 2 && !clientSecret && amountFrom && parseFloat(amountFrom.replace(/,/g, '')) > 0) {
       createPaymentIntent();
     }
     
@@ -211,21 +214,32 @@ export default function Transfer() {
     }
   }, [transferMethod, step, amountFrom]);
 
-  // Customer-specific extra margin based on amountFrom (CAD)
-  // Rules:
-  // - amount < 300 CAD => +0 VND
-  // - amount >= 300 and < 1000 => +50 VND
-  // - amount >= 1000 => + 100 VND
-  const extraMargin = useMemo(() => {
-    const val = parseFloat((amountFrom || '').toString());
-    if (isNaN(val) || val <= 0) return 0;
-    if (val >= 1000) return 100;
-    if (val >= 300) return 50;
-    return 0;
-  }, [amountFrom]);
+  // Show KYC reminder when user reaches Step 4 (Review) if not verified
+  useEffect(() => {
+    async function checkKycForReminder() {
+      if (step !== 4 || !user || !token) return;
+      
+      try {
+        const response = await fetch('/api/kyc/status', {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.ok && data.kycStatus !== 'verified') {
+          setShowKycReminder(true);
+        }
+      } catch (error) {
+        console.error('Error checking KYC status:', error);
+      }
+    }
+    
+    checkKycForReminder();
+  }, [step, user, token]);
 
-  // Effective rate used for calculations = base backend rate (includes +200 margin) + customer extra margin
-  const effectiveRate = useMemo(() => (typeof rate === 'number' ? Number(rate) + Number(extraMargin) : null), [rate, extraMargin]);
+  // Use the rate directly from backend (already includes +200 VND margin)
+  const effectiveRate = rate;
 
   // ============================================
   // SAFE DATA PERSISTENCE (localStorage)
@@ -309,7 +323,7 @@ export default function Transfer() {
       
       const savedStep = draft.step || 1;
       
-      // If they were at step 4 (review), take them back to step 3 (payment method)
+      // If they were at step 4 (review), take them back to step 3 (amount)
       if (savedStep === 4) {
         setStep(3);
       } else {
@@ -432,7 +446,7 @@ export default function Transfer() {
 
   async function onDetailsSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setStep(4);
+    setSubStep(1);
   }
 
   // Create Stripe PaymentIntent when user selects card payment
@@ -683,19 +697,66 @@ export default function Transfer() {
         <div className="wrapper d-flex flex-column min-vh-100">
           <AppHeader />
           <div className="body flex-grow-1 transfers-page">
+            {showKycReminder && (
+              <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="KYC Reminder">
+                <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
+                  <h3 className="rate-modal-title">⚠️ Identity Verification Required</h3>
+                  <p className="rate-modal-p">
+                    To submit your transfer, you need to complete identity verification (KYC). 
+                    This is a one-time process that takes just a few minutes.
+                  </p>
+                  <p className="rate-modal-p">
+                    <strong>Why do we need this?</strong><br/>
+                    Identity verification helps us keep your transfers secure and comply with countries regulations.
+                  </p>
+                  <div className="rate-modal-actions" style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                      className="btn btn-primary" 
+                      type="button" 
+                      onClick={async () => {
+                        setShowKycReminder(false);
+                        try {
+                          const response = await fetch('/api/kyc/create-verification', {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${token}`,
+                              'Content-Type': 'application/json'
+                            }
+                          });
+                          const data = await response.json();
+                          if (response.ok && data.verificationUrl) {
+                            window.open(data.verificationUrl, '_blank');
+                          } else {
+                            alert('Failed to start verification. Please try again.');
+                          }
+                        } catch (error) {
+                          console.error('Verification error:', error);
+                          alert('Failed to start verification. Please try again.');
+                        }
+                      }}
+                    >
+                      Start Verification
+                    </button>
+                    <button 
+                      className="btn btn-outline-secondary" 
+                      type="button" 
+                      onClick={() => setShowKycReminder(false)}
+                    >
+                      Remind Me Later
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {showRateModal && (
               <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="Exchange rate details" onClick={() => setShowRateModal(false)}>
                 <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
                   <h3 className="rate-modal-title">How we calculate your exchange rate</h3>
 
-
-                  <ul className="rate-modal-list">
-                    <li>Send less than $300 CAD → Standard rate</li>
-                    <li>Send $300 - $999 CAD → Extra <strong>+50 VND/CAD</strong></li>
-                    <li>Send $1,000+ CAD → Extra <strong>+100 VND/CAD</strong> with no transfer fee applied!</li>
-                  </ul>
-                  <p className="rate-modal-p">Your current bonus: <strong>+{extraMargin} VND</strong></p>
+                  <p className="rate-modal-p">We offer competitive exchange rates with a transparent margin applied to the market rate.</p>
                   <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
+                  <p className="rate-modal-p">Send $1,000+ CAD to enjoy <strong>no transfer fee</strong>!</p>
 
                   <p className="rate-modal-p note">*Note: Exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.</p>
                   <div className="rate-modal-actions">
@@ -758,7 +819,7 @@ export default function Transfer() {
                 <button 
                   className="back-btn z-20 pointer-events-auto lt-phone:!left-[8px] lt-phone:!p-1" 
                   onClick={() => {
-                    if (step === 3 && subStep === 1) {
+                    if (step === 2 && subStep === 1) {
                       setSubStep(0);
                     } else {
                       setStep(prev => Math.max(1, prev - 1));
@@ -775,11 +836,11 @@ export default function Transfer() {
                     <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">1</span>
                     <span className="label">Recipient</span>
                   </li>
-                  <li className={`step ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`}>
+                  <li className={`step ${step === 2 ? 'active' : step > 2 ? 'completed' : ''} ${step === 2 && subStep === 1 ? 'half-completed' : ''}`}>
                     <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">2</span>
                     <span className="label">Amount</span>
                   </li>
-                  <li className={`step ${step === 3 ? 'active' : step > 3 ? 'completed' : ''} ${step === 3 && subStep === 1 ? 'half-completed' : ''}`}>
+                  <li className={`step ${step === 3 ? 'active' : step > 3 ? 'completed' : ''}`}>
                     <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">3</span>
                     <span className="label">Details</span>
                   </li>
@@ -933,131 +994,8 @@ export default function Transfer() {
                   </section>
                 )}
 
-                {/* Step 2 */}
-                {step === 2 && (
-                  <section id="exchange" className="card exchange-form scroll-reveal">
-                    <form id="moneyExchangeForm" onSubmit={onCalcSubmit}>
-                      <div className="form-group">
-                        <label htmlFor="amountFrom">YOU SEND:</label>
-                          {rate && (
-                            <span className="label-inline-info">
-
-                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate + 100)} VND <strong>Best Rate</strong>
-                              <button
-                                type="button"
-                                aria-label="Rate details"
-                                title="Get a quote!"
-                                onClick={() => setShowRateModal(true)}
-                                className="rate-info-btn"
-                              >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                  <circle cx="12" cy="12" r="10"></circle>
-                                  <line x1="12" y1="16" x2="12" y2="12"></line>
-                                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                </svg>
-                              </button>
-                            </span>
-                          )}
-                          {amountFrom && parseFloat(amountFrom) > 0 && effectiveRate && (
-                            <span className="label-inline-info">
-                              Your rate: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND
-                            </span>
-                          )}
-                        <div className="currency-input" role="group" aria-label="You send amount in CAD">
-                          <input
-                            type="number"
-                            id="amountFrom"
-                            name="amountFrom"
-                            placeholder="Enter amount"
-                            min={20}
-                            max={9999}
-                            step="0.01"
-                            required
-                            value={amountFrom}
-                            onChange={(e) => formatCurrencyInput(e, 'from')}
-                            onInput={(e) => formatCurrencyInput(e as unknown as React.ChangeEvent<HTMLInputElement>, 'from')}
-                            inputMode="decimal"
-                            aria-label="You send"
-                          />
-                          <div className="currency-suffix" aria-hidden="true">
-                            <img className="flag" src="/flags/Flag_of_Canada.png" alt="" />
-                            <span className="code">CAD</span>
-                          </div>
-                        </div>
-                      </div>
-                      <hr />
-                      <div className="form-group">
-                        <label htmlFor="amountTo">
-                          THEY RECEIVE:
-                        </label>
-                        <div className="currency-input" role="group" aria-label="They receive amount in VND">
-                          <input
-                            type="text"
-                            id="amountTo"
-                            name="amountTo"
-                            placeholder="Enter VND amount"
-                            value={amountTo}
-                            readOnly
-                            disabled
-                            inputMode="numeric"
-                            pattern="[0-9,]*"
-                            aria-label="They receive"
-                          />
-                          <div className="currency-suffix" aria-hidden="true">
-                            <img className="flag" src="/flags/Flag_of_Vietnam.png" alt="" />
-                            <span className="code">VND</span>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Transfer fee notification */}
-                      {(() => {
-                        const val = parseFloat(amountFrom);
-                        
-                        // Show congratulations message when amount >= threshold
-                        if (!isNaN(val) && val >= FEE_THRESHOLD) {
-                          return (
-                            <div className="alert alert-success d-flex align-items-center mt-3" role="alert">
-                              <svg 
-                                width="24" 
-                                height="24" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                strokeWidth="2" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round"
-                                className="me-2"
-                              >
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                              </svg>
-                              <div>
-                                <strong>Congrats!</strong> NO Transfer fee applied. <strong> You Save ${FEE_CAD.toFixed(2)} CAD!</strong>.
-                              </div>
-                            </div>
-                          );
-                        }
-                        
-                        // Show fee warning and upsell by default or when amount is below threshold
-                        return (
-                          <>
-                            <div className="fee-mini" role="note">Transfer fee: <strong>${FEE_CAD.toFixed(2)}</strong> CAD</div>
-                            <div className="upsell-row" role="note" aria-live="polite">
-                              <div className="upsell-text">
-                                Tip: Send <strong>${FEE_THRESHOLD.toLocaleString()}</strong> CAD to enjoy no transfer fee.
-                              </div>
-                              <button type="button" className="upsell-btn" onClick={() => setAmountFrom(String(FEE_THRESHOLD))}>GET GOOD RATE</button>
-                            </div>
-                          </>
-                        );
-                      })()}
-                      <button type="submit" className="btn primary w-full">Confirm send</button>
-                    </form>
-                  </section>
-                )}
-
-                {/* Step 3.1 - Payment Method */}
-                {step === 3 && subStep === 0 && (
+                {/* Step 2.1 - Payment Method */}
+                {step === 2 && subStep === 0 && (
                   <>
                     <h2>Select payment method</h2>
 
@@ -1264,7 +1202,7 @@ export default function Transfer() {
                   </>
                 )}
 
-                {step === 3 && subStep === 0 && (
+                {step === 2 && subStep === 0 && (
                   <div className="step-actions">
                     <button 
                       type="button" 
@@ -1278,13 +1216,137 @@ export default function Transfer() {
                         setSubStep(1);
                       }}
                     >
-                      Continue to Receiver Details
+                      Continue to Amount
                     </button>
                   </div>
                 )}
 
-                {/* Step 3.2 - Receiver Bank Details */}
-                {step === 3 && subStep === 1 && (
+                {/* Step 2.2 - Amount */}
+                {step === 2 && subStep === 1 && (
+                  <section id="exchange" className="card exchange-form scroll-reveal">
+                    <form id="moneyExchangeForm" onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
+                      <div className="form-group">
+                        <label htmlFor="amountFrom">YOU SEND:</label>
+                          {rate && (
+                            <span className="label-inline-info">
+
+                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND <strong>Best Rate</strong>
+                              <button
+                                type="button"
+                                aria-label="Rate details"
+                                title="Get a quote!"
+                                onClick={() => setShowRateModal(true)}
+                                className="rate-info-btn"
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                              </button>
+                            </span>
+                          )}
+                          {amountFrom && parseFloat(amountFrom) > 0 && effectiveRate && (
+                            <span className="label-inline-info">
+                              Your rate: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND
+                            </span>
+                          )}
+                        <div className="currency-input" role="group" aria-label="You send amount in CAD">
+                          <input
+                            type="number"
+                            id="amountFrom"
+                            name="amountFrom"
+                            placeholder="Enter amount"
+                            min={20}
+                            max={9999}
+                            step="0.01"
+                            required
+                            value={amountFrom}
+                            onChange={(e) => formatCurrencyInput(e, 'from')}
+                            onInput={(e) => formatCurrencyInput(e as unknown as React.ChangeEvent<HTMLInputElement>, 'from')}
+                            inputMode="decimal"
+                            aria-label="You send"
+                          />
+                          <div className="currency-suffix" aria-hidden="true">
+                            <img className="flag" src="/flags/Flag_of_Canada.png" alt="" />
+                            <span className="code">CAD</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="amountTo">
+                          THEY RECEIVE:
+                        </label>
+                        <div className="currency-input" role="group" aria-label="They receive amount in VND">
+                          <input
+                            type="text"
+                            id="amountTo"
+                            name="amountTo"
+                            placeholder="Enter VND amount"
+                            value={amountTo}
+                            readOnly
+                            disabled
+                            inputMode="numeric"
+                            pattern="[0-9,]*"
+                            aria-label="They receive"
+                          />
+                          <div className="currency-suffix" aria-hidden="true">
+                            <img className="flag" src="/flags/Flag_of_Vietnam.png" alt="" />
+                            <span className="code">VND</span>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Transfer fee notification */}
+                      {(() => {
+                        const val = parseFloat(amountFrom);
+                        
+                        // Show congratulations message when amount >= threshold
+                        if (!isNaN(val) && val >= FEE_THRESHOLD) {
+                          return (
+                            <div className="alert alert-success d-flex align-items-center mt-3" role="alert">
+                              <svg 
+                                width="24" 
+                                height="24" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round"
+                                className="me-2"
+                              >
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                              </svg>
+                              <div>
+                                <strong>Congrats!</strong> NO Transfer fee applied. <strong> You Save ${FEE_CAD.toFixed(2)} CAD!</strong>.
+                              </div>
+                            </div>
+                          );
+                        }
+                        
+                        // Show fee warning and upsell by default or when amount is below threshold
+                        return (
+                          <>
+                            <div className="fee-mini" role="note">Transfer fee: <strong>${FEE_CAD.toFixed(2)}</strong> CAD</div>
+                            <div className="upsell-row" role="note" aria-live="polite">
+                              <div className="upsell-text">
+                                Tip: Send <strong>${FEE_THRESHOLD.toLocaleString()}</strong> CAD to enjoy no transfer fee.
+                              </div>
+                              <button type="button" className="upsell-btn" onClick={() => setAmountFrom(String(FEE_THRESHOLD))}>GET GOOD RATE</button>
+                            </div>
+                          </>
+                        );
+                      })()}
+                      <button type="submit" className="btn primary w-full">Continue to Receiver Details</button>
+                    </form>
+                  </section>
+                )}
+
+
+
+                {/* Step 3 - Receiver Bank Details */}
+                {step === 3 && (
                   <>
                     <h2>Receiver Bank Details</h2>
 
@@ -1433,7 +1495,7 @@ export default function Transfer() {
                   </>
                 )}
 
-                {step === 3 && subStep === 1 && (
+                {step === 3 && (
                   <div className="step-actions">
                     <button type="button" className="btn primary w-full" onClick={() => setStep(4)}>
                       Continue to Review

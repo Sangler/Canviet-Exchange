@@ -65,23 +65,20 @@ exports.createVerification = async (req, res) => {
     // Build verification request payload
     const reference = `cvx-${userId}-${Date.now()}`;
     
-    // Build redirect URL for development/production
-    const baseUrl =  'http://localhost:3000';
-    const redirectUrl = `${baseUrl}/kyc-callback`;
-    
-    // Build payload - redirect_url sends user back to our app after KYC completion
-    // IMPORTANT: To use redirect_url, you MUST register it in Shufti Pro dashboard:
+    // TEMPORARY: Comment out redirect_url until domain is registered in Shufti Pro dashboard
+    // To use redirect_url, you MUST register your domain in Shufti Pro:
     // 1. Login to https://backoffice.shuftipro.com/
-    // 2. Go to Settings → Webhooks/API Settings → Redirect URLs
-    // 3. Add your domain (for localhost use: localhost or for production: yourdomain.com)
-    // 4. Do NOT include http://, https://, or www in the domain field
-    // 
-    // For webhook (server-side callback), register at Settings → Webhooks:
-    // Add: https://yourdomain.com/api/kyc/webhook (or use ngrok for local dev)
+    // 2. Go to Settings → Redirect URLs
+    // 3. Add: localhost:3000 (for development) or yourdomain.com (for production)
+    // 4. Do NOT include http://, https://, or www
+    
+    // Build redirect URL for development/production
+    // const baseUrl = 'http://localhost:3000';
+    // const redirectUrl = `${baseUrl}/kyc-callback`;
     
     const payload = {
       reference,
-      redirect_url: redirectUrl,
+      // redirect_url: redirectUrl, // Commented out - register domain in Shufti dashboard first
       email: user.email,
       country: 'CA', // Canada
       language: 'EN',

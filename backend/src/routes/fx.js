@@ -126,8 +126,8 @@ router.get('/cad-vnd', async (_req, res) => {
     // Step 4: Calculate VND per CAD = (VND/USD) ÷ (CAD/USD)
     const cadToVnd = usdVndData.rate / cadPerUsd;
 
-    // Apply business margin of +30 VND
-    const withMargin = cadToVnd + 25;
+    // Apply business margin of +165 VND
+    const withMargin = cadToVnd + 165;
 
 
     return res.json({ 

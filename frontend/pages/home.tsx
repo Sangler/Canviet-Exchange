@@ -104,8 +104,8 @@ export default function Home() {
   useEffect(() => {
     if (activeInput !== 'from' || isUpdatingRef.current) return;
     const val = parseFloat((amountFrom || '').toString().replace(/,/g, ''));
-    if (!isNaN(val) && effective && effective > 0) {
-      const rawNext = val * effective;
+    if (!isNaN(val) && effectiveRate && effectiveRate > 0) {
+      const rawNext = val * effectiveRate;
       const nextNum = Math.round(rawNext);
       if (lastComputedToRef.current !== nextNum) {
         isUpdatingRef.current = true;
@@ -117,7 +117,7 @@ export default function Home() {
       lastComputedToRef.current = NaN;
       setAmountTo('');
     }
-  }, [amountFrom, effective, activeInput]);
+  }, [amountFrom, effectiveRate, activeInput]);
 
   // Redirect logged-in users to /transfers
   useEffect(() => {
@@ -217,7 +217,7 @@ export default function Home() {
                                   {rate && (
                                     <div className="form-group mb-2">
                                       <div className="label-inline-info">
-                                        1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((rate || 0) + 100)} VND <strong>Best Rate</strong>
+                                        1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND <strong>Best Rate</strong>
                                         <button
                                           type="button"
                                           aria-label="Rate details"
@@ -391,12 +391,9 @@ export default function Home() {
           <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="Exchange rate details" onClick={() => setShowRateModal(false)}>
             <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
               <h3 className="rate-modal-title">How we calculate your rate</h3>
-              <ul className="rate-modal-list">
-                <li>Send less than $300 CAD → Standard rate</li>
-                <li>Send $300 - $999 CAD → Extra <strong>+50 VND/CAD</strong></li>
-                <li>Send $1,000+ CAD → Extra <strong>+100 VND/CAD</strong> with no transfer fee applied!</li>
-              </ul>
+              <p className="rate-modal-p">We offer competitive exchange rates with a transparent margin applied to the market rate.</p>
               <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
+              <p className="rate-modal-p">Send $1,000+ CAD to enjoy <strong>no transfer fee</strong>!</p>
 
               <p className="rate-modal-p note">*Note: Currency exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.</p>
               <div className="rate-modal-actions">
