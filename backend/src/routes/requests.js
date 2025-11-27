@@ -3,6 +3,7 @@ const Request = require('../models/Requests');
 const authMiddleware = require('../middleware/auth');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
+const Stripe = require('stripe');
 
 // Optional auth middleware - doesn't reject if no token
 const optionalAuth = (req, res, next) => {
@@ -207,6 +208,7 @@ router.post('/', authMiddleware, async (req, res) => {
       sendingMethod,
       recipientBank,
       termAndServiceAccepted
+      , paymentIntentId
     } = req.body;
 
 
@@ -220,6 +222,50 @@ router.post('/', authMiddleware, async (req, res) => {
       .update(referenceNumber)
       .digest('hex')
       .substring(0, 24);
+
+    // If a paymentIntentId is provided (card payments), verify the PaymentIntent with Stripe
+    let verifiedPaymentIntent = null;
+    if (paymentIntentId) {
+      try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+          logger.error('[Requests] STRIPE_SECRET_KEY is not configured on server');
+          return res.status(500).json({ ok: false, message: 'Payment configuration error' });
+        }
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+        if (!intent) {
+          return res.status(400).json({ ok: false, message: 'Invalid payment intent' });
+        }
+
+        // Require succeeded status
+        if (intent.status !== 'succeeded') {
+          return res.status(400).json({ ok: false, message: 'Payment not completed', paymentStatus: intent.status });
+        }
+
+        // If amounts/currencies were provided, validate them to avoid mismatches
+        try {
+          if (typeof amountSent !== 'undefined' && currencyFrom) {
+            const expectedCents = Math.round(Number(amountSent) * 100);
+            if (Number.isFinite(expectedCents) && intent.amount !== expectedCents) {
+              logger.warn('[Requests] PaymentIntent amount mismatch', { intentAmount: intent.amount, expectedCents });
+              return res.status(400).json({ ok: false, message: 'Payment amount mismatch' });
+            }
+            if (intent.currency && String(intent.currency).toLowerCase() !== String(currencyFrom).toLowerCase()) {
+              logger.warn('[Requests] PaymentIntent currency mismatch', { intentCurrency: intent.currency, currencyFrom });
+              return res.status(400).json({ ok: false, message: 'Payment currency mismatch' });
+            }
+          }
+        } catch (vErr) {
+          logger.warn('[Requests] Error validating PaymentIntent amounts', vErr.message);
+        }
+
+        verifiedPaymentIntent = intent;
+      } catch (stripeErr) {
+        logger.error('[Requests] Error retrieving PaymentIntent:', stripeErr.message || stripeErr);
+        return res.status(400).json({ ok: false, message: 'Failed to verify payment' });
+      }
+    }
 
     // Create new request
     // Normalize sendingMethod.type to ensure consistent storage
@@ -252,7 +298,10 @@ router.post('/', authMiddleware, async (req, res) => {
       sendingMethod: normalizedSendingMethod,
       recipientBank,
       termAndServiceAccepted,
-      status: 'pending'
+      status: 'pending',
+      // If verifiedPaymentIntent exists, store its id and mark succeeded
+      paymentIntentId: verifiedPaymentIntent ? String(verifiedPaymentIntent.id) : undefined,
+      paymentStatus: verifiedPaymentIntent ? 'succeeded' : undefined
     });
 
     await newRequest.save();

@@ -73,7 +73,7 @@ export default function Home() {
     const raw = e.target.value || '';
     if (type === 'from') {
       const normalized = raw.replace(/,/g, '.');
-      const cleaned = normalized.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+      const cleaned = normalized.replace(/[^0-9.]/g, '').replace(/(\..*)\./, '$1');
       const parts = cleaned.split('.');
       parts[0] = parts[0].replace(/^0+/, '') || '0';
       if (parts[0].length > 5) parts[0] = parts[0].slice(0, 5);
@@ -82,25 +82,22 @@ export default function Home() {
       const display = limited === '0' ? '' : limited;
       setActiveInput('from');
       setAmountFrom(display);
+    } else if (type === 'to') {
+      // VND: No decimals, limit to 9 digits, remove leading zeros and commas
+      const cleaned = raw.replace(/[^0-9]/g, '');
+      const trimmed = cleaned.replace(/^0+/, '') || '0';
+      const limited = trimmed.length > 9 ? trimmed.slice(0, 9) : trimmed;
+      // Format with commas every 3 digits
+      const formatted = limited === '0' ? '' : limited.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      setActiveInput('to');
+      setAmountTo(formatted);
     }
   }
 
-  // Extra margin rules (same as transfers.tsx)
-  // - amount < 300 CAD => +0 VND
-  // - amount >= 300 and < 1000 => +50 VND
-  // - amount >= 1000 => +100 VND
-  const extraMargin = useMemo(() => {
-    const val = parseFloat((amountFrom || '').toString());
-    if (isNaN(val) || val <= 0) return 0;
-    if (val >= 1000) return 100;
-    if (val >= 300) return 50;
-    return 0;
-  }, [amountFrom]);
+  // Effective rate used for calculations = base backend rate (includes any backend margin)
+  const effectiveRate = useMemo(() => (typeof rate === 'number' ? Number(rate) : null), [rate]);
 
-  const effective = useMemo(() => (typeof rate === 'number' ? Number(rate) + Number(extraMargin) : null), [rate, extraMargin]);
-  const effectiveRate = effective;
-
-  // Keep amountTo in sync when user edits amountFrom
+  // Keep amountTo in sync when user edits amountFrom (CAD -> VND)
   useEffect(() => {
     if (activeInput !== 'from' || isUpdatingRef.current) return;
     const val = parseFloat((amountFrom || '').toString().replace(/,/g, ''));
@@ -118,6 +115,25 @@ export default function Home() {
       setAmountTo('');
     }
   }, [amountFrom, effectiveRate, activeInput]);
+
+  // Keep amountFrom in sync when user edits amountTo (VND -> CAD)
+  useEffect(() => {
+    if (activeInput !== 'to' || isUpdatingRef.current) return;
+    const val = parseFloat((amountTo || '').toString().replace(/,/g, ''));
+    if (!isNaN(val) && effectiveRate && effectiveRate > 0) {
+      const rawNext = val / effectiveRate;
+      const nextNum = Math.round(rawNext * 100) / 100; // Round to 2 decimals
+      if (lastComputedFromRef.current !== nextNum) {
+        isUpdatingRef.current = true;
+        lastComputedFromRef.current = nextNum;
+        setAmountFrom(nextNum.toFixed(2));
+        setTimeout(() => { isUpdatingRef.current = false; }, 0);
+      }
+    } else {
+      lastComputedFromRef.current = NaN;
+      setAmountFrom('');
+    }
+  }, [amountTo, effectiveRate, activeInput]);
 
   // Redirect logged-in users to /transfers
   useEffect(() => {
@@ -270,8 +286,7 @@ export default function Home() {
                                         name="amountTo"
                                         placeholder="They Receive VND"
                                         value={amountTo}
-                                        readOnly
-                                        disabled
+                                        onChange={(e) => formatCurrencyInput(e, 'to')}
                                         inputMode="numeric"
                                         pattern="[0-9,]*"
                                         aria-label="They receive"

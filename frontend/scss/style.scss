@@ -1142,6 +1142,18 @@ select.themed { padding-right: 36px; }
   flex: 1;
 }
 
+/* default strong color inside radio content */
+.radio-content strong {
+  color: #014a44;
+}
+
+/* Hovering the payment radio or when it's checked should highlight the strong text */
+.payment-radio:hover .radio-content strong,
+.payment-radio:has(input:checked) .radio-content strong,
+.payment-radio input[type="radio"]:checked ~ .radio-content strong  {
+  color: #00B3A4;
+}
+
 .payment-icon {
   flex-shrink: 0;
   color: #64748b;
@@ -1154,14 +1166,8 @@ select.themed { padding-right: 36px; }
 .payment-label {
   font-size: 16px;
   font-weight: 600;
-  color: #0b1326;
+  color: #011326;
   flex: 1;
-}
-
-.payment-note {
-  font-size: 12px;
-  color: #64748b;
-  margin-left: auto;
 }
 
 /* End of moved page-level styles */
@@ -1193,7 +1199,7 @@ p { color: #475569; }
 }
 
 .input-group input {
-  background: #0b1326;
+  background: #011326;
   border: 1px solid #203058;
   color: #e6edf7;
 }
@@ -1612,7 +1618,7 @@ color: #94a3b8 !important;
   }
 
   .themed {
-    background: #0b1326;
+    background: #011326;
     border: 1px solid #203058;
     color: #f2f8ff;
   }
@@ -1661,7 +1667,7 @@ color: #94a3b8 !important;
   }
 
   .input-group input {
-    background: #0b1326 !important;
+    background: #011326 !important;
     border: 1px solid #203058 !important;
     color: #e6edf7 !important;
   }
@@ -1669,7 +1675,7 @@ color: #94a3b8 !important;
   .input-group input:focus {
     border-color: #5b8def !important;
     box-shadow: 0 0 0 3px rgba(91,141,239,.25) !important;
-    background: #0b1326 !important;
+    background: #011326 !important;
   }
 
   .input-group label {
@@ -1723,7 +1729,7 @@ color: #94a3b8 !important;
   .auth-card.verify-email .input-group input:focus {
     border-color: #00B3A4 !important;
     box-shadow: 0 0 0 3px rgba(0,179,164,0.25) !important;
-    background: #0b1326 !important;
+    background: #011326 !important;
   }
 
   .auth-card.register .input-group input:not(:placeholder-shown) + label,
@@ -1756,7 +1762,7 @@ color: #94a3b8 !important;
 
   .checkbox-container .checkmark {
     border: 1px solid #2a3a6a !important;
-    background: #0b1326 !important;
+    background: #011326 !important;
   }
 
   .checkbox-container input:checked + .checkmark {

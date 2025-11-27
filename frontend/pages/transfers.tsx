@@ -64,6 +64,11 @@ export default function Transfer() {
   const [rateError, setRateError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const rateTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Display rate adjusted by -175 VND (base rate - 175)
+  const displayRate = typeof rate === 'number' ? Math.max(0, Number((rate - 175).toFixed(2))) : null;
+  const displayRateFormatted = displayRate !== null ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(displayRate) : null;
+  const baseRateFormatted = typeof rate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate) : null;
   
   async function fetchRate(manual = false) {
     try {
@@ -134,6 +139,30 @@ export default function Transfer() {
     return () => { if (rateTimer.current) clearInterval(rateTimer.current); };
   }, [user?.id]);
 
+  // Fetch KYC status on mount
+  useEffect(() => {
+    async function fetchKycStatus() {
+      if (!user || !token) return;
+      
+      try {
+        const response = await fetch('/api/kyc/status', {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.ok) {
+          setKycStatus(data.kycStatus || 'unverified');
+        }
+      } catch (error) {
+        console.error('Error fetching KYC status:', error);
+      }
+    }
+    
+    fetchKycStatus();
+  }, [user, token]);
+
   const [amountFrom, setAmountFrom] = useState<string>('');
   const [amountTo, setAmountTo] = useState<string>('');
   const [activeInput, setActiveInput] = useState<'from' | 'to'>('from'); // Track which input user is editing
@@ -149,9 +178,12 @@ export default function Transfer() {
   const [paymentIntentId, setPaymentIntentId] = useState<string>('');
   const [paymentStatus, setPaymentStatus] = useState<string>('pending');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const stripeFormRef = useRef<any>(null);
+  const [paymentFlowBusy, setPaymentFlowBusy] = useState(false);
   
   // KYC reminder popup state
   const [showKycReminder, setShowKycReminder] = useState(false);
+  const [kycStatus, setKycStatus] = useState<string>('unverified');
   
   // Multi-step flow: 1=Recipient, 2=Amount, 3=Payment Method (with substeps 3.1 and 3.2), 4=Review
   const [step, setStep] = useState<number>(1);
@@ -193,26 +225,19 @@ export default function Transfer() {
     }
   }, [router.query.kycSuccess]);
 
-  // Create payment intent when user selects card payment
+  // NOTE: When the user reaches Step 4 (Review) and card payment is selected,
+  // we initialize the PaymentIntent so the Stripe `PaymentElement` can mount
+  // and the customer can enter card details prior to final confirmation.
+  // Payment confirmation (charging the card) still happens only during final submit.
   useEffect(() => {
     const isCardPayment = transferMethod === 'debit' || transferMethod === 'credit';
-    
-    // Only create payment intent if:
-    // 1. Card payment selected
-    // 2. We're on step 2 (payment method step)
-    // 3. We don't already have a client secret
-    // 4. Amount is valid
-    if (isCardPayment && step === 2 && !clientSecret && amountFrom && parseFloat(amountFrom.replace(/,/g, '')) > 0) {
-      createPaymentIntent();
-    }
-    
     // Reset payment state when switching away from card payments
     if (!isCardPayment) {
       setClientSecret('');
       setPaymentIntentId('');
       setPaymentStatus('pending');
     }
-  }, [transferMethod, step, amountFrom]);
+  }, [transferMethod]);
 
   // Show KYC reminder when user reaches Step 4 (Review) if not verified
   useEffect(() => {
@@ -238,8 +263,15 @@ export default function Transfer() {
     checkKycForReminder();
   }, [step, user, token]);
 
-  // Use the rate directly from backend (already includes +200 VND margin)
-  const effectiveRate = rate;
+  // Effective rate used for calculations. If user selected card in Step 2 and
+  // has progressed to the next steps (3 or 4), apply -175 VND per CAD.
+  const effectiveRate = useMemo(() => {
+    if (typeof rate !== 'number') return null;
+    const isCardSelected = transferMethod === 'debit' || transferMethod === 'credit';
+    const applyDiscount = isCardSelected && (step >= 3 || (step === 2 && subStep === 1));
+    const val = applyDiscount ? Number((rate - 175).toFixed(6)) : Number(rate);
+    return val;
+  }, [rate, transferMethod, step, subStep]);
 
   // ============================================
   // SAFE DATA PERSISTENCE (localStorage)
@@ -317,19 +349,14 @@ export default function Transfer() {
       if (draft.bankTransitNumber) setBankTransitNumber(draft.bankTransitNumber);
       if (draft.bankInstitutionNumber) setBankInstitutionNumber(draft.bankInstitutionNumber);
       
-      // Restore to the exact step where they left off
-      // Security rule: Never restore to step 4 (review) - requires fresh validation
-      // Maximum step allowed to restore is step 3
-      
+      // Restore to the exact step where they left off.
+      // Previously we prevented restoring to step 4 for safety; update: allow
+      // restoration to step 4 so the PaymentElement can initialize there
+      // (the PaymentElement will be created on Step 4 mount and confirmation
+      // still only happens on final submit).
       const savedStep = draft.step || 1;
-      
-      // If they were at step 4 (review), take them back to step 3 (amount)
-      if (savedStep === 4) {
-        setStep(3);
-      } else {
-        // Otherwise restore exactly where they were (1, 2, or 3)
-        setStep(savedStep);
-      }
+      // Allow restoring to step 4 now (user will continue where they left off)
+      setStep(savedStep);
       
       // Show restoration notification
       setDraftRestored(true);
@@ -478,6 +505,7 @@ export default function Transfer() {
       setClientSecret(data.clientSecret);
       setPaymentIntentId(data.paymentIntentId);
       setPaymentStatus('pending');
+      return { clientSecret: data.clientSecret, paymentIntentId: data.paymentIntentId };
     } catch (error) {
       console.error('Payment intent creation error:', error);
       alert('Failed to initialize payment. Please try again.');
@@ -492,9 +520,13 @@ export default function Transfer() {
   function handlePaymentSuccess(confirmedPaymentIntentId: string) {
     setPaymentIntentId(confirmedPaymentIntentId);
     setPaymentStatus('succeeded');
-    alert('Payment successful! Please complete the recipient details.');
-    // Move to next substep (receiver details)
-    setSubStep(1);
+    // If payment was completed during earlier steps, guide user to receiver details.
+    // If payment confirmed during final review (step 4), do not change the UI here —
+    // the submit flow will continue and post the transfer request.
+    if (step !== 4) {
+      alert('Payment successful! Please complete the recipient details.');
+      setSubStep(1);
+    }
   }
 
   // Handle payment errors
@@ -502,6 +534,23 @@ export default function Transfer() {
     alert(`Payment failed: ${errorMessage}`);
     setPaymentStatus('failed');
   }
+
+  // When user reaches Step 4 and card payment is selected, create the PaymentIntent
+  // so the PaymentElement can mount and the customer can enter card details.
+  // We still only confirm the payment when the user submits the final form.
+  React.useEffect(() => {
+    // compute card flag from transferMethod here to avoid referencing variables
+    // declared later in the file (prevents SSR ReferenceError)
+    const isCardLocal = transferMethod === 'debit' || transferMethod === 'credit';
+    if (step === 4 && isCardLocal && kycStatus === 'verified' && !clientSecret && !paymentProcessing) {
+      // initialize payment form in background so PaymentElement is visible
+      createPaymentIntent().catch((err) => {
+        // createPaymentIntent already handles user-facing errors; log for debugging
+        console.debug('createPaymentIntent failed on step 4 mount', err);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, transferMethod, kycStatus, clientSecret, paymentProcessing]);
 
 
   async function onTransferSubmit(e: React.FormEvent) {
@@ -592,6 +641,68 @@ export default function Transfer() {
         return;
       }
       
+      // If card payment is selected, create PaymentIntent and confirm payment during submit
+      if (isCard) {
+        setPaymentFlowBusy(true);
+        // Create payment intent if not present yet
+        if (!clientSecret) {
+          const created = await createPaymentIntent();
+          if (!created) {
+            alert('Failed to initialize payment. Please try again.');
+            setPaymentFlowBusy(false);
+            setSubmitting(false);
+            return;
+          }
+        }
+
+        // Wait for the Stripe form component to mount and expose confirmPayment
+        const waitForStripeFormReady = async (timeout = 5000) => {
+          const start = Date.now();
+          while (Date.now() - start < timeout) {
+            if (stripeFormRef && stripeFormRef.current && typeof stripeFormRef.current.confirmPayment === 'function') {
+              return true;
+            }
+            // small delay
+            // eslint-disable-next-line no-await-in-loop
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          return false;
+        };
+
+        const ready = await waitForStripeFormReady(7000);
+        if (!ready) {
+          alert('Payment form did not initialize in time. Please try again.');
+          setPaymentFlowBusy(false);
+          setSubmitting(false);
+          return;
+        }
+
+        // Confirm payment via the StripePaymentForm imperative handle
+        try {
+          const payResult = await stripeFormRef.current.confirmPayment();
+
+          if (!payResult || !payResult.success) {
+            // Error reported by StripePaymentForm via onPaymentError already; stop submission
+            setPaymentFlowBusy(false);
+            setSubmitting(false);
+            return;
+          }
+
+          if (payResult.paymentIntentId) {
+            setPaymentIntentId(payResult.paymentIntentId);
+            setPaymentStatus('succeeded');
+          }
+          // Done with the payment flow
+          setPaymentFlowBusy(false);
+        } catch (err) {
+          console.error('Payment confirmation error:', err);
+          alert('Payment confirmation failed. Please try again.');
+          setPaymentFlowBusy(false);
+          setSubmitting(false);
+          return;
+        }
+      }
+
       // Prepare request data
       const requestData = {
         userId: user?.id,
@@ -702,12 +813,12 @@ export default function Transfer() {
                 <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
                   <h3 className="rate-modal-title">⚠️ Identity Verification Required</h3>
                   <p className="rate-modal-p">
-                    To submit your transfer, you need to complete identity verification (KYC). 
-                    This is a one-time process that takes just a few minutes.
+                    To transfer money abroad, you need to complete a one-time process identity verification (KYC). 
+                    that takes 2-5 minutes.
                   </p>
                   <p className="rate-modal-p">
                     <strong>Why do we need this?</strong><br/>
-                    Identity verification helps us keep your transfers secure and comply with countries regulations.
+                    This process helps us keep your transfers secure and comply with countries regulations.
                   </p>
                   <div className="rate-modal-actions" style={{ display: 'flex', gap: '10px' }}>
                     <button 
@@ -754,9 +865,13 @@ export default function Transfer() {
                 <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
                   <h3 className="rate-modal-title">How we calculate your exchange rate</h3>
 
-                  <p className="rate-modal-p">We offer competitive exchange rates with a transparent margin applied to the market rate.</p>
+
+                  <ul className="rate-modal-list">
+                    <li>Send less than $300 CAD → Standard rate</li>
+                    <li>Send $300 - $999 CAD → Extra <strong>+50 VND/CAD</strong></li>
+                    <li>Send $1,000+ CAD → Extra <strong>+100 VND/CAD</strong> with no transfer fee applied!</li>
+                  </ul>
                   <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
-                  <p className="rate-modal-p">Send $1,000+ CAD to enjoy <strong>no transfer fee</strong>!</p>
 
                   <p className="rate-modal-p note">*Note: Exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.</p>
                   <div className="rate-modal-actions">
@@ -1000,8 +1115,8 @@ export default function Transfer() {
                     <h2>Select payment method</h2>
 
                     <section id="card" className="card transfer-details scroll-reveal">
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="dropdown-header"
                         onClick={() => {
                           const section = document.getElementById('cardForm');
@@ -1009,17 +1124,19 @@ export default function Transfer() {
                         }}
                       >
                         <div className="dropdown-header-content">
-                          <h3>Fast methods</h3>
+                          <h3>Proceed via Card</h3>
                           <div className="dropdown-header-details">
-                            <span className="delivery-info">Delivers instantly</span>
-                            {amountTo && <span className="amount-preview">VND {amountTo}</span>}
+                            <span className="delivery-info">Fastest Delivery</span>
+                            {displayRateFormatted && (
+                              <span className="exchange-rate">1 CAD = {displayRateFormatted} VND</span>
+                            )}
                           </div>
                         </div>
                         <svg className="dropdown-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                       </button>
-                      
+
                       <form id="cardForm" className="dropdown-content" onSubmit={onDetailsSubmit}>
                         <div className="form-group">
                           <div className="radio-group">
@@ -1029,12 +1146,12 @@ export default function Transfer() {
                                 name="paymentMethod"
                                 value="debit"
                                 checked={transferMethod === 'debit'}
-                                onChange={(e)=>setTransferMethod(e.target.value)}
+                                onChange={(e) => setTransferMethod(e.target.value)}
                               />
                               <div className="radio-content">
                                 <svg className="payment-icon" width="32" height="24" viewBox="0 0 32 24" fill="none">
-                                  <rect x="1" y="3" width="30" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
-                                  <rect x="1" y="7" width="30" height="4" fill="currentColor"/>
+                                  <rect x="1" y="3" width="30" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                                  <rect x="1" y="7" width="30" height="4" fill="currentColor" />
                                 </svg>
                                 <span className="payment-label">Debit card</span>
                               </div>
@@ -1045,12 +1162,12 @@ export default function Transfer() {
                                 name="paymentMethod"
                                 value="credit"
                                 checked={transferMethod === 'credit'}
-                                onChange={(e)=>setTransferMethod(e.target.value)}
+                                onChange={(e) => setTransferMethod(e.target.value)}
                               />
                               <div className="radio-content">
                                 <svg className="payment-icon" width="32" height="24" viewBox="0 0 32 24" fill="none">
-                                  <rect x="1" y="3" width="30" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
-                                  <rect x="1" y="7" width="30" height="4" fill="currentColor"/>
+                                  <rect x="1" y="3" width="30" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                                  <rect x="1" y="7" width="30" height="4" fill="currentColor" />
                                 </svg>
                                 <span className="payment-label">Credit card</span>
                                 <span className="payment-note">2% processing fee might be applied</span>
@@ -1059,26 +1176,21 @@ export default function Transfer() {
                           </div>
                         </div>
 
-                        {isCard && clientSecret && (
-                          <div className="stripe-payment-wrapper">
-                            <Elements stripe={stripePromise} options={{ clientSecret }}>
-                              <StripePaymentForm
-                                onPaymentSuccess={handlePaymentSuccess}
-                                onPaymentError={handlePaymentError}
-                                isProcessing={paymentProcessing}
-                                setIsProcessing={setPaymentProcessing}
-                              />
-                            </Elements>
-                          </div>
-                        )}
-
-                        {isCard && !clientSecret && (
-                          <div className="form-group">
-                            <p className="text-center">
-                              {paymentProcessing ? 'Initializing secure payment...' : 'Loading payment form...'}
+                        {isCard && (
+                          <div className="form-group delivery-notice">
+                            <p className="notice-text">
+                              <strong>Expected delivery:</strong>{' '}
+                              {transferMethod === 'e-transfer' || transferMethod === 'debit' || transferMethod === 'credit'
+                                ? 'Within 24 hours'
+                                : '5-7 business days'}
+                            </p>
+                            <p className="notice-subtext">
+                              Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays.
+                              Consider that your transfer might take longer than expected—this is normal!
                             </p>
                           </div>
                         )}
+
                       </form>
                     </section>
 
@@ -1094,9 +1206,11 @@ export default function Transfer() {
                         <div className="dropdown-header-content">
                           <div className="dropdown-header-title">
                             <span className="best-value-badge">BEST VALUE</span>
-                            <h3>Pay by bank</h3>
+                            <h3>Proceed via bank</h3>
                           </div>
-                          {amountTo && <span className="amount-preview">VND {amountTo}</span>}
+                          {baseRateFormatted && (
+                            <span className="exchange-rate">1 CAD = {baseRateFormatted} VND</span>
+                          )}
                         </div>
                         <svg className="dropdown-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="6 9 12 15 18 9"></polyline>
@@ -1186,35 +1300,31 @@ export default function Transfer() {
                               </div>
                             )}
 
-                            <div className="form-group delivery-notice">
-                              <p className="notice-text">
-                                <strong>Expected delivery:</strong> {transferMethod === 'e-transfer' ? 'Within 24 hours' : '5-7 business days'}
-                              </p>
-                              <p className="notice-subtext">
-                                Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
-                                Consider that your transfer might take longer than expected—this is normal!
-                              </p>
-                            </div>
+                            {isBank && (
+                              <div className="form-group delivery-notice">
+                                <p className="notice-text">
+                                  <strong>Expected delivery:</strong> {transferMethod === 'e-transfer' || transferMethod === 'debit' || transferMethod === 'credit' ? 'Within 24 hours' : '5-7 business days'}
+                                </p>
+                                <p className="notice-subtext">
+                                  Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
+                                  Consider that your transfer might take longer than expected—this is normal!
+                                </p>
+                              </div>
+                            )}
+
                           </>
                         )}
+
                       </form>
                     </section>
                   </>
                 )}
-
                 {step === 2 && subStep === 0 && (
                   <div className="step-actions">
                     <button 
                       type="button" 
                       className="btn primary w-full" 
-                      onClick={() => {
-                        // Validate billing address checkbox for card payments
-                        if (isCard && !useHomeAddress) {
-                          alert('Please check "Use home address" to fill in your billing address before continuing.');
-                          return;
-                        }
-                        setSubStep(1);
-                      }}
+                      onClick={() => setSubStep(1)}
                     >
                       Continue to Amount
                     </button>
@@ -1351,6 +1461,15 @@ export default function Transfer() {
                     <h2>Receiver Bank Details</h2>
 
                     <section id="receiver" className="card transfer-details scroll-reveal">
+                      {displayRateFormatted && (
+                        <div className="dropdown-header-details receiver-rate">
+                          { (transferMethod === 'debit' || transferMethod === 'credit') ? (
+                            displayRateFormatted ? <span className="exchange-rate">1 CAD = {displayRateFormatted} VND</span> : null
+                          ) : (
+                            baseRateFormatted ? <span className="exchange-rate">1 CAD = {baseRateFormatted} VND</span> : null
+                          ) }
+                        </div>
+                      )}
                       <div className="dropdown-content expanded">
 
                         <div className="form-group">
@@ -1549,6 +1668,51 @@ export default function Transfer() {
                       <div><strong>Bank:</strong> {selectedBank === 'Others' ? customBankName || 'Others' : selectedBank}</div>
                       <div><strong>Account #:</strong> {recipientAccountNumber || '-'}</div>
                     </div>
+                    <div className="form-group delivery-notice">
+                      <p className="notice-text">
+                        <strong>Expected delivery:</strong> {transferMethod === 'e-transfer' || transferMethod === 'debit' || transferMethod === 'credit' ? 'Within 24 hours' : '5-7 business days'}
+                      </p>
+                      <p className="notice-subtext">
+                        Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
+                        Consider that your transfer might take longer than expected—this is normal!
+                      </p>
+                    </div>
+                    {paymentFlowBusy && (
+                      <div className="payment-overlay">
+                        <div className="payment-overlay-inner">
+                          <div className="spinner" aria-hidden />
+                          <div className="payment-overlay-text">
+                            Processing payment — please do not close this window.
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Stripe Payment Section - Only show for card payments and KYC verified users */}
+                    {isCard && kycStatus === 'verified' && (
+                      <div className="payment-section-review">
+                        <h3>Payment</h3>
+                        {clientSecret ? (
+                          <div className="stripe-payment-wrapper">
+                            <Elements stripe={stripePromise} options={{ clientSecret }}>
+                              <StripePaymentForm
+                                ref={stripeFormRef}
+                                onPaymentSuccess={handlePaymentSuccess}
+                                onPaymentError={handlePaymentError}
+                                isProcessing={paymentProcessing}
+                                setIsProcessing={setPaymentProcessing}
+                              />
+                            </Elements>
+                          </div>
+                        ) : (
+                          <div className="form-group">
+                            <p className="text-center">
+                              {paymentProcessing ? 'Initializing secure payment...' : 'Loading payment form...'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     
                     <div className="form-group checkbox-row">
                       <label className="checkbox">
@@ -1569,10 +1733,10 @@ export default function Transfer() {
                       <form onSubmit={onTransferSubmit}>
                         <button 
                           type="submit" 
-                          className={`btn primary ${user?.kycStatus === 'verified' ? 'kyc-verified-btn' : ''}`}
+                          className={`btn primary ${kycStatus === 'verified' ? 'kyc-verified-btn' : ''}`}
                           disabled={submitting || !agreedToTerms}
                         >
-                          {user?.kycStatus === 'verified' && (
+                          {kycStatus === 'verified' && (
                             <svg 
                               className="me-2" 
                               width="20" 
@@ -1584,7 +1748,7 @@ export default function Transfer() {
                               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                             </svg>
                           )}
-                          {submitting ? 'Submitting…' : user?.kycStatus === 'verified' ? 'Submit Transfer (Verified)' : 'Submit Transfer'}
+                          {submitting ? 'Submitting…' : kycStatus === 'verified' ? 'Submit Transfer (Verified)' : 'Submit Transfer'}
                         </button>
                       </form>
                     </div>
@@ -1601,7 +1765,7 @@ export default function Transfer() {
                   </div>
                   <div className="feature card">
                     <h4>Fast Delivery</h4>
-                    <p>Most transfers delivered within 24–48 hours.</p>
+
                   </div>
                   <div className="feature card">
                     <h4>Secure</h4>

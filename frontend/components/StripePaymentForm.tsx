@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useImperativeHandle } from 'react';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 interface StripePaymentFormProps {
@@ -8,75 +8,67 @@ interface StripePaymentFormProps {
   setIsProcessing: (processing: boolean) => void;
 }
 
-export default function StripePaymentForm({ 
-  onPaymentSuccess, 
-  onPaymentError,
-  isProcessing,
-  setIsProcessing 
-}: StripePaymentFormProps) {
-  const stripe = useStripe();
-  const elements = useElements();
+export type StripePaymentFormHandle = {
+  confirmPayment: () => Promise<{ success: boolean; paymentIntentId?: string; error?: string }>;
+};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const StripePaymentForm = React.forwardRef<StripePaymentFormHandle, StripePaymentFormProps>(
+  ({ onPaymentSuccess, onPaymentError, isProcessing, setIsProcessing }, ref) => {
+    const stripe = useStripe();
+    const elements = useElements();
 
-    if (!stripe || !elements) {
-      onPaymentError('Stripe has not loaded yet. Please wait and try again.');
-      return;
-    }
+    // Expose confirmPayment to parent via ref
+    useImperativeHandle(ref, () => ({
+      confirmPayment: async () => {
+        if (!stripe || !elements) {
+          const msg = 'Stripe has not loaded yet. Please wait and try again.';
+          return { success: false, error: msg };
+        }
 
-    setIsProcessing(true);
+        setIsProcessing(true);
 
-    try {
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        redirect: 'if_required',
-        confirmParams: {
-          return_url: `${window.location.origin}/transfers`,
-        },
-      });
+        try {
+          const { error, paymentIntent } = await stripe.confirmPayment({
+            elements,
+            redirect: 'if_required',
+            confirmParams: { return_url: `${window.location.origin}/transfers` },
+          });
 
-      if (error) {
-        onPaymentError(error.message || 'Payment failed');
-        setIsProcessing(false);
-      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        onPaymentSuccess(paymentIntent.id);
-        setIsProcessing(false);
-      } else {
-        onPaymentError('Payment status is not successful. Please try again.');
-        setIsProcessing(false);
-      }
-    } catch (err) {
-      onPaymentError('An unexpected error occurred during payment processing.');
-      setIsProcessing(false);
-    }
-  };
+          if (error) {
+            const msg = error.message || 'Payment failed';
+            onPaymentError(msg);
+            setIsProcessing(false);
+            return { success: false, error: msg };
+          }
 
-  return (
-    <form onSubmit={handleSubmit}>
-      <div className="stripe-payment-element">
-        <PaymentElement />
+          if (paymentIntent && paymentIntent.status === 'succeeded') {
+            onPaymentSuccess(paymentIntent.id);
+            setIsProcessing(false);
+            return { success: true, paymentIntentId: paymentIntent.id };
+          }
+
+          const unknownMsg = 'Payment status is not successful. Please try again.';
+          onPaymentError(unknownMsg);
+          setIsProcessing(false);
+          return { success: false, error: unknownMsg };
+        } catch (err) {
+          const msg = 'An unexpected error occurred during payment processing.';
+          onPaymentError(msg);
+          setIsProcessing(false);
+          return { success: false, error: msg };
+        }
+      },
+    }));
+
+    // The parent controls confirmation; the form simply renders the PaymentElement.
+    return (
+      <div>
+        <div className="stripe-payment-element">
+          <PaymentElement />
+        </div>
       </div>
-      
-      <div className="form-group delivery-notice">
-        <p className="notice-text">
-          <strong>Expected delivery:</strong> 24-48 business hours
-        </p>
-        <p className="notice-subtext">
-          Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
-          Consider that your transfer might take longer than expected—this is normal!
-        </p>
-      </div>
+    );
+  }
+);
 
-      <div className="form-group">
-        <button 
-          type="submit" 
-          className="btn btn-primary btn-block"
-          disabled={!stripe || isProcessing}
-        >
-          {isProcessing ? 'Processing Payment...' : 'Confirm Payment'}
-        </button>
-      </div>
-    </form>
-  );
-}
+export default StripePaymentForm;
