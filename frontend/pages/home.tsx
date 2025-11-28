@@ -159,6 +159,12 @@ export default function Home() {
     <div>
       <div className="wrapper d-flex flex-column min-vh-100">
         <AppHeader />
+{/* TODO: Đưa form nhập tỉ giá vào Background image Việt Nam */}
+{/* TODO: Thêm <section> review Truspilot */}
+{/* TODO: Thêm <section> miêu tả về phương thức chuyển tiền HĐ Như Thế Nào? và đưa Sign Up và Log in dưới section đó */}
+{/* TODO: Thêm <section> phương thức thanh toán người nhận ở Việt Nam */}
+{/* TODO: Thêm <section> để describe 4 steps để chuyển tiền cho người dùng hiểu! */}
+{/* TODO: Thêm <section> FAQs và 5-7 câu hỏi thường gặp + câu trả lời ở phần drop-down */}
 
         <div className="body flex-grow-1 px-0 my-4 home-full-bleed">
           <div className="container">
@@ -423,16 +429,20 @@ export default function Home() {
           /* Hero area: keep 16:9 (1920x1080) aspect ratio and scale responsively */
           .hero-section {
             position: relative;
-            width: 100%;
+            /* Make hero full-bleed: expand to viewport width and center it */
+            width: 100vw;
+            margin-left: calc(50% - 50vw);
             aspect-ratio: 16 / 9;
-            max-width: 100%;
+            max-width: 100vw;
             min-height: 220px; /* reasonable minimum on small screens */
+            max-height: 1000px;
             display: block;
+            left: 0;
           }
           /* Prevent accidental hero/background on blocks that should not show the banner */
           .no-hero { background: none !important; color: inherit !important; }
           .hero-media { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-          .hero-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+          .hero-media img { position: absolute; inset: 0; width: 100vw; height: 100%; object-fit: cover; display: block; left: 0; }
           .hero-img-base { z-index: 1; filter: none; transform: none; }
           /* blurred layer: fade/opacity mask reversed (now fades from 20% -> 100% from top to bottom) */
           .hero-img-blur {
