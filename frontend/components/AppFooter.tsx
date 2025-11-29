@@ -23,12 +23,12 @@ const AppFooter: React.FC = () => {
             <h6 className="fw-bold mb-2">Support</h6>
             <ul className="list-unstyled mb-0">
               <li className="mb-2">
-                <a href="/help" className="text-decoration-none text-medium-emphasis">
+                <a href="/general/help" className="text-decoration-none text-medium-emphasis">
                   Help Center
                 </a>
               </li>
               <li className="mb-2">
-                <a href="/terms-and-conditions" className="text-decoration-none text-medium-emphasis">
+                <a href="/general/terms-and-conditions" className="text-decoration-none text-medium-emphasis">
                   Terms & Conditions
                 </a>
               </li>

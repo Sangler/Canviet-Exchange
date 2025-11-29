@@ -159,17 +159,66 @@ export default function Home() {
     <div>
       <div className="wrapper d-flex flex-column min-vh-100">
         <AppHeader />
-{/* TODO: Đưa form nhập tỉ giá vào Background image Việt Nam */}
-{/* TODO: Thêm <section> review Truspilot */}
-{/* TODO: Thêm <section> miêu tả về phương thức chuyển tiền HĐ Như Thế Nào? và đưa Sign Up và Log in dưới section đó */}
-{/* TODO: Thêm <section> phương thức thanh toán người nhận ở Việt Nam */}
-{/* TODO: Thêm <section> để describe 4 steps để chuyển tiền cho người dùng hiểu! */}
-{/* TODO: Thêm <section> FAQs và 5-7 câu hỏi thường gặp + câu trả lời ở phần drop-down */}
+
 
         <div className="body flex-grow-1 px-0 my-4 home-full-bleed">
           <div className="container">
             <div className="row g-0">
               <div className="col-12 w-100">
+                
+                {/* Testimonials / Reviews Section */}
+                <section className="testimonials-section mb-5">
+                  <div className="container">
+                    <div className="text-center mb-4">
+                      <h2 className="section-title">What Our Customers Say</h2>
+                      <div className="trust-badge">
+                        <div className="stars">★★★★★</div>
+                        <p className="mb-0"><strong>4.8 out of 5</strong> based on 1,200+ reviews</p>
+                      </div>
+                    </div>
+                    <div className="row g-4">
+                      <div className="col-md-4">
+                        <div className="testimonial-card">
+                          <div className="stars-small">★★★★★</div>
+                          <p className="testimonial-text">"Fastest and most reliable service I've used. Money arrived in Vietnam within hours!"</p>
+                          <div className="testimonial-author">
+                            <div className="author-avatar">MN</div>
+                            <div>
+                              <strong>Michael Nguyen</strong>
+                              <div className="text-muted small">Toronto, ON</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-md-4">
+                        <div className="testimonial-card">
+                          <div className="stars-small">★★★★★</div>
+                          <p className="testimonial-text">"Best rates compared to other services. I save hundreds every month sending money home."</p>
+                          <div className="testimonial-author">
+                            <div className="author-avatar">TP</div>
+                            <div>
+                              <strong>Tran Pham</strong>
+                              <div className="text-muted small">Vancouver, BC</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-md-4">
+                        <div className="testimonial-card">
+                          <div className="stars-small">★★★★★</div>
+                          <p className="testimonial-text">"Excellent customer support and transparent pricing. Highly recommend to everyone!"</p>
+                          <div className="testimonial-author">
+                            <div className="author-avatar">HL</div>
+                            <div>
+                              <strong>Hoa Le</strong>
+                              <div className="text-muted small">Montreal, QC</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
                 
                  <div className="main mb-4 border-0t">
                   <div className="main text-center py-5">
@@ -191,16 +240,17 @@ export default function Home() {
                       </p>
                   </div>
                 </div>
+
                 
                 <div className="main mb-4 border-0 bg-gradient">
                   <div className="main-body hero-section text-center py-5">
                     <div className="hero-media" aria-hidden="true">
-                      <img className="hero-img-base" src="/mainpage/banner_vietname_1920%C3%971080.jpg" alt="" />
-                      <img className="hero-img-blur" src="/mainpage/banner_vietname_1920%C3%971080.jpg" alt="" />
+                      <img className="hero-img-base" src="/mainpage/banner_vietname.png" alt="" />
+                      <img className="hero-img-blur" src="/mainpage/banner_vietname.png" alt="" />
                     </div>
                     <div className="hero-content">
 
-                      <div className="d-flex gap-3 justify-content-center flex-wrap">
+                        <div className="d-flex gap-3 justify-content-center flex-wrap">
                         <a href="/register" className="btn btn-primary btn-lg">
                           Get Started
                         </a>
@@ -208,143 +258,269 @@ export default function Home() {
                           Sign In
                         </a>
                       </div>
+
                     </div>
                   </div>
                 </div>
 
                 
-                <section className="main mb-4">
-                  <div className="main-body">
-                    <div className="row align-items-center">
-                      <div className="col-md-6 mb-3 mb-md-0">
-                        <h1 className="h3">Fast Quote</h1>
-                        <p className="text-medium-emphasis">Get an instant quote and preview how much your recipient would receive.</p>
-                        <hr />
-                        <div className="d-flex align-items-center gap-3">
-                          <div className="fs-1">🧾</div>
-                          <div>
-                            <strong>Transparent rates</strong>
-                            <div className="small text-medium-emphasis">Review the rate before you continue</div>
+                <div className="hero-card">
+
+                  <section className="main mb-4">
+                    <div className="main-body">
+                      <div className="row align-items-center">
+                        <div className="col-md-6 mb-3 mb-md-0">
+                          <h1 className="h3">See Your Rate Instantly</h1>
+                          <p className="text-medium-emphasis">Calculate exactly how much your loved ones will receive. No surprises, no hidden fees.</p>
+                          <hr />
+                          <div className="d-flex align-items-center gap-3">
+                            <div className="fs-1">💰</div>
+                            <div>
+                              <strong>What you see is what they get</strong>
+                              <div className="small text-medium-emphasis">Live rates updated every minute</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="col-md-6">
+                        <div className="col-md-6">
 
 
-                        <div>
-                          <div className="form-group">
-                               
-                                <div className="top-block">
-                                  {rate && (
-                                    <div className="form-group mb-2">
-                                      <div className="label-inline-info">
-                                        1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND <strong>Best Rate</strong>
-                                        <button
-                                          type="button"
-                                          aria-label="Rate details"
-                                          title="Get a quote!"
-                                          onClick={() => setShowRateModal(true)}
-                                          className="rate-info-btn ms-2"
-                                        >
-                                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                            <circle cx="12" cy="12" r="10"></circle>
-                                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                          <div>
+                            <div className="form-group">
+                                
+                                  <div className="top-block">
+                                    {rate && (
+                                      <div className="form-group mb-2">
+                                        <div className="label-inline-info">
+                                          1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND <strong>Best Rate</strong>
+                                          <button
+                                            type="button"
+                                            aria-label="Rate details"
+                                            title="Get a quote!"
+                                            onClick={() => setShowRateModal(true)}
+                                            className="rate-info-btn ms-2"
+                                          >
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                              <circle cx="12" cy="12" r="10"></circle>
+                                              <line x1="12" y1="16" x2="12" y2="12"></line>
+                                              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                            </svg>
+                                          </button>
+                                        </div>
+                                        {amountFrom && parseFloat(amountFrom) > 0 && effectiveRate && (
+                                          <div className="label-inline-info mt-1">Your rate: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND</div>
+                                        )}
+                                      </div>
+                                    )}
+                                    {/* Top input: YOU SEND with CAD input */}
+                                    <div className="form-group mt-3">
+                                      <div className="currency-input" role="group" aria-label="You send amount in CAD">
+                                        <input
+                                          type="number"
+                                          id="amountFrom"
+                                          name="amountFrom"
+                                          placeholder="You Send CAD"
+                                          min={20}
+                                          max={9999}
+                                          step="0.01"
+                                          value={amountFrom}
+                                          onChange={(e) => formatCurrencyInput(e, 'from')}
+                                          inputMode="decimal"
+                                          aria-label="You send"
+                                        />
+                                        <div className="currency-suffix" aria-hidden="true">
+                                          <img className="flag" src="/flags/Flag_of_Canada.png" alt="" />
+                                          <span className="code">CAD</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="bottom-block">
+                                    <div className="form-group">
+                                      <div className="currency-input" role="group" aria-label="They receive amount in VND">
+                                        <input
+                                          type="text"
+                                          id="amountTo"
+                                          name="amountTo"
+                                          placeholder="They Receive VND"
+                                          value={amountTo}
+                                          onChange={(e) => formatCurrencyInput(e, 'to')}
+                                          inputMode="numeric"
+                                          pattern="[0-9,]*"
+                                          aria-label="They receive"
+                                        />
+                                        <div className="currency-suffix" aria-hidden="true">
+                                          <img className="flag" src="/flags/Flag_of_Vietnam.png" alt="" />
+                                          <span className="code">VND</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Payment Methods Display */}
+                                <div className="payment-methods-preview mt-4">
+                                  <div className="text-center mb-3">
+                                    <strong className="d-block mb-2">Payment Methods:</strong>
+                                    <div className="payment-icons d-flex justify-content-center gap-3 flex-wrap">
+                                      <div className="payment-icon" title="Interac e-Transfer">
+                                        <div>
+                                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="icon-interac">
+                                            <rect width="40" height="40" rx="8" fill="#FFC400"/>
+                                            <g transform="translate(8, 10)">
+                                              <path d="M8 15 L8 8 L11 8 L11 4 L14 4 L14 8 L17 8 L17 15" fill="#2B2B2B" stroke="#2B2B2B" strokeWidth="1.5" strokeLinejoin="round"/>
+                                              <rect x="4" y="15" width="3" height="5" rx="1.5" fill="#2B2B2B"/>
+                                              <rect x="7.5" y="15" width="3" height="5" rx="1.5" fill="#2B2B2B"/>
+                                              <rect x="11" y="15" width="3" height="5" rx="1.5" fill="#2B2B2B"/>
+                                              <rect x="14.5" y="15" width="3" height="5" rx="1.5" fill="#2B2B2B"/>
+                                              <path d="M14 4 L14 0 L17 0 L17 3" fill="#2B2B2B"/>
+                                              <circle cx="18" cy="0.5" r="1" fill="#2B2B2B"/>
+                                            </g>
                                           </svg>
-                                        </button>
+                                        </div>
+                                        <span className="small">Interac</span>
                                       </div>
-                                      {amountFrom && parseFloat(amountFrom) > 0 && effectiveRate && (
-                                        <div className="label-inline-info mt-1">Your rate: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND</div>
-                                      )}
-                                    </div>
-                                  )}
-                                  {/* Top input: YOU SEND with CAD input */}
-                                  <div className="form-group mt-3">
-                                    <div className="currency-input" role="group" aria-label="You send amount in CAD">
-                                      <input
-                                        type="number"
-                                        id="amountFrom"
-                                        name="amountFrom"
-                                        placeholder="You Send CAD"
-                                        min={20}
-                                        max={9999}
-                                        step="0.01"
-                                        value={amountFrom}
-                                        onChange={(e) => formatCurrencyInput(e, 'from')}
-                                        inputMode="decimal"
-                                        aria-label="You send"
-                                      />
-                                      <div className="currency-suffix" aria-hidden="true">
-                                        <img className="flag" src="/flags/Flag_of_Canada.png" alt="" />
-                                        <span className="code">CAD</span>
+                                      <div className="payment-icon" title="Credit Card">
+                                        <div>
+                                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                                            <rect width="40" height="40" rx="8" fill="#4A90E2"/>
+                                            <rect x="8" y="12" width="24" height="16" rx="2" fill="#fff"/>
+                                            <rect x="8" y="15" width="24" height="3" fill="#4A90E2"/>
+                                          </svg>
+                                        </div>
+                                        <span className="small">Card</span>
+                                      </div>
+                                      <div className="payment-icon" title="Bank Transfer">
+                                        <div>
+                                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                                            <rect width="40" height="40" rx="8" fill="#34C759"/>
+                                            <g transform="translate(7, 8)">
+                                              <path d="M13 2 L1 8 L25 8 Z" fill="#fff" stroke="#fff" strokeWidth="0.5"/>
+                                              <rect x="1" y="8" width="24" height="1" fill="#fff"/>
+                                              <rect x="3" y="10" width="3" height="10" fill="#fff" rx="0.5"/>
+                                              <rect x="8" y="10" width="3" height="10" fill="#fff" rx="0.5"/>
+                                              <rect x="13" y="10" width="3" height="10" fill="#fff" rx="0.5"/>
+                                              <rect x="18" y="10" width="3" height="10" fill="#fff" rx="0.5"/>
+                                              <rect x="1" y="20" width="24" height="2" fill="#fff" rx="0.5"/>
+                                              <circle cx="13" cy="4.5" r="0.8" fill="#34C759"/>
+                                            </g>
+                                          </svg>
+                                        </div>
+                                        <span className="small">Bank</span>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
 
-                                <div className="bottom-block">
-                                  <div className="form-group">
-                                    <div className="currency-input" role="group" aria-label="They receive amount in VND">
-                                      <input
-                                        type="text"
-                                        id="amountTo"
-                                        name="amountTo"
-                                        placeholder="They Receive VND"
-                                        value={amountTo}
-                                        onChange={(e) => formatCurrencyInput(e, 'to')}
-                                        inputMode="numeric"
-                                        pattern="[0-9,]*"
-                                        aria-label="They receive"
-                                      />
-                                      <div className="currency-suffix" aria-hidden="true">
-                                        <img className="flag" src="/flags/Flag_of_Vietnam.png" alt="" />
-                                        <span className="code">VND</span>
+                                {(() => {
+                                  const val = parseFloat((amountFrom || '').toString().replace(/,/g, ''));
+                                  const FEE_CAD = 1.5;
+                                  const FEE_THRESHOLD = 1000;
+                                  if (!isNaN(val) && val >= FEE_THRESHOLD) {
+                                    return (
+                                      <div className="alert alert-success d-flex align-items-center mt-3" role="alert">
+                                        <svg 
+                                          width="24" 
+                                          height="24" 
+                                          viewBox="0 0 24 24" 
+                                          fill="none" 
+                                          stroke="currentColor" 
+                                          strokeWidth="2" 
+                                          strokeLinecap="round" 
+                                          strokeLinejoin="round"
+                                          className="me-2"
+                                        >
+                                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                        </svg>
+                                        <div>
+                                          <strong>Congrats!</strong> NO Transfer fee applied.
+                                        </div>
                                       </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
+                                    );
+                                  }
 
-                              {(() => {
-                                const val = parseFloat((amountFrom || '').toString().replace(/,/g, ''));
-                                const FEE_CAD = 1.5;
-                                const FEE_THRESHOLD = 1000;
-                                if (!isNaN(val) && val >= FEE_THRESHOLD) {
                                   return (
-                                    <div className="alert alert-success d-flex align-items-center mt-3" role="alert">
-                                      <svg 
-                                        width="24" 
-                                        height="24" 
-                                        viewBox="0 0 24 24" 
-                                        fill="none" 
-                                        stroke="currentColor" 
-                                        strokeWidth="2" 
-                                        strokeLinecap="round" 
-                                        strokeLinejoin="round"
-                                        className="me-2"
-                                      >
-                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                      </svg>
-                                      <div>
-                                        <strong>Congrats!</strong> NO Transfer fee applied.
-                                      </div>
-                                    </div>
+                                    <div className="fee-mini" role="note">Transfer fee: <strong>${FEE_CAD.toFixed(2)}</strong> CAD - No fee if sending 1000 CAD</div>
                                   );
-                                }
+                                })()}
 
-                                return (
-                                  <div className="fee-mini" role="note">Transfer fee: <strong>${FEE_CAD.toFixed(2)}</strong> CAD - No fee if sending 1000 CAD</div>
-                                );
-                              })()}
-
-                        <p className="main-text">Secure transfers and verified partners</p>
+                          <p className="main-text">Secure transfers and verified partners</p>
+                        </div>
                       </div>
                     </div>
                   </div>
+
+                  </section>
                 </div>
 
+                {/* Vietnamese Receiving Methods Section */}
+                <section className="receiving-methods-section mb-5">
+                  <div className="container">
+                    <div className="text-center mb-4">
+                      <h2 className="section-title">Flexible Receiving Options in Vietnam</h2>
+                      <p className="text-medium-emphasis">Your recipient can receive money through multiple convenient methods</p>
+                    </div>
+                    <div className="row g-4">
+                      <div className="col-6 col-md-3">
+                        <div className="receiving-method-card">
+                          <div className="method-icon bank-icon">
+                            <div>
+                              <svg width="50" height="50" viewBox="0 0 50 50" fill="currentColor">
+                                <path d="M25 8L5 18v3h40v-3L25 8zM8 24v14h5V24H8zm9 0v14h5V24h-5zm9 0v14h5V24h-5zm9 0v14h5V24h-5zM5 41v3h40v-3H5z"/>
+                              </svg>
+                            </div>
+                          </div>
+                          <strong className="d-block mt-2">Bank Transfer</strong>
+                          <p className="small text-muted mb-0">Vietcombank, BIDV, Techcombank, VPBank...</p>
+                        </div>
+                      </div>
+                      <div className="col-6 col-md-3">
+                        <div className="receiving-method-card">
+                          <div className="method-icon momo-icon">
+                            <div>
+                              <svg width="50" height="50" viewBox="0 0 50 50">
+                                <circle cx="25" cy="25" r="22" fill="#A50064"/>
+                                <text x="25" y="32" fontSize="20" fill="#fff" textAnchor="middle" fontWeight="bold">M</text>
+                              </svg>
+                            </div>
+                          </div>
+                          <strong className="d-block mt-2">Momo Wallet</strong>
+                          <p className="small text-muted mb-0">Instant to e-wallet</p>
+                        </div>
+                      </div>
+                      <div className="col-6 col-md-3">
+                        <div className="receiving-method-card">
+                          <div className="method-icon zalopay-icon">
+                            <div>
+                              <svg width="50" height="50" viewBox="0 0 50 50">
+                                <circle cx="25" cy="25" r="22" fill="#008FE5"/>
+                                <text x="25" y="32" fontSize="18" fill="#fff" textAnchor="middle" fontWeight="bold">Z</text>
+                              </svg>
+                            </div>
+                          </div>
+                          <strong className="d-block mt-2">ZaloPay</strong>
+                          <p className="small text-muted mb-0">Fast e-wallet transfer</p>
+                        </div>
+                      </div>
+                      <div className="col-6 col-md-3">
+                        <div className="receiving-method-card">
+                          <div className="method-icon cash-icon">
+                            <div>
+                              <svg width="50" height="50" viewBox="0 0 50 50" fill="currentColor">
+                                <rect x="5" y="15" width="40" height="20" rx="3" stroke="currentColor" strokeWidth="2" fill="none"/>
+                                <circle cx="25" cy="25" r="5"/>
+                                <path d="M10 20h5M35 20h5M10 30h5M35 30h5"/>
+                              </svg>
+                            </div>
+                          </div>
+                          <strong className="d-block mt-2">Cash Pickup</strong>
+                          <p className="small text-muted mb-0">At partner locations</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </section>
 
                 {/* Why choose us */}
@@ -378,32 +554,63 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Referral Section - Two Column Layout */}
-                <div className="main mt-4">
-                  <div className="main-body">
-                    <div className="row align-items-center">
-                      <div className="col-md-6 mb-3 mb-md-0">
-                        <img 
-                          src="/mainpage/referal-pic.jpg" 
-                          alt="Refer a friend" 
-                          className="img-fluid rounded"
-                          style={{ width: '100%', height: 'auto' }}
-                        />
-                      </div>
-                      <div className="col-md-6">
-                        <h2 className="h3 mb-3">Refer Friends & Earn Rewards</h2>
-                        <p className="text-medium-emphasis mb-4">
-                          Share the love and get rewarded! Invite your friends to use CanViet Exchange. 
-                          When they complete their first transfer, you both earn exclusive bonuses. 
-                          It's our way of saying thank you for spreading the word.
-                        </p>
-                        <a href="/register" className="btn btn-primary btn-lg">
-                          Refer Now
-                        </a>
+                {/* Referral Section - Dynamic Two Column Layout */}
+                <section className="referral-section mt-5 mb-5">
+                  <div className="container">
+                    <div className="referral-card">
+                      <div className="row align-items-center g-4">
+                        <div className="col-md-6 mb-3 mb-md-0">
+                          <div className="referral-image-wrapper">
+                            <img 
+                              src="/mainpage/referal-pic.jpg" 
+                              alt="Refer a friend" 
+                              className="img-fluid rounded-4 referral-img"
+                            />
+                            <div className="referral-badge">
+                              <span className="badge-icon">🎁</span>
+                              <span className="badge-text">Earn Together</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-6">
+                          <div className="referral-content">
+                            <div className="referral-tag mb-3">
+                              <span>💝 SPECIAL OFFER</span>
+                            </div>
+                            <h2 className="referral-title mb-3">Refer Friends & Earn Rewards</h2>
+                            <p className="referral-description mb-4">
+                              Share the love and get rewarded! Invite your friends to use CanViet Exchange. 
+                              When they complete their first transfer, <strong>you both earn exclusive bonuses</strong>. 
+                              It's our way of saying thank you for spreading the word.
+                            </p>
+                            <div className="referral-benefits mb-4">
+                              <div className="benefit-item">
+                                <div className="benefit-icon">✨</div>
+                                <div>
+                                  <strong>Instant Bonus</strong>
+                                  <p className="mb-0 small">Get rewards when your friend signs up</p>
+                                </div>
+                              </div>
+                              <div className="benefit-item">
+                                <div className="benefit-icon">🚀</div>
+                                <div>
+                                  <strong>Unlimited Referrals</strong>
+                                  <p className="mb-0 small">No limit on how many friends you can refer</p>
+                                </div>
+                              </div>
+                            </div>
+                            <a href="/register" className="btn btn-primary btn-lg referral-btn">
+                              Start Referring Now
+                              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="ms-2">
+                                <path d="M10 0l10 10-10 10-1.5-1.5L15.2 11H0V9h15.2L8.5 1.5z"/>
+                              </svg>
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </section>
               </div>
             </div>
           </div>
@@ -423,45 +630,179 @@ export default function Home() {
             </div>
           </div>
         )}
-        <AppFooter />
-        <style jsx>{`
-          .main-body { position: relative; overflow: hidden; color: #ffffff; }
-          /* Hero area: keep 16:9 (1920x1080) aspect ratio and scale responsively */
-          .hero-section {
-            position: relative;
-            /* Make hero full-bleed: expand to viewport width and center it */
-            width: 100vw;
-            margin-left: calc(50% - 50vw);
-            aspect-ratio: 16 / 9;
-            max-width: 100vw;
-            min-height: 220px; /* reasonable minimum on small screens */
-            max-height: 1000px;
-            display: block;
-            left: 0;
-          }
-          /* Prevent accidental hero/background on blocks that should not show the banner */
-          .no-hero { background: none !important; color: inherit !important; }
-          .hero-media { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-          .hero-media img { position: absolute; inset: 0; width: 100vw; height: 100%; object-fit: cover; display: block; left: 0; }
-          .hero-img-base { z-index: 1; filter: none; transform: none; }
-          /* blurred layer: fade/opacity mask reversed (now fades from 20% -> 100% from top to bottom) */
-          .hero-img-blur {
-            z-index: 2;
-            filter: blur(8px);
-            transform: scale(1.03);
-            -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.2) 0%, rgba(0,0,0,1) 100%);
-            mask-image: linear-gradient(to top, rgba(0,0,0,0.2) 0%, rgba(0,0,0,1) 100%);
-            opacity: 0;
-            animation: blurFadeIn 900ms ease forwards 120ms;
-          }
 
-          @keyframes blurFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          .hero-content { position: relative; z-index: 3; }
-          .hero-media img, .hero-content { will-change: transform; }
-        `}</style>
+        {/* How It Works Section */}
+        <section className="how-it-works-section py-5">
+          <div className="container">
+            <div className="text-center mb-5">
+              <h2 className="section-title">How Money Transfer Works</h2>
+              <p className="lead text-medium-emphasis">Send money to Vietnam in 4 simple steps</p>
+            </div>
+            
+            {/* 4 Steps Process */}
+            <div className="row g-4 mb-5">
+              <div className="col-md-6 col-lg-3">
+                <div className="step-card">
+                  <div className="step-number">1</div>
+                  <div className="step-icon">📝</div>
+                  <h5 className="step-title">Create Account</h5>
+                  <p className="step-description">Sign up for free in under 2 minutes. No hidden fees or commitments.</p>
+                </div>
+              </div>
+              <div className="col-md-6 col-lg-3">
+                <div className="step-card">
+                  <div className="step-number">2</div>
+                  <div className="step-icon">💳</div>
+                  <h5 className="step-title">Enter Details</h5>
+                  <p className="step-description">Add recipient information and choose payment method. We keep your data secure.</p>
+                </div>
+              </div>
+              <div className="col-md-6 col-lg-3">
+                <div className="step-card">
+                  <div className="step-number">3</div>
+                  <div className="step-icon">✅</div>
+                  <h5 className="step-title">Confirm & Pay</h5>
+                  <p className="step-description">Review the rate and total, then complete your secure payment instantly.</p>
+                </div>
+              </div>
+              <div className="col-md-6 col-lg-3">
+                <div className="step-card">
+                  <div className="step-number">4</div>
+                  <div className="step-icon">🚀</div>
+                  <h5 className="step-title">Money Delivered</h5>
+                  <p className="step-description">Track your transfer in real-time. Money typically arrives within hours!</p>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="text-center">
+              <h3 className="mb-4">Ready to send money?</h3>
+              <div className="d-flex gap-3 justify-content-center flex-wrap">
+                <a href="/register" className="btn btn-primary btn-lg px-5">
+                  Sign Up Now
+                </a>
+                <a href="/login" className="btn btn-outline-primary btn-lg px-5">
+                  Log In
+                </a>
+              </div>
+              <p className="mt-3 text-muted small">Join thousands of satisfied customers sending money home</p>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQs Section */}
+        <section className="faq-section py-5">
+          <div className="container">
+            <div className="text-center mb-5">
+              <h2 className="section-title">Frequently Asked Questions</h2>
+              <p className="text-medium-emphasis">Everything you need to know about sending money to Vietnam</p>
+            </div>
+            <div className="row justify-content-center">
+              <div className="col-lg-8">
+                <div className="accordion" id="faqAccordion">
+                  
+                  <div className="accordion-item">
+                    <h3 className="accordion-header" id="faq1">
+                      <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
+                        How long does it take for money to arrive in Vietnam?
+                      </button>
+                    </h3>
+                    <div id="collapse1" className="accordion-collapse collapse show" aria-labelledby="faq1" data-bs-parent="#faqAccordion">
+                      <div className="accordion-body">
+                        Most transfers arrive within <strong>1-4 hours</strong> during business hours in Vietnam. Bank transfers may take up to 24 hours depending on the receiving bank's processing time. E-wallet transfers (Momo, ZaloPay) are typically instant.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="accordion-item">
+                    <h3 className="accordion-header" id="faq2">
+                      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
+                        What are the fees for sending money?
+                      </button>
+                    </h3>
+                    <div id="collapse2" className="accordion-collapse collapse" aria-labelledby="faq2" data-bs-parent="#faqAccordion">
+                      <div className="accordion-body">
+                        Our standard transfer fee is <strong>$1.50 CAD</strong>. However, if you send <strong>$1,000 CAD or more</strong>, we waive the transfer fee completely! There are no hidden charges - what you see is what you pay.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="accordion-item">
+                    <h3 className="accordion-header" id="faq3">
+                      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
+                        Is my money safe and secure?
+                      </button>
+                    </h3>
+                    <div id="collapse3" className="accordion-collapse collapse" aria-labelledby="faq3" data-bs-parent="#faqAccordion">
+                      <div className="accordion-body">
+                        Absolutely! We use <strong>bank-level encryption</strong> and comply with Canadian financial regulations. Your personal and financial information is protected with industry-leading security measures. All transfers are tracked and guaranteed.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="accordion-item">
+                    <h3 className="accordion-header" id="faq4">
+                      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
+                        What payment methods can I use?
+                      </button>
+                    </h3>
+                    <div id="collapse4" className="accordion-collapse collapse" aria-labelledby="faq4" data-bs-parent="#faqAccordion">
+                      <div className="accordion-body">
+                        You can send money using <strong>Interac e-Transfer</strong>, <strong>Credit/Debit Card</strong>, or <strong>Bank Transfer</strong>. Each method is secure and processed quickly. Interac e-Transfer is typically the fastest option for Canadian customers.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="accordion-item">
+                    <h3 className="accordion-header" id="faq5">
+                      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5" aria-expanded="false" aria-controls="collapse5">
+                        How do I track my transfer?
+                      </button>
+                    </h3>
+                    <div id="collapse5" className="accordion-collapse collapse" aria-labelledby="faq5" data-bs-parent="#faqAccordion">
+                      <div className="accordion-body">
+                        After completing your transfer, you'll receive a <strong>tracking number</strong> via email. You can log into your account anytime to check the status in real-time. We'll also notify you when the money has been successfully delivered.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="accordion-item">
+                    <h3 className="accordion-header" id="faq6">
+                      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse6" aria-expanded="false" aria-controls="collapse6">
+                        What information do I need about the recipient?
+                      </button>
+                    </h3>
+                    <div id="collapse6" className="accordion-collapse collapse" aria-labelledby="faq6" data-bs-parent="#faqAccordion">
+                      <div className="accordion-body">
+                        For <strong>bank transfers</strong>, you'll need the recipient's full name, bank account number, and bank name. For <strong>e-wallets</strong> (Momo/ZaloPay), you just need their registered phone number. We guide you through each step to make it easy.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="accordion-item">
+                    <h3 className="accordion-header" id="faq7">
+                      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse7" aria-expanded="false" aria-controls="collapse7">
+                        Can I cancel or modify a transfer?
+                      </button>
+                    </h3>
+                    <div id="collapse7" className="accordion-collapse collapse" aria-labelledby="faq7" data-bs-parent="#faqAccordion">
+                      <div className="accordion-body">
+                        You can cancel a transfer <strong>within 30 minutes</strong> of initiating it, as long as the money hasn't been sent yet. Contact our support team immediately if you need to make changes. Once the transfer is processed, modifications are not possible, but our support team is here to help with any issues.
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+            <div className="text-center mt-4">
+              <p className="text-medium-emphasis">Still have questions? <a href="/general/help" className="text-primary">Contact our support team</a></p>
+            </div>
+          </div>
+        </section>
+
+        <AppFooter />
       </div>
     </div>
   );

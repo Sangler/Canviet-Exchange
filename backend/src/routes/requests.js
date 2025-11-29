@@ -246,7 +246,14 @@ router.post('/', authMiddleware, async (req, res) => {
         // If amounts/currencies were provided, validate them to avoid mismatches
         try {
           if (typeof amountSent !== 'undefined' && currencyFrom) {
-            const expectedCents = Math.round(Number(amountSent) * 100);
+            // Compute expected total cents: principal + transfer fee + tax on fee
+            const TRANSFER_FEE_CAD = 150; // must match payments.js
+            const TAX_RATE = 0.13;
+            const principalCents = Math.round(Number(amountSent) * 100);
+            const feeCents = Math.round(TRANSFER_FEE_CAD * 100);
+            const taxCents = Math.round(feeCents * TAX_RATE);
+            const expectedCents = principalCents + feeCents + taxCents;
+
             if (Number.isFinite(expectedCents) && intent.amount !== expectedCents) {
               logger.warn('[Requests] PaymentIntent amount mismatch', { intentAmount: intent.amount, expectedCents });
               return res.status(400).json({ ok: false, message: 'Payment amount mismatch' });

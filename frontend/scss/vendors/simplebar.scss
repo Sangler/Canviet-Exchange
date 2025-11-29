@@ -71,13 +71,6 @@
   min-height: calc(3rem + 1px);
 }
 
-/* ---- Dark Mode Overrides for Components ---- */
-[data-coreui-theme="dark"] {
-  .footer {
-    --cui-footer-bg: var(--cui-body-bg);
-  }
-}
-
 /* ---- Light Mode Sidebar Override ---- */
 [data-coreui-theme="light"] {
   .sidebar.sidebar-dark {
@@ -231,6 +224,10 @@
 
 /* Dark mode support */
 [data-coreui-theme="dark"] {
+    .footer {
+    --cui-footer-bg: var(--cui-body-bg);
+  }
+  
   .browser-warning {
     background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
     color: #fef3c7;

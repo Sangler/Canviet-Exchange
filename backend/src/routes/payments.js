@@ -27,33 +27,53 @@ router.post('/create-intent', authMiddleware, async (req, res) => {
   try {
     const { amount } = req.body;
 
-    // Validation
-    if (!amount || amount <= 0) {
+    // Validation: principal must be within allowed range 50 - 9999 CAD
+    if (!amount || typeof amount !== 'number' || amount < 50 || amount > 9999) {
       return res.status(400).json({ 
-        error: 'Invalid amount. Amount must be greater than 0.' 
+        error: 'Invalid amount. Amount must be a number between 50 and 9,999 CAD.' 
       });
     }
 
-    // Convert dollars to cents (Stripe requires amount in smallest currency unit)
-    const amountInCents = Math.round(amount * 100);
+    // Server-side fee and tax policy
+    const TRANSFER_FEE_CAD = 150; // fixed transfer service fee in CAD
+    const TAX_RATE = 0.13; // 13% tax applied to transfer fee
 
-    // Create PaymentIntent
+    // Convert to cents
+    const principalCents = Math.round(amount * 100);
+    const feeCents = Math.round(TRANSFER_FEE_CAD * 100);
+    const taxCents = Math.round(Math.round(TRANSFER_FEE_CAD * 100) * TAX_RATE);
+    const totalCents = principalCents + feeCents + taxCents;
+
+    // Create PaymentIntent charging: principal + fee + tax
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
+      amount: totalCents,
       currency: 'cad',
       automatic_payment_methods: {
         enabled: true,
       },
       metadata: {
         userId: req.auth?.id || req.auth?.userId || 'unknown',
-        userEmail: req.auth?.email || 'unknown'
+        userEmail: req.auth?.email || 'unknown',
+        principal_cad: String(amount),
+        principal_cents: String(principalCents),
+        transfer_fee_cad: String(TRANSFER_FEE_CAD),
+        transfer_fee_cents: String(feeCents),
+        tax_rate: String(TAX_RATE),
+        tax_cents: String(taxCents),
+        total_cents: String(totalCents)
       }
     });
 
-    // Return client secret for frontend
+    // Return client secret for frontend along with breakdown
     res.json({ 
       clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id
+      paymentIntentId: paymentIntent.id,
+      breakdown: {
+        principal: amount,
+        transferFee: TRANSFER_FEE_CAD,
+        taxRate: TAX_RATE,
+        tax: (taxCents / 100)
+      }
     });
 
   } catch (error) {

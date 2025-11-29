@@ -65,8 +65,8 @@ export default function Transfer() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const rateTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Display rate adjusted by -175 VND (base rate - 175)
-  const displayRate = typeof rate === 'number' ? Math.max(0, Number((rate - 175).toFixed(2))) : null;
+  // Display rate adjusted by -250 VND (base rate - 250)
+  const displayRate = typeof rate === 'number' ? Math.max(0, Number((rate - 250).toFixed(2))) : null;
   const displayRateFormatted = displayRate !== null ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(displayRate) : null;
   const baseRateFormatted = typeof rate === 'number' ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate) : null;
   
@@ -91,7 +91,6 @@ export default function Transfer() {
         // Surface the error up so outer catch() sets the user-visible error state
         throw err;
       }
-
       if (typeof nextRate === 'number') {
         setPrevRate(rate);
         setRate(nextRate);
@@ -180,6 +179,10 @@ export default function Transfer() {
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const stripeFormRef = useRef<any>(null);
   const [paymentFlowBusy, setPaymentFlowBusy] = useState(false);
+  // Transfer fee & tax (populated from backend when creating PaymentIntent)
+  // Default to 0; will be set by backend for card payments or computed locally for non-card.
+  const [transferFee, setTransferFee] = useState<number>(0);
+  const [transferTax, setTransferTax] = useState<number>(0);
   
   // KYC reminder popup state
   const [showKycReminder, setShowKycReminder] = useState(false);
@@ -264,12 +267,12 @@ export default function Transfer() {
   }, [step, user, token]);
 
   // Effective rate used for calculations. If user selected card in Step 2 and
-  // has progressed to the next steps (3 or 4), apply -175 VND per CAD.
+  // has progressed to the next steps (3 or 4), apply -250 VND per CAD.
   const effectiveRate = useMemo(() => {
     if (typeof rate !== 'number') return null;
     const isCardSelected = transferMethod === 'debit' || transferMethod === 'credit';
     const applyDiscount = isCardSelected && (step >= 3 || (step === 2 && subStep === 1));
-    const val = applyDiscount ? Number((rate - 175).toFixed(6)) : Number(rate);
+    const val = applyDiscount ? Number((rate - 250).toFixed(6)) : Number(rate);
     return val;
   }, [rate, transferMethod, step, subStep]);
 
@@ -505,6 +508,15 @@ export default function Transfer() {
       setClientSecret(data.clientSecret);
       setPaymentIntentId(data.paymentIntentId);
       setPaymentStatus('pending');
+      // Update fee/tax from backend breakdown so UI and final request use canonical values
+      try {
+        if (data.breakdown) {
+          setTransferFee(Number(data.breakdown.transferFee) || 0);
+          setTransferTax(Number(data.breakdown.tax) || 0);
+        }
+      } catch (bErr) {
+        console.debug('Failed to parse breakdown from create-intent', bErr);
+      }
       return { clientSecret: data.clientSecret, paymentIntentId: data.paymentIntentId };
     } catch (error) {
       console.error('Payment intent creation error:', error);
@@ -703,6 +715,19 @@ export default function Transfer() {
         }
       }
 
+      // Ensure transfer fee/tax are present in request body. For non-card flows compute locally.
+      try {
+        const numericAmount = parseFloat(amountFrom.replace(/,/g, '')) || 0;
+        if (!isCard) {
+          // Compute fee client-side to show in UI and include in request
+          const localFee = (!isNaN(numericAmount) && numericAmount > 0 && numericAmount < FEE_THRESHOLD) ? FEE_CAD : 0;
+          setTransferFee(localFee);
+          setTransferTax(Number((localFee * 0.13).toFixed(2)));
+        }
+      } catch (pfErr) {
+        console.debug('Failed to compute local fee/tax before submit', pfErr);
+      }
+
       // Prepare request data
       const requestData = {
         userId: user?.id,
@@ -716,7 +741,8 @@ export default function Transfer() {
         exchangeRate: finalExchangeRate,
         currencyFrom: 'CAD',
         currencyTo: 'VND',
-        transferFee: 0, // Calculate based on your fee structure
+        transferFee: transferFee, // populated from backend for card payments or computed locally for non-card
+        transferTax: transferTax,
         sendingMethod: {
           type: transferMethod,
           // Include EFT details if EFT transfer
@@ -864,15 +890,9 @@ export default function Transfer() {
               <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="Exchange rate details" onClick={() => setShowRateModal(false)}>
                 <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
                   <h3 className="rate-modal-title">How we calculate your exchange rate</h3>
-
-
-                  <ul className="rate-modal-list">
-                    <li>Send less than $300 CAD → Standard rate</li>
-                    <li>Send $300 - $999 CAD → Extra <strong>+50 VND/CAD</strong></li>
-                    <li>Send $1,000+ CAD → Extra <strong>+100 VND/CAD</strong> with no transfer fee applied!</li>
-                  </ul>
+                  <p className="rate-modal-p">We offer competitive exchange rates with a transparent margin applied to the market rate.</p>
                   <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
-
+                  <p className="rate-modal-p">Send $1,000+ CAD to enjoy <strong>no transfer fee</strong>!</p>
                   <p className="rate-modal-p note">*Note: Exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.</p>
                   <div className="rate-modal-actions">
                     <button className="btn" type="button" onClick={() => setShowRateModal(false)}>Got it</button>
@@ -1170,7 +1190,6 @@ export default function Transfer() {
                                   <rect x="1" y="7" width="30" height="4" fill="currentColor" />
                                 </svg>
                                 <span className="payment-label">Credit card</span>
-                                <span className="payment-note">2% processing fee might be applied</span>
                               </div>
                             </label>
                           </div>
@@ -1409,9 +1428,12 @@ export default function Transfer() {
                       {/* Transfer fee notification */}
                       {(() => {
                         const val = parseFloat(amountFrom);
-                        
-                        // Show congratulations message when amount >= threshold
-                        if (!isNaN(val) && val >= FEE_THRESHOLD) {
+                        // Prefer canonical fee from backend (transferFee). If not available yet,
+                        // estimate locally using same business rule (charge $1.50 when amount < threshold).
+                        const estimatedFee = (typeof transferFee === 'number' && transferFee >= 0) ? transferFee : ((!isNaN(val) && val >= FEE_THRESHOLD) ? 0 : FEE_CAD);
+
+                        // Show congratulations message when estimated fee is zero
+                        if (estimatedFee === 0) {
                           return (
                             <div className="alert alert-success d-flex align-items-center mt-3" role="alert">
                               <svg 
@@ -1434,11 +1456,11 @@ export default function Transfer() {
                             </div>
                           );
                         }
-                        
-                        // Show fee warning and upsell by default or when amount is below threshold
+
+                        // Show fee warning and upsell by default or when estimated fee is non-zero
                         return (
                           <>
-                            <div className="fee-mini" role="note">Transfer fee: <strong>${FEE_CAD.toFixed(2)}</strong> CAD</div>
+                            <div className="fee-mini" role="note">Transfer fee: <strong>${estimatedFee.toFixed(2)}</strong> CAD</div>
                             <div className="upsell-row" role="note" aria-live="polite">
                               <div className="upsell-text">
                                 Tip: Send <strong>${FEE_THRESHOLD.toLocaleString()}</strong> CAD to enjoy no transfer fee.
@@ -1630,8 +1652,10 @@ export default function Transfer() {
                       <div><strong>Amount:</strong> {amountFrom || '0'} CAD</div>
                       {(() => {
                         const val = parseFloat(amountFrom);
-                        const fee = !isNaN(val) && val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0;
-                        const isApplied = fee === 0; // As requested, show "Applied" when fee is 0.00
+                        const fee = (typeof transferFee === 'number' && transferFee >= 0)
+                          ? transferFee
+                          : (val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0);
+                        const isApplied = fee === 0; // Show "Applied" when fee is 0.00
                         return (
                           <div
                             className="fee-review"
@@ -1650,7 +1674,7 @@ export default function Transfer() {
                       {(() => {
                         const val = parseFloat(amountFrom);
                         if (!isNaN(val) && typeof effectiveRate === 'number') {
-                          const fee = val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0;
+                          const fee = (typeof transferFee === 'number' && transferFee >= 0) ? transferFee : (val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0);
                           const net = Math.max(val - fee, 0);
                           const vnd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(net * (effectiveRate || 0));
                           const rateFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate || 0);
@@ -1723,7 +1747,7 @@ export default function Transfer() {
                           required
                         />
                         <span>
-                          <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer">Terms and Conditions</a> Read & Agreed!
+                          <a href="/general/terms-and-conditions" target="_blank" rel="noopener noreferrer">Terms and Conditions</a> Read & Agreed!
                         </span>
                       </label>
                     </div>
