@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "verify:smtp": "node src/scripts/verifySmtp.js"
+    "verify:smtp": "node src/scripts/verifySmtp.js",
+    "referral:backfill": "node src/scripts/backfillReferralCodes.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

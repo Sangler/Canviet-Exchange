@@ -27,13 +27,13 @@ router.post(
 router.post("/login", loginLimiter, authLoginValidator, validate, login);
 
 // Google OAuth routes
-router.get(
-  "/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-    session: false,
-  })
-);
+// Start Google OAuth; pass referral via `state` when provided
+router.get("/google", (req, res, next) => {
+  const opts = { scope: ["profile", "email"], session: false }
+  const ref = (req.query.ref || req.query.state || '').toString().trim()
+  if (ref) Object.assign(opts, { state: ref })
+  return passport.authenticate("google", opts)(req, res, next)
+});
 
 router.get(
   "/google/callback",

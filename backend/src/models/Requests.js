@@ -66,7 +66,8 @@ const requestSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
-  
+  removeFee:{type:Boolean, default:false, required:false},
+  buffExchangeRate:{type:Boolean, default:false, required:false},
   // Sending method details (payment method)
   sendingMethod: {
     type: {
@@ -125,12 +126,6 @@ const requestSchema = new mongoose.Schema({
     type: String,
     index: true,
     sparse: true,
-    required:false
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'succeeded', 'failed', 'refunded'],
-    default: 'pending',
     required:false
   }
   

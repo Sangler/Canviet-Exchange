@@ -8,7 +8,14 @@ const contributionSchema = new mongoose.Schema({
     required: false,
     index: true
   },
-
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
+  },
   // Keep a copy of the email at submission time
   userEmail: {
     type: String,
@@ -34,7 +41,8 @@ const contributionSchema = new mongoose.Schema({
   }
 
 }, {
-  timestamps: true // adds createdAt and updatedAt
+  // Only store createdAt; disable updatedAt to minimize storage
+  timestamps: { createdAt: true, updatedAt: false }
 });
 
 // Index for fast recent queries by user

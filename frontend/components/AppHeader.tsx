@@ -112,7 +112,7 @@ const AppHeader: React.FC = () => {
         {user && (
           <CHeaderNav className="ms-auto ms-md-0 d-flex align-items-center">
             <div className="d-flex align-items-center">
-              <span className="me-3">{user?.email ?? 'user@canviet-exchange.com'}</span>
+              <span className="me-3">Hi, {user?.firstName ?? 'Nguyen'}</span>
               <CDropdown variant="nav-item">
                 <CDropdownToggle className="py-0 pe-0" caret={false}>
                   <div className="avatar avatar-md">👤</div>

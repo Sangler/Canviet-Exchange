@@ -4,6 +4,7 @@ import { getAuthToken, parseJwt, clearAuthToken } from '../lib/auth';
 export type AuthUser = {
   id: string;
   email: string;
+  firstName?: string;
   role?: string;
 };
 

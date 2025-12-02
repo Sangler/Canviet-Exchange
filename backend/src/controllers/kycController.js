@@ -5,6 +5,46 @@ const SHUFTI_BASE_URL = 'https://api.shuftipro.com';
 const SHUFTI_CLIENT_ID = process.env.SHUFTI_CLIENT_ID || '';
 const SHUFTI_SECRET_KEY = process.env.SHUFTI_SECRET_KEY || '';
 
+// Frontend URL for redirects (e.g., https://yourdomain.com). Defaults to prod domain.
+const FRONTEND_URL = ((process.env.FRONTEND_URL || 'https://canvietexchange.com').trim()).replace(/\/$/, '');
+// Toggle poll mode to avoid webhook during dev when callback domain cannot be whitelisted
+const SHUFTI_POLL_MODE = (() => {
+  const v = String(process.env.SHUFTI_POLL_MODE || '').trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+})();
+// Optionally omit redirect_url even when not in poll mode (use webhook-only flow)
+const SHUFTI_OMIT_REDIRECT = (() => {
+  const v = String(process.env.SHUFTI_OMIT_REDIRECT || '').trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+})();
+// Optionally enforce upstream response signature validation (webhooks are always validated)
+const SHUFTI_VALIDATE_RESPONSE_SIGNATURE = (() => {
+  const v = String(process.env.SHUFTI_VALIDATE_RESPONSE_SIGNATURE || '').trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+})();
+
+const KYC_IDENTITY_HMAC_SECRET = process.env.KYC_IDENTITY_HMAC_SECRET || '';
+
+// Normalize country input to ISO-3166 alpha-2 code
+function toIso2Country(input) {
+  try {
+    if (!input) return ''
+    const s = String(input).trim().toUpperCase()
+    if (s.length === 2) return s
+    // Simple common-name mapper; extend as needed
+    const map = {
+      CANADA: 'CA',
+      VIETNAM: 'VN',
+      'UNITED STATES': 'US',
+      USA: 'US',
+      'UNITED KINGDOM': 'GB',
+      UK: 'GB',
+      FRANCE: 'FR'
+    }
+    return map[s] || ''
+  } catch { return '' }
+}
+
 /**
  * Generate Basic Auth header for Shufti Pro API
  */
@@ -34,6 +74,42 @@ function validateShuftiSignature(responseBody, signatureHeader) {
   } catch (error) {
     console.error('[Shufti] Signature validation error:', error);
     return false;
+  }
+}
+
+/**
+ * Build a privacy-preserving identity fingerprint using verified KYC attributes.
+ * We deliberately avoid storing raw PII in the fingerprint.
+ * Fields used (if present): document type, issuing country, document number, date of birth.
+ */
+function computeIdentityKey(verificationResult) {
+  try {
+    if (!KYC_IDENTITY_HMAC_SECRET) {
+      console.warn('[KYC] identityKey disabled: missing KYC_IDENTITY_HMAC_SECRET')
+      return null; // Feature disabled if no secret configured
+    }
+    const docData = verificationResult?.document || {};
+    const faceData = verificationResult?.face || {};
+    // Prefer dob from document; fallback to face if provided
+    const dob = (docData.dob || faceData.dob || '').trim();
+    const country = (docData.country || verificationResult?.country || '').toUpperCase().trim();
+    const docType = (docData.selected_type || docData.type || '').toUpperCase().trim();
+    // Normalize document number: remove spaces, dashes, make uppercase
+    const rawNumber = (docData.document_number || docData.number || '').toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
+    if (!country || !docType || !rawNumber || !dob) {
+      const missing = [];
+      if (!country) missing.push('country');
+      if (!docType) missing.push('docType');
+      if (!rawNumber) missing.push('document_number');
+      if (!dob) missing.push('dob');
+      console.warn('[KYC] identityKey inputs missing:', missing, 'verificationResult keys:', Object.keys(verificationResult || {}))
+      return null; // Need all to reduce false positives
+    }
+    const base = `${docType}|${country}|${rawNumber}|${dob}`;
+    return crypto.createHmac('sha256', KYC_IDENTITY_HMAC_SECRET).update(base).digest('hex');
+  } catch (e) {
+    console.error('[KYC] computeIdentityKey error:', e);
+    return null;
   }
 }
 
@@ -70,33 +146,43 @@ exports.createVerification = async (req, res) => {
     // 1. Login to https://backoffice.shuftipro.com/
     // 2. Go to Settings → Redirect URLs
     // 3. Add: localhost:3000 (for development) or yourdomain.com (for production)
-    // 4. Do NOT include http://, https://, or www
+
     
-    // Build redirect URL for development/production
-    // const baseUrl = 'http://localhost:3000';
-    // const redirectUrl = `${baseUrl}/kyc-callback`;
-    
+    // Build redirect URL using configured FRONTEND_URL (works with tunnels/no port)
+    const redirectUrl = `${FRONTEND_URL}/kyc-callback`;
     const payload = {
       reference,
-      // redirect_url: redirectUrl, // Commented out - register domain in Shufti dashboard first
+      // In poll mode, omit callback_url to bypass webhook domain whitelisting
+      ...(SHUFTI_POLL_MODE ? {} : { callback_url: `${(process.env.BACKEND_URL || '').replace(/\/$/, '')}/api/kyc/webhook/shufti` }),
+      // Omit redirect_url in poll mode or when SHUFTI_OMIT_REDIRECT is enabled
+      ...((SHUFTI_POLL_MODE || SHUFTI_OMIT_REDIRECT) ? {} : { redirect_url: redirectUrl }),
       email: user.email,
-      country: 'CA', // Canada
+      country: toIso2Country(user.address?.country || 'CA'),
       language: 'EN',
-      verification_mode: 'any', // on-site or off-site
-      face: {
-        proof: '' // empty means user will upload during verification
-      },
+      verification_mode: 'any',
+      allow_offline: '0',
+      allow_online: '1',
+      show_privacy_policy: '1',
+      show_results: '1',
+      show_consent: '1',
+      show_feedback_form: '0',
+      face: { proof: '' },
       document: {
         proof: '',
-        supported_types: ['id_card', 'passport', 'driving_license'],
+        supported_types: ['id_card', 'driving_license', 'passport'],
         name: '',
         dob: '',
         document_number: '',
         expiry_date: ''
+      },
+      background_checks: {
+        name: {
+          first_name: user.firstName || '',
+          last_name: user.lastName || ''
+        },
+        dob: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : '',
+        country: toIso2Country(user.address?.country || 'CA')
       }
-      // Address verification removed - user will provide address proof during verification
-      // Shufti requires full_address to be populated if address service is requested
-      // Without pre-filled data, it's better to let user upload address proof document only
     };
 
     console.log('[Shufti] Creating verification for user:', userId, 'reference:', reference);
@@ -111,7 +197,11 @@ exports.createVerification = async (req, res) => {
       body: JSON.stringify(payload)
     });
 
-    const data = await response.json();
+    // Capture raw response text before parsing for accurate signature calc
+    const rawText = await response.clone().text();
+    const data = (() => {
+      try { return JSON.parse(rawText); } catch { return {}; }
+    })();
 
     if (!response.ok) {
       console.error('[Shufti] API error:', data);
@@ -119,6 +209,29 @@ exports.createVerification = async (req, res) => {
         ok: false, 
         message: data.message || 'Failed to create verification request' 
       });
+    }
+
+    // Validate Shufti response signature (backend-only, optional)
+    try {
+      const signature = response.headers.get('Signature') || response.headers.get('signature');
+      const secretHash = crypto.createHash('sha256').update(SHUFTI_SECRET_KEY).digest('hex');
+      const calculated = crypto.createHash('sha256').update(rawText + secretHash).digest('hex');
+      if (!signature || calculated !== signature) {
+        const msg = '[Shufti] Response signature validation failed';
+        if (SHUFTI_VALIDATE_RESPONSE_SIGNATURE) {
+          console.error(msg);
+          return res.status(502).json({ ok: false, message: 'Upstream signature validation failed' });
+        } else {
+          console.warn(msg + ' (continuing; validation disabled)');
+        }
+      }
+    } catch (sigErr) {
+      if (SHUFTI_VALIDATE_RESPONSE_SIGNATURE) {
+        console.error('[Shufti] Signature validation error:', sigErr);
+        return res.status(502).json({ ok: false, message: 'Signature validation error' });
+      } else {
+        console.warn('[Shufti] Signature validation error (continuing; disabled):', sigErr?.message || sigErr);
+      }
     }
 
     // Update user with reference and pending status
@@ -183,8 +296,38 @@ exports.checkKycStatus = async (req, res) => {
         if (statusResponse.ok && statusData.event) {
           // Update user status based on Shufti response
           if (statusData.event === 'verification.accepted') {
+            // Attempt to compute identityKey when using polling (or if available here)
+            let identityKey = null;
+            try {
+              const vr = statusData.verification_result || statusData.result || statusData.data || null;
+              if (vr) identityKey = computeIdentityKey(vr);
+            } catch (e) {
+              // best-effort only
+            }
+
             user.KYCStatus = 'verified';
-            await user.save();
+            user.updatedAt = new Date();
+            if (identityKey) user.identityKey = identityKey;
+            try {
+              await user.save();
+            } catch (saveErr) {
+              if (saveErr && saveErr.code === 11000 && String(saveErr.message).includes('identityKey')) {
+                // Duplicate identity detected; align with webhook behavior
+                user.KYCStatus = 'rejected';
+                user.KYCDeclinedReason = 'duplicate_identity';
+                user.identityKey = undefined;
+                try { await user.save(); } catch (_) {}
+                return res.json({
+                  ok: true,
+                  kycStatus: 'rejected',
+                  message: 'Identity already registered with another account',
+                  code: 'duplicate_identity'
+                });
+              }
+              // Other errors
+              return res.status(500).json({ ok: false, message: 'Failed to finalize KYC verification' });
+            }
+
             return res.json({
               ok: true,
               kycStatus: 'verified',
@@ -296,10 +439,34 @@ exports.shuftiWebhook = async (req, res) => {
 
     // Update user KYC status based on event
     if (event === 'verification.accepted') {
+      // Attempt to compute identity fingerprint
+      let identityKey = null;
+      try {
+        identityKey = computeIdentityKey(verification_result);
+      } catch (e) {
+        console.warn('[Shufti Webhook] Identity key generation failed:', e?.message);
+      }
+
       user.KYCStatus = 'verified';
       user.updatedAt = new Date();
-      await user.save();
-      console.log(`[Shufti Webhook] User ${userId} KYC verified`);
+      if (identityKey) user.identityKey = identityKey;
+      try {
+        await user.save();
+        console.log(`[Shufti Webhook] User ${userId} KYC verified${identityKey ? ' (identityKey set)' : ''}`);
+      } catch (saveErr) {
+        if (saveErr && saveErr.code === 11000 && String(saveErr.message).includes('identityKey')) {
+          // Duplicate identity detected: revert status and mark reason
+            user.KYCStatus = 'rejected';
+            user.KYCDeclinedReason = 'duplicate_identity';
+            // Remove identityKey from this record to avoid future collisions
+            user.identityKey = undefined;
+            try { await user.save(); } catch(e2){ /* final attempt */ }
+            console.warn(`[Shufti Webhook] Duplicate identity detected for user ${userId}. Marked as rejected.`);
+            return res.status(409).json({ ok: false, message: 'Identity already registered with another account', code: 'duplicate_identity' });
+        }
+        console.error('[Shufti Webhook] Save error after verification.accepted:', saveErr);
+        return res.status(500).json({ ok: false, message: 'Failed to finalize KYC verification' });
+      }
     } else if (event === 'verification.declined') {
       user.KYCStatus = 'rejected';
       user.KYCDeclinedReason = declined_reason || 'Verification declined';

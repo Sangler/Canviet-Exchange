@@ -18,6 +18,8 @@ function applyPepper(password) {
 exports.register = async (req, res) => {
   try {
     const { email, password, firstName, lastName, phone, dateOfBirth, address } = req.body || {}
+    // Optional referral code from body or query
+    const referralInput = (req.body?.ref || req.body?.referral || req.body?.referralCode || req.query?.ref || req.query?.referral || req.query?.referralCode || '').toString().trim()
     if (!email || !password || !lastName) {
       return res.status(400).json({ message: 'Email, password and lastName are required' })
     }
@@ -43,6 +45,15 @@ exports.register = async (req, res) => {
   const salt = await bcrypt.genSalt(10)
   const passwordHash = await bcrypt.hash(applyPepper(password), salt)
 
+    // Resolve referredBy if referral code provided
+    let referredById = null
+    if (referralInput) {
+      try {
+        const referrer = await User.findOne({ referralCode: referralInput }).select('_id').lean().exec()
+        if (referrer) referredById = referrer._id
+      } catch {}
+    }
+
     const user = await User.create({
       email: emailLower,
       firstName: firstName || '',
@@ -52,7 +63,16 @@ exports.register = async (req, res) => {
       address: address || undefined,
       passwordHash,
       authProvider: 'local', // Mark as traditional registration
+      referredBy: referredById || undefined,
     })
+    // If referred, add to referrer's referrals list (best-effort, don't block registration)
+    if (referredById) {
+      try {
+        await User.updateOne({ _id: referredById }, { $addToSet: { referrals: user._id } }).exec()
+      } catch (e) {
+        console.warn('Failed to add referral linkage:', e?.message)
+      }
+    }
     
   const token = createToken({ sub: user.id, email: user.email, role: user.role })
     return res.json({ token, user: user.toJSON() })
@@ -119,6 +139,23 @@ exports.login = async (req, res) => {
 
 exports.googleOAuth = async (req, res) => {
   try {
+    // Best-effort referral linking using state parameter
+    const referralInput = (req.query?.state || req.query?.ref || '').toString().trim()
+    if (referralInput && req.user && req.user._id) {
+      try {
+        const user = await User.findById(req.user._id)
+        if (user && !user.referredBy) {
+          const referrer = await User.findOne({ referralCode: referralInput }).select('_id').lean().exec()
+          if (referrer && String(referrer._id) !== String(user._id)) {
+            user.referredBy = referrer._id
+            await user.save()
+            await User.updateOne({ _id: referrer._id }, { $addToSet: { referrals: user._id } }).exec()
+          }
+        }
+      } catch (e) {
+        console.warn('Google OAuth referral link failed:', e?.message)
+      }
+    }
     const token = jwt.sign(
       {
         sub: req.user._id,

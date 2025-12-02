@@ -421,6 +421,48 @@ export default function Transfer() {
       console.warn('Failed to clear transfer draft:', error);
     }
   };
+  // Unified KYC start flow (same-tab redirect; preserves draft)
+  const startKycVerification = async () => {
+    if (!token) {
+      alert('Please login first.');
+      router.push('/login');
+      return;
+    }
+    try {
+      const draft = {
+        step,
+        amountFrom,
+        amountTo,
+        transferMethod,
+        recipientPhoneCode,
+        recipientPhone,
+        recipientName,
+        recipientAccountNumber,
+        transferContent,
+        selectedBank,
+        customBankName,
+        bankAccountNumber,
+        bankTransitNumber,
+        bankInstitutionNumber,
+        savedAt: new Date().toISOString(),
+        pendingKyc: true
+      };
+      try { localStorage.setItem('pendingTransferDraft', JSON.stringify(draft)); } catch {}
+      const response = await fetch('/api/kyc/create-verification', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      if (!response.ok || !data.verificationUrl) {
+        alert(data.message || 'Failed to start verification.');
+        return;
+      }
+      window.location.href = data.verificationUrl; // same-tab navigation
+    } catch (err) {
+      console.error('Start KYC error:', err);
+      alert('Unable to start verification. Please try again.');
+    }
+  };
 
   // Auto-calc receive amount (CAD -> VND)
   useEffect(() => {
@@ -588,59 +630,8 @@ export default function Transfer() {
 
       // If KYC not verified, create verification request and redirect
       if (kycData.kycStatus !== 'verified') {
-        const confirmVerify = window.confirm(
-          'You need to complete identity verification (KYC) before submitting transfers.\n\n' +
-          'Click OK to start the verification process.'
-        );
-        
-        if (confirmVerify) {
-          try {
-            // Save current transfer form state to localStorage before redirecting to KYC
-            const transferDraft = {
-              amountFrom,
-              amountTo,
-              transferMethod,
-              recipientPhoneCode,
-              recipientPhone,
-              recipientName,
-              recipientAccountNumber,
-              transferContent,
-              selectedBank,
-              customBankName,
-              bankAccountNumber,
-              bankTransitNumber,
-              bankInstitutionNumber,
-              agreedToTerms,
-              savedAt: new Date().toISOString(),
-              pendingKyc: true // Flag to indicate this draft is waiting for KYC completion
-            };
-            localStorage.setItem('pendingTransferDraft', JSON.stringify(transferDraft));
-            
-            // Create new verification request
-            const verifyResponse = await fetch('/api/kyc/create-verification', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            });
-
-            const verifyData = await verifyResponse.json();
-
-            if (verifyResponse.ok && verifyData.verificationUrl) {
-              // Open Shufti Pro verification in new tab
-              window.open(verifyData.verificationUrl, '_blank');
-              alert('Please complete the verification process in the new window. Once completed, you can submit your transfer.');
-            } else {
-              alert(verifyData.message || 'Failed to create verification request. Please try again.');
-            }
-          } catch (verifyError) {
-            console.error('Verification creation error:', verifyError);
-            alert('Failed to start verification process. Please try again.');
-          }
-        }
-        
         setSubmitting(false);
+        startKycVerification();
         return;
       }
 
@@ -847,33 +838,11 @@ export default function Transfer() {
                     This process helps us keep your transfers secure and comply with countries regulations.
                   </p>
                   <div className="rate-modal-actions" style={{ display: 'flex', gap: '10px' }}>
-                    <button 
-                      className="btn btn-primary" 
-                      type="button" 
-                      onClick={async () => {
-                        setShowKycReminder(false);
-                        try {
-                          const response = await fetch('/api/kyc/create-verification', {
-                            method: 'POST',
-                            headers: {
-                              'Authorization': `Bearer ${token}`,
-                              'Content-Type': 'application/json'
-                            }
-                          });
-                          const data = await response.json();
-                          if (response.ok && data.verificationUrl) {
-                            window.open(data.verificationUrl, '_blank');
-                          } else {
-                            alert('Failed to start verification. Please try again.');
-                          }
-                        } catch (error) {
-                          console.error('Verification error:', error);
-                          alert('Failed to start verification. Please try again.');
-                        }
-                      }}
-                    >
-                      Start Verification
-                    </button>
+                    <button
+                      className="btn btn-primary"
+                      type="button"
+                      onClick={() => { setShowKycReminder(false); startKycVerification(); }}
+                    >Start Verification</button>
                     <button 
                       className="btn btn-outline-secondary" 
                       type="button" 
@@ -885,6 +854,19 @@ export default function Transfer() {
                 </div>
               </div>
             )}
+              {kycStatus !== 'verified' && (
+                <div className="alert alert-warning d-flex align-items-center mb-4 mx-auto alert-maxwide" role="alert">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <div className="flex-grow-1">
+                    <strong>Verify your identity</strong> to submit transfers. It only takes a few minutes.
+                  </div>
+                  <button type="button" className="btn btn-sm btn-primary ms-3" onClick={startKycVerification}>Start Verifying</button>
+                </div>
+              )}
             
             {showRateModal && (
               <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="Exchange rate details" onClick={() => setShowRateModal(false)}>
@@ -1005,7 +987,7 @@ export default function Transfer() {
                       <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
                     <div className="flex-grow-1">
-                      <strong>Identity Verified!</strong> Your KYC verification is complete. Please review your transfer details and submit.
+                      <strong>Identity Verified!</strong> Your KYC verification is complete. You can send money now!
                     </div>
                     <button 
                       type="button" 
