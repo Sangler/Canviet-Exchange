@@ -51,6 +51,14 @@ const _nav = [
   },
   {
     component: CNavItem,
+    name: 'All Requests',
+    to: '/transfers-history',
+    // visible to admin only - shows all user requests
+    roles: 'admin',
+    icon: <CIcon icon={cilHistory} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
     name: 'Analytics',
     to: '/analytics',
     roles: "admin",

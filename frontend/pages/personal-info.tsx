@@ -13,6 +13,7 @@ interface MeResponse {
     phone?: { countryCode?: string; phoneNumber?: string } | string; 
     role?: string; emailVerified?: boolean; createdAt?: string;
     dateOfBirth?: string; address?: { street?: string; postalCode?: string; city?: string; province?: string; country?: string }; employmentStatus?: string;
+    KYCStatus?: string;
   };
 }
 
@@ -43,6 +44,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
   const [province, setProvince] = useState('');
   const [employmentStatus, setEmploymentStatus] = useState('');
   const [saving, setSaving] = useState(false);
+  const [kycVerified, setKycVerified] = useState(false);
   const errorRef = useRef<HTMLDivElement | null>(null);
 
   const surfaceError = useCallback((message: string) => {
@@ -105,6 +107,9 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         setFirstName(u.firstName || '');
         setLastName(u.lastName || '');
         
+        // Check KYC status
+        setKycVerified(u.KYCStatus === 'verified');
+        
         // Handle phone number
         if (u.phone && typeof u.phone === 'object' && u.phone.countryCode && u.phone.phoneNumber) {
           setPhoneCountryCode(u.phone.countryCode);
@@ -155,9 +160,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
 
   // Autocomplete: address input ref
   const addressInputRef = useRef<HTMLInputElement | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
   const [scriptStatus, setScriptStatus] = useState<'pending'|'loaded'|'error'>('pending');
 
   // Initialize Google Places Autocomplete when script is loaded.
@@ -193,20 +195,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
     if (!addressInputRef.current) return;
     initCalledRef.current = true;
     try {
-      // Create map if a container exists
-      if (mapContainerRef.current && !mapRef.current) {
-        mapRef.current = new googleAny.maps.Map(mapContainerRef.current, {
-          center: { lat: 43.6532, lng: -79.3832 }, // Toronto default
-          zoom: 13,
-          mapTypeControl: false,
-        });
-      }
-
-      // Create a marker (will be positioned when a place is selected)
-      if (mapRef.current && !markerRef.current) {
-        markerRef.current = new googleAny.maps.Marker({ map: mapRef.current });
-      }
-
       const autocomplete = new googleAny.maps.places.Autocomplete(addressInputRef.current, {
         types: ['address'],
         componentRestrictions: { country: country && country.length === 2 ? country : 'ca' }
@@ -240,24 +228,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         if (postal) setPostalCode(postal);
         if (provinceVal) setProvince(provinceVal);
         if (countryVal) setCountry(countryVal);
-
-        // Update map & marker
-        try {
-          if (place.geometry) {
-            if (place.geometry.viewport && mapRef.current) {
-              mapRef.current.fitBounds(place.geometry.viewport);
-            } else if (place.geometry.location && mapRef.current) {
-              mapRef.current.setCenter(place.geometry.location);
-              mapRef.current.setZoom(17);
-            }
-            if (markerRef.current && place.geometry.location) {
-              markerRef.current.setPosition(place.geometry.location);
-              markerRef.current.setVisible(true);
-            }
-          }
-        } catch (err) {
-          // ignore map update errors
-        }
       });
     } catch (err) {
       console.error('[maps] initAutocompleteOnce error', err);
@@ -384,11 +354,42 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       setError(null);
       const trimmedFirst = firstName.trim();
       const trimmedLast = lastName.trim();
+      const trimmedPreferred = preferredName.trim();
+      // Validate required names
       if (!trimmedFirst || !trimmedLast) {
         surfaceError('Please enter your legal first and last name.');
         setSaving(false);
         return;
       }
+
+      // Names: letters and spaces only, max 30 chars
+      const nameRegex = /^[\p{L}\s]{1,30}$/u;
+      try {
+        if (!nameRegex.test(trimmedFirst) || !nameRegex.test(trimmedLast)) {
+          surfaceError('Names may contain only letters and spaces (max 30 characters).');
+          setSaving(false);
+          return;
+        }
+        if (trimmedPreferred && !nameRegex.test(trimmedPreferred)) {
+          surfaceError('Preferred name may contain only letters and spaces (max 30 characters).');
+          setSaving(false);
+          return;
+        }
+      } catch (e) {
+        // Some browsers may not support Unicode property escapes; fallback to basic ASCII letters
+        const fallbackRegex = /^[A-Za-z\s]{1,30}$/;
+        if (!fallbackRegex.test(trimmedFirst) || !fallbackRegex.test(trimmedLast)) {
+          surfaceError('Names may contain only letters and spaces (max 30 characters).');
+          setSaving(false);
+          return;
+        }
+        if (trimmedPreferred && !fallbackRegex.test(trimmedPreferred)) {
+          surfaceError('Preferred name may contain only letters and spaces (max 30 characters).');
+          setSaving(false);
+          return;
+        }
+      }
+
       // Build payload
       let dobIso: string | undefined = undefined;
       if (dob) {
@@ -472,6 +473,9 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       }
       
       const payload: any = {
+        firstName: trimmedFirst,
+        lastName: trimmedLast,
+        preferredName: trimmedPreferred || undefined,
         dateOfBirth: dobIso,
         address: {
           street: trimmedStreet,
@@ -605,16 +609,89 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                   <h2>Personal details</h2>
                   <div className="grid-1">
                     <div className="field-group">
-                      <label htmlFor="firstName">Full legal first and middle name(s)</label>
-                      <input id="firstName" className="themed" value={firstName} onChange={(e)=> setFirstName(e.target.value)} required />
+                      <label htmlFor="firstName">
+                        Full legal first and middle name(s)
+                        {kycVerified && (
+                          <span style={{ 
+                            marginLeft: '8px', 
+                            padding: '2px 8px', 
+                            backgroundColor: '#28a745', 
+                            color: 'white', 
+                            borderRadius: '4px', 
+                            fontSize: '12px', 
+                            fontWeight: 'bold' 
+                          }}>
+                            ✓
+                          </span>
+                        )}
+                      </label>
+                      <input 
+                        id="firstName" 
+                        className="themed" 
+                        value={firstName} 
+                        onChange={(e)=> {
+                          // Allow only letters and spaces (Unicode letters), enforce maxlength 30
+                          try {
+                            const sanitized = (e.target.value || '').replace(/[^\p{L}\s]/gu, '').slice(0,30);
+                            setFirstName(sanitized);
+                          } catch {
+                            // Fallback for environments without Unicode regex support
+                            const sanitized = (e.target.value || '').replace(/[^A-Za-z\s]/g, '').slice(0,30);
+                            setFirstName(sanitized);
+                          }
+                        }} 
+                        disabled={kycVerified}
+                        required 
+                        maxLength={30}
+                      />
+
                     </div>
                     <div className="field-group">
-                      <label htmlFor="lastName">Full legal last name(s)</label>
-                      <input id="lastName" className="themed" value={lastName} onChange={(e)=> setLastName(e.target.value)} required />
+                      <label htmlFor="lastName">
+                        Full legal last name(s)
+                        {kycVerified && (
+                          <span style={{ 
+                            marginLeft: '8px', 
+                            padding: '2px 8px', 
+                            backgroundColor: '#28a745', 
+                            color: 'white', 
+                            borderRadius: '4px', 
+                            fontSize: '12px', 
+                            fontWeight: 'bold' 
+                          }}>
+                            ✓
+                          </span>
+                        )}
+                      </label>
+                      <input 
+                        id="lastName" 
+                        className="themed" 
+                        value={lastName} 
+                        onChange={(e)=> {
+                          try {
+                            const sanitized = (e.target.value || '').replace(/[^\p{L}\s]/gu, '').slice(0,30);
+                            setLastName(sanitized);
+                          } catch {
+                            const sanitized = (e.target.value || '').replace(/[^A-Za-z\s]/g, '').slice(0,30);
+                            setLastName(sanitized);
+                          }
+                        }} 
+                        disabled={kycVerified}
+                        required 
+                        maxLength={30}
+                      />
                     </div>
                     <div className="field-group">
                       <label htmlFor="preferredName">Preferred name (optional) <span className="hint">ⓘ</span></label>
-                      <input id="preferredName" className="themed" value={preferredName} onChange={(e)=> setPreferredName(e.target.value)} />
+                      <input id="preferredName" className="themed" value={preferredName} onChange={(e)=> {
+                        try {
+                          const sanitized = (e.target.value || '').replace(/[^\p{L}\s]/gu, '').slice(0,30);
+                          setPreferredName(sanitized);
+                        } catch {
+                          const sanitized = (e.target.value || '').replace(/[^A-Za-z\s]/g, '').slice(0,30);
+                          setPreferredName(sanitized);
+                        }
+                      }} maxLength={30} />
                     </div>
                   </div>
                 </section>
@@ -622,7 +699,22 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                 <section className="pi-section">
                   <h2>Date of birth</h2>
                   <div className="field-group">
-                    <label htmlFor="dob">Date of birth</label>
+                    <label htmlFor="dob">
+                      Date of birth
+                      {kycVerified && (
+                        <span style={{ 
+                          marginLeft: '8px', 
+                          padding: '2px 8px', 
+                          backgroundColor: '#28a745', 
+                          color: 'white', 
+                          borderRadius: '4px', 
+                          fontSize: '12px', 
+                          fontWeight: 'bold' 
+                        }}>
+                          ✓
+                        </span>
+                      )}
+                    </label>
                     <input
                       id="dob"
                       type="date"
@@ -636,8 +728,10 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                       onClick={(e) => {
                         try { (e.target as HTMLInputElement & { showPicker?: () => void }).showPicker?.(); } catch { /* ignore */ }
                       }}
+                      disabled={kycVerified}
                       required
                     />
+
                   </div>
                 </section>
 
@@ -651,7 +745,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                       disabled={phoneVerified}
                     >
                       <option value="+1">+1</option>
-                      <option value="+84">+84</option>
                     </select>
                     <input 
                       className="phone themed" 
@@ -793,9 +886,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                       value={addressLine2}
                       onChange={(e)=> setAddressLine2(e.target.value)}
                     />
-                  </div>
-                  <div className="field-group">
-                    <div ref={mapContainerRef} className="map-container" />
                   </div>
                   <div className="field-group">
                     <label htmlFor="city">City</label>

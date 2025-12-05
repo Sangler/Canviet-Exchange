@@ -83,14 +83,15 @@ export default function Home() {
       setActiveInput('from');
       setAmountFrom(display);
     } else if (type === 'to') {
-      // VND: No decimals, limit to 9 digits, remove leading zeros and commas
+      // VND: integers only, format with thousand separators for display
       const cleaned = raw.replace(/[^0-9]/g, '');
-      const trimmed = cleaned.replace(/^0+/, '') || '0';
-      const limited = trimmed.length > 9 ? trimmed.slice(0, 9) : trimmed;
-      // Format with commas every 3 digits
-      const formatted = limited === '0' ? '' : limited.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      // strip leading zeros, but allow empty input
+      const normalized = cleaned.replace(/^0+/, '') || '0';
+      // cap length to 9 digits (maximum VNĐ digits allowed)
+      const capped = normalized.slice(0, 9);
+      const display = capped === '0' ? '' : new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(capped));
       setActiveInput('to');
-      setAmountTo(formatted);
+      setAmountTo(display);
     }
   }
 

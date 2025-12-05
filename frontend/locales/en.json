@@ -91,5 +91,12 @@
     "title": "Personal Information",
     "updateProfile": "Update your profile",
     "saveChanges": "Save Changes"
+  },
+  "button": {
+    "addNew": "Add New",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "BackToLogin": "Back to Login"
   }
 }

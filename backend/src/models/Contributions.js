@@ -41,7 +41,6 @@ const contributionSchema = new mongoose.Schema({
   }
 
 }, {
-  // Only store createdAt; disable updatedAt to minimize storage
   timestamps: { createdAt: true, updatedAt: false }
 });
 

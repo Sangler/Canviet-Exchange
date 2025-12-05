@@ -110,19 +110,26 @@ export default function Transfer() {
   // Fetch user's transaction history
   async function fetchTransactionHistory() {
     if (!user?.id) return;
-    
+
     try {
       setTransactionsLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/requests?userId=${user.id}&status=approved`, {
+      // Request a reasonable page of recent requests and filter client-side for approved/completed
+      const response = await fetch(`/api/requests?limit=5`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        setTransactions(data.requests || []);
+        const reqs = Array.isArray(data.requests) ? data.requests : [];
+        // Only include requests that belong to this user (server also filters when auth is present)
+        const mine = reqs.filter(r => String(r.userId) === String(user.id) || !r.userId);
+        // Keep only approved or completed statuses
+        const filtered = mine.filter(r => r.status === 'approved' || r.status === 'completed');
+        // Take the 5 most recent (requests are returned sorted desc by createdAt)
+        setTransactions(filtered.slice(0, 5));
       }
     } catch (error) {
       console.error('Failed to fetch transaction history:', error);
@@ -138,29 +145,7 @@ export default function Transfer() {
     return () => { if (rateTimer.current) clearInterval(rateTimer.current); };
   }, [user?.id]);
 
-  // Fetch KYC status on mount
-  useEffect(() => {
-    async function fetchKycStatus() {
-      if (!user || !token) return;
-      
-      try {
-        const response = await fetch('/api/kyc/status', {
-          method: 'GET',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.ok) {
-          setKycStatus(data.kycStatus || 'unverified');
-        }
-      } catch (error) {
-        console.error('Error fetching KYC status:', error);
-      }
-    }
-    
-    fetchKycStatus();
-  }, [user, token]);
+  // KYC status is checked only when user clicks "Start verifying" button
 
   const [amountFrom, setAmountFrom] = useState<string>('');
   const [amountTo, setAmountTo] = useState<string>('');
@@ -228,6 +213,33 @@ export default function Transfer() {
     }
   }, [router.query.kycSuccess]);
 
+  // Fetch KYC status on mount
+  useEffect(() => {
+    if (!token) return;
+    
+    const fetchKycStatus = async () => {
+      try {
+        const response = await fetch('/api/kyc/status', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.ok && data.kycStatus) {
+            setKycStatus(data.kycStatus);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch KYC status:', error);
+      }
+    };
+    
+    fetchKycStatus();
+  }, [token]);
+
   // NOTE: When the user reaches Step 4 (Review) and card payment is selected,
   // we initialize the PaymentIntent so the Stripe `PaymentElement` can mount
   // and the customer can enter card details prior to final confirmation.
@@ -242,29 +254,7 @@ export default function Transfer() {
     }
   }, [transferMethod]);
 
-  // Show KYC reminder when user reaches Step 4 (Review) if not verified
-  useEffect(() => {
-    async function checkKycForReminder() {
-      if (step !== 4 || !user || !token) return;
-      
-      try {
-        const response = await fetch('/api/kyc/status', {
-          method: 'GET',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.ok && data.kycStatus !== 'verified') {
-          setShowKycReminder(true);
-        }
-      } catch (error) {
-        console.error('Error checking KYC status:', error);
-      }
-    }
-    
-    checkKycForReminder();
-  }, [step, user, token]);
+  // KYC reminder will be shown based on kycStatus state set when user starts KYC flow
 
   // Effective rate used for calculations. If user selected card in Step 2 and
   // has progressed to the next steps (3 or 4), apply -250 VND per CAD.
@@ -484,6 +474,26 @@ export default function Transfer() {
     }
   }, [amountFrom, effectiveRate, activeInput]);
 
+  // Auto-calc send amount (VND -> CAD) when user edits the VND input
+  useEffect(() => {
+    if (activeInput !== 'to' || isUpdatingRef.current) return;
+    const val = parseInt((amountTo || '').toString().replace(/,/g, ''), 10);
+    if (!isNaN(val) && effectiveRate && effectiveRate > 0) {
+      const rawCad = val / effectiveRate;
+      const nextNum = Math.round(rawCad * 100) / 100; // round to cents
+      if (lastComputedFromRef.current !== nextNum) {
+        isUpdatingRef.current = true;
+        lastComputedFromRef.current = nextNum;
+        const display = (nextNum % 1 === 0) ? nextNum.toFixed(0) : nextNum.toFixed(2);
+        setAmountFrom(display === '0' ? '' : display);
+        setTimeout(() => { isUpdatingRef.current = false; }, 0);
+      }
+    } else {
+      lastComputedFromRef.current = NaN;
+      setAmountFrom('');
+    }
+  }, [amountTo, effectiveRate, activeInput]);
+
   function formatCurrencyInput(e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') {
     const raw = e.target.value || '';
     
@@ -508,6 +518,16 @@ export default function Transfer() {
       
       setActiveInput('from');
       setAmountFrom(display);
+    } else {
+      // VND: integers only, format with thousand separators for display
+      const cleaned = raw.replace(/[^0-9]/g, '');
+      // strip leading zeros, but allow empty input
+      const normalized = cleaned.replace(/^0+/, '') || '0';
+      // cap length to 9 digits (maximum VNĐ digits allowed)
+      const capped = normalized.slice(0, 9);
+      const display = capped === '0' ? '' : new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(capped));
+      setActiveInput('to');
+      setAmountTo(display);
     }
   }
 
@@ -628,11 +648,52 @@ export default function Transfer() {
         return;
       }
 
-      // If KYC not verified, create verification request and redirect
+      // If KYC not verified, show reminder modal
       if (kycData.kycStatus !== 'verified') {
         setSubmitting(false);
-        startKycVerification();
+        setShowKycReminder(true);
         return;
+      }
+
+      // Check 24-hour limit for regular users (not admin)
+      if (user?.role !== 'admin') {
+        const currentAmount = parseFloat(amountFrom.replace(/,/g, '')) || 0;
+        
+        try {
+          const response = await fetch('/api/requests', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const allRequests = data.requests || [];
+            
+            // Calculate cutoff time (24 hours + 1 minute ago)
+            const cutoffTime = new Date(Date.now() - (24 * 60 * 60 * 1000 + 60 * 1000));
+            
+            // Sum all amounts from requests within the last 24 hours + 1 minute
+            const recentTotal = allRequests
+              .filter((req: RequestItem) => new Date(req.createdAt) > cutoffTime)
+              .reduce((sum: number, req: RequestItem) => sum + (req.amountSent || 0), 0);
+            
+            const totalWithCurrent = recentTotal + currentAmount;
+            
+            if (totalWithCurrent > 9999) {
+              alert(
+                `Transfer Limit Exceeded!\n\n` +
+                `Daily limit: $9,999 CAD\n` +
+                `Please come back tomorrow!\n` 
+              );
+              setSubmitting(false);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Failed to check 24-hour limit:', error);
+          // Continue with submission if limit check fails (graceful degradation)
+        }
       }
 
       // Ensure we have a valid exchange rate
@@ -1395,11 +1456,11 @@ export default function Transfer() {
                             name="amountTo"
                             placeholder="Enter VND amount"
                             value={amountTo}
-                            readOnly
-                            disabled
                             inputMode="numeric"
                             pattern="[0-9,]*"
                             aria-label="They receive"
+                            onChange={(e) => formatCurrencyInput(e as unknown as React.ChangeEvent<HTMLInputElement>, 'to')}
+                            onInput={(e) => formatCurrencyInput(e as unknown as React.ChangeEvent<HTMLInputElement>, 'to')}
                           />
                           <div className="currency-suffix" aria-hidden="true">
                             <img className="flag" src="/flags/Flag_of_Vietnam.png" alt="" />

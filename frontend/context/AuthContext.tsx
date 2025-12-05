@@ -45,9 +45,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       return;
     }
-    const payload = parseJwt<{ sub?: string; email?: string; role?: string }>(token);
+    const payload = parseJwt<{ sub?: string; email?: string; role?: string; firstName?: string }>(token);
     if (payload?.sub && payload?.email) {
-      setUser({ id: payload.sub, email: payload.email, role: payload.role });
+      setUser({ id: payload.sub, email: payload.email, role: payload.role, firstName: payload.firstName });
     } else {
       setUser(null);
     }

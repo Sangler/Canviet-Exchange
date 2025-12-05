@@ -43,6 +43,31 @@ export default function KycCallbackPage() {
           setStatus('pending');
           setMessage('⏳ Your verification is still being processed. Please check back in a few minutes.');
           setTimeout(() => router.push('/transfers'), 3000);
+        } else if (kycData.kycStatus === 'rejected') {
+          setStatus('failed');
+          
+          // Handle different rejection reasons
+          let rejectionMessage = '❌ Verification failed. ';
+          if (kycData.code === 'duplicate_identity') {
+            rejectionMessage += 'Duplicate user found. This identity is already registered with another account.';
+          } else if (kycData.code === 'documentation_mismatch') {
+            rejectionMessage += 'Documentation mismatched. Please try again with valid documents.';
+          } else if (kycData.code === 'face_match_low_confidence') {
+            rejectionMessage += 'Face match confidence too low. Please try again with better lighting.';
+          } else {
+            rejectionMessage += 'Please try again.';
+          }
+          
+          if (kycData.remainingAttempts !== undefined) {
+            rejectionMessage += ` Remaining attempts: ${kycData.remainingAttempts}`;
+          }
+          
+          setMessage(rejectionMessage);
+          setTimeout(() => router.push('/transfers'), 5000);
+        } else if (kycData.kycStatus === 'suspended') {
+          setStatus('failed');
+          setMessage('❌ Account suspended due to multiple failed verification attempts. Please contact support.');
+          setTimeout(() => router.push('/transfers'), 5000);
         } else {
           setStatus('failed');
           setMessage('❌ Verification was not successful. Please try again.');

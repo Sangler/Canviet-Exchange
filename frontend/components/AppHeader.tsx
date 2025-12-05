@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useSelector, useDispatch } from 'react-redux';
+import { getAuthToken } from '../lib/auth';
 import {
   CContainer,
   CDropdown,
@@ -25,6 +26,7 @@ import {
   cilMoon,
   cilSun,
   cilUser,
+  cilTrash,
 } from '@coreui/icons';
 
 const AppHeader: React.FC = () => {
@@ -112,7 +114,7 @@ const AppHeader: React.FC = () => {
         {user && (
           <CHeaderNav className="ms-auto ms-md-0 d-flex align-items-center">
             <div className="d-flex align-items-center">
-              <span className="me-3">Hi, {user?.firstName ?? 'Nguyen'}</span>
+              <span className="me-3">Hi, {user?.preferredName || user?.firstName || 'Nguyen'}</span>
               <CDropdown variant="nav-item">
                 <CDropdownToggle className="py-0 pe-0" caret={false}>
                   <div className="avatar avatar-md">👤</div>
@@ -123,14 +125,46 @@ const AppHeader: React.FC = () => {
                     Personal Details
                   </CDropdownItem>
 
-                  <CDropdownItem>
-                    <CIcon icon={cilBell} className="me-2" />
-                    Messages
-                  </CDropdownItem>
-
                   <CDropdownItem onClick={() => logout()}>
                     <CIcon icon={cilList} className="me-2" />
                     Logout
+                  </CDropdownItem>
+                  
+                  <CDropdownItem 
+                    onClick={async () => {
+                      if (window.confirm('⚠️ WARNING: This will permanently delete your account and all associated data including transfers, KYC information, and personal details. This action CANNOT be undone.\n\nAre you absolutely sure you want to close your account?')) {
+                        try {
+                          const token = getAuthToken();
+                          if (!token) {
+                            alert('You are not logged in.');
+                            return;
+                          }
+                          
+                          const response = await fetch('/api/users/close-account', {
+                            method: 'DELETE',
+                            headers: {
+                              'Authorization': `Bearer ${token}`,
+                              'Content-Type': 'application/json'
+                            }
+                          });
+                          
+                          if (response.ok) {
+                            alert('Your account has been permanently closed. You will now be logged out.');
+                            logout();
+                          } else {
+                            const data = await response.json();
+                            alert(`Failed to close account: ${data.message || 'Unknown error'}`);
+                          }
+                        } catch (error) {
+                          console.error('Error closing account:', error);
+                          alert('Failed to close account. Please try again.');
+                        }
+                      }
+                    }}
+                    className="text-danger"
+                  >
+                    <CIcon icon={cilTrash} className="me-2" />
+                    Close Account
                   </CDropdownItem>
                 </CDropdownMenu>
               </CDropdown>

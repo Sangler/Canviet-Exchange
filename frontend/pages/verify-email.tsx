@@ -152,7 +152,7 @@ export default function VerifyEmailPage() {
       </Head>
   <div className="auth-container bg-auth">
     <div className="auth-card">
-            {/* Back button placed top-left using existing .back-btn.page styles */}
+           
             <button
               type="button"
               className="back-btn page"

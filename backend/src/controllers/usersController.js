@@ -47,6 +47,35 @@ function isProfileComplete(u) {
   return true
 }
 
+exports.closeAccount = async (req, res) => {
+  try {
+    const userId = req.auth?.sub
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' })
+
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ message: 'User not found' })
+
+    // Delete all related data
+    const Request = require('../models/Requests')
+    
+    // Delete all user's transfer requests
+    await Request.deleteMany({ userId: userId })
+    
+    // Delete the user account
+    await User.findByIdAndDelete(userId)
+    
+    console.log(`Account closed and all data deleted for user: ${userId}`)
+    
+    return res.json({ 
+      ok: true, 
+      message: 'Account and all associated data have been permanently deleted' 
+    })
+  } catch (err) {
+    console.error('Users.closeAccount error:', err)
+    return res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.auth?.sub

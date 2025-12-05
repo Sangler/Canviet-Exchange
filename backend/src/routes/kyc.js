@@ -15,4 +15,7 @@ router.post('/update-status', authMiddleware, updateKycStatus);
 // Webhook endpoint for Shufti Pro callbacks (no auth required)
 router.post('/webhook/shufti', shuftiWebhook);
 
+// Compatibility alias matching suggested '/kyc/callback' path
+router.post('/callback', shuftiWebhook);
+
 module.exports = router;

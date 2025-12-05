@@ -23,7 +23,7 @@ const optionalAuth = (req, res, next) => {
   return next();
 };
 
-// GET /api/requests - Get user's transfer history
+// GET /api/requests - Get user's transfer history (or all requests for admin)
 // Query params: status, limit, skip
 router.get('/', optionalAuth, async (req, res) => {
   try {
@@ -32,9 +32,12 @@ router.get('/', optionalAuth, async (req, res) => {
     // Build query filter
     const filter = {};
     
-    // If authenticated, filter by the authenticated user's ID
+    // If authenticated, filter by the authenticated user's ID (unless admin)
     const authenticatedUserId = req.auth?.sub || req.auth?.id;
-    if (authenticatedUserId) {
+    const userRole = req.auth?.role;
+    
+    // Admin can see all requests; regular users only see their own
+    if (authenticatedUserId && userRole !== 'admin') {
       filter.userId = authenticatedUserId;
     }
     
@@ -68,7 +71,7 @@ router.get('/', optionalAuth, async (req, res) => {
       }
       return r;
     });
-    logger.info(`[Requests] Retrieved ${requests.length} requests for user ${authenticatedUserId || 'all'}`);
+    logger.info(`[Requests] Retrieved ${requests.length} requests for ${userRole === 'admin' ? 'admin (all users)' : `user ${authenticatedUserId || 'guest'}`}`);
 
     return res.json({
       ok: true,

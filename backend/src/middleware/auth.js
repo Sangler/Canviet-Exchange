@@ -17,6 +17,14 @@ module.exports = function authMiddleware(req, res, next) {
 
     const decoded = jwt.verify(token, JWT_SECRET)
 
+    // Check for account suspension
+    if (decoded.kycStatus === 'suspended') {
+      return res.status(403).json({ 
+        message: 'Account suspended due to multiple duplicate identity attempts', 
+        code: 'account_suspended' 
+      })
+    }
+
     // Maintain existing req.auth reference
     req.auth = decoded
 

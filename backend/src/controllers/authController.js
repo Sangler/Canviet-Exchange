@@ -104,6 +104,15 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
+    // Check for account suspension
+    if (user.KYCStatus === 'suspended') {
+      return res.status(403).json({ 
+        message: 'Account suspended due to multiple duplicate identity attempts', 
+        code: 'account_suspended',
+        rejectionCount: user.KYCRejectionCount || 0
+      })
+    }
+
     // Check if user has a password hash (required for password login)
     // Google users who have set a password via reset flow can login with email/password
     if (!user.passwordHash) {
@@ -129,7 +138,13 @@ exports.login = async (req, res) => {
       }
     }
 
-  const token = createToken({ sub: user.id, email: user.email, role: user.role })
+  const token = createToken({ 
+    sub: user.id, 
+    email: user.email, 
+    role: user.role, 
+    firstName: user.firstName,
+    kycStatus: user.KYCStatus
+  })
     return res.json({ token, user: user.toJSON() })
   } catch (err) {
     console.error('Login error:', err)
@@ -156,12 +171,19 @@ exports.googleOAuth = async (req, res) => {
         console.warn('Google OAuth referral link failed:', e?.message)
       }
     }
+    // Check for account suspension
+    if (req.user.KYCStatus === 'suspended') {
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=account_suspended`)
+    }
+
     const token = jwt.sign(
       {
         sub: req.user._id,
         userId: req.user._id,
         email: req.user.email,
         role: req.user.role,
+        firstName: req.user.firstName,
+        kycStatus: req.user.KYCStatus,
       },
       process.env.JWT_SECRET,
       { expiresIn: process.env.ACCESS_EXPIRES || '15m' }
