@@ -15,7 +15,8 @@ import {
   cilUser,
   cilCreditCard,
   cilSettings,
-  cilHistory
+  cilHistory,
+  cilPeople
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -63,6 +64,13 @@ const _nav = [
     to: '/analytics',
     roles: "admin",
     icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Referral Program',
+    to: '/referral',
+    roles: 'user',
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,

@@ -1,24 +1,45 @@
 import { Provider } from 'react-redux'
 import type { AppProps } from 'next/app'
 import { useRouter } from 'next/router'
+import { useEffect } from 'react'
 import store from '../store/store'
 import '../styles/globals.css'
 import '../scss/style.scss'
-import { AuthProvider } from '../context/AuthContext'
+import { AuthProvider, useAuth } from '../context/AuthContext'
 import { LanguageProvider } from '../context/LanguageContext'
 import BrowserCompatibilityWarning from '../components/BrowserCompatibilityWarning'
 
+function AppContent({ Component, pageProps }: AppProps) {
+  const router = useRouter()
+  const { token } = useAuth()
+
+  useEffect(() => {
+    // Allow access to help page, login, register, and public pages
+    const allowedPaths = ['/general/help', '/terms-and-conditions', '/oauth-callback']
+    const isAllowedPath = allowedPaths.some(path => router.pathname.startsWith(path))
+    
+    if (token && !isAllowedPath) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        if (payload.suspended === true || payload.kycStatus === 'suspended') {
+          router.replace('/general/help')
+        }
+      } catch (e) {
+        console.error('Failed to parse token:', e)
+      }
+    }
+  }, [router.pathname, token])
+
+  return <Component {...pageProps} />
+}
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const router = useRouter()
-
-
   return (
     <Provider store={store}>
       <LanguageProvider>
         <AuthProvider>
           <BrowserCompatibilityWarning />
-          <Component {...pageProps} />
+          <AppContent Component={Component} pageProps={pageProps} />
         </AuthProvider>
       </LanguageProvider>
     </Provider>

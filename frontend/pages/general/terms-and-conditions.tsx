@@ -114,9 +114,42 @@ export default function TermsAndConditions() {
                 <p>
                   We collect and process personal information in accordance with our Privacy Policy. By using our Service, you consent to our collection, use, and disclosure of your personal information as described in our Privacy Policy.
                 </p>
+                
+                <h3 className="h5 mb-3 mt-4">Know Your Customer (KYC) Requirements</h3>
                 <p>
-                  We implement security measures to protect your data, but cannot guarantee absolute security of information transmitted over the internet.
+                  As a financial service provider operating in Canada, we are required by law to implement Know Your Customer (KYC) procedures to comply with:
                 </p>
+                <ul>
+                  <li><strong>Proceeds of Crime (Money Laundering) and Terrorist Financing Act (PCMLTFA)</strong></li>
+                  <li><strong>Financial Transactions and Reports Analysis Centre of Canada (FINTRAC)</strong> regulations</li>
+                  <li><strong>Anti-Money Laundering (AML)</strong> and Counter-Terrorist Financing (CTF) requirements</li>
+                </ul>
+
+                <h3 className="h5 mb-3 mt-4">Why We Collect Your Information</h3>
+                <p>We collect your personal information and identity documents for the following purposes:</p>
+                <ul>
+                  <li><strong>Identity Verification:</strong> To confirm you are who you claim to be and prevent identity theft or fraud</li>
+                  <li><strong>Legal Compliance:</strong> To meet regulatory requirements under Canadian federal and provincial laws</li>
+                  <li><strong>Risk Assessment:</strong> To evaluate and manage potential risks associated with money laundering, terrorist financing, or other illegal activities</li>
+                  <li><strong>Transaction Monitoring:</strong> To detect and report suspicious transactions as required by law</li>
+                  <li><strong>Service Provision:</strong> To process your transfer requests accurately and securely</li>
+                </ul>
+
+                <h3 className="h5 mb-3 mt-4">How We Secure Your Information</h3>
+                <p>We take the security and confidentiality of your personal information seriously and implement multiple layers of protection:</p>
+                <ul>
+                  <li><strong>Encryption:</strong> All data transmitted between your device and our servers is encrypted using industry-standard SSL/TLS protocols</li>
+                  <li><strong>Secure Storage:</strong> Personal information and documents are stored in encrypted databases with restricted access</li>
+                  <li><strong>Data Minimization:</strong> We only collect information that is necessary for regulatory compliance and service provision</li>
+                </ul>
+
+                <h3 className="h5 mb-3 mt-4">Data Retention and Your Rights</h3>
+                <p>
+                  We retain your personal information for as long as required by Canadian law (typically 5-7 years after your last transaction) to comply with record-keeping obligations under FINTRAC regulations.
+                </p>
+
+                <h3 className="h5 mb-3 mt-4">Data Security Disclaimer</h3>
+                
               </section>
 
               <section className="mb-5">

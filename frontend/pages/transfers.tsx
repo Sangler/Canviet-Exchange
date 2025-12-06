@@ -56,7 +56,6 @@ export default function Transfer() {
   
   // Fee rules
   const FEE_CAD = 1.5;
-  const FEE_THRESHOLD = 1000;
   // Live CAD->VND rate handling
   const [rate, setRate] = useState<number | null>(null);
   const [prevRate, setPrevRate] = useState<number | null>(null);
@@ -1473,44 +1472,10 @@ export default function Transfer() {
                         const val = parseFloat(amountFrom);
                         // Prefer canonical fee from backend (transferFee). If not available yet,
                         // estimate locally using same business rule (charge $1.50 when amount < threshold).
-                        const estimatedFee = (typeof transferFee === 'number' && transferFee >= 0) ? transferFee : ((!isNaN(val) && val >= FEE_THRESHOLD) ? 0 : FEE_CAD);
+                        const estimatedFee = (typeof transferFee === 'number' && transferFee >= 0) ? transferFee : FEE_CAD;
 
-                        // Show congratulations message when estimated fee is zero
-                        if (estimatedFee === 0) {
-                          return (
-                            <div className="alert alert-success d-flex align-items-center mt-3" role="alert">
-                              <svg 
-                                width="24" 
-                                height="24" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                strokeWidth="2" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round"
-                                className="me-2"
-                              >
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                              </svg>
-                              <div>
-                                <strong>Congrats!</strong> NO Transfer fee applied. <strong> You Save ${FEE_CAD.toFixed(2)} CAD!</strong>.
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        // Show fee warning and upsell by default or when estimated fee is non-zero
                         return (
-                          <>
-                            <div className="fee-mini" role="note">Transfer fee: <strong>${estimatedFee.toFixed(2)}</strong> CAD</div>
-                            <div className="upsell-row" role="note" aria-live="polite">
-                              <div className="upsell-text">
-                                Tip: Send <strong>${FEE_THRESHOLD.toLocaleString()}</strong> CAD to enjoy no transfer fee.
-                              </div>
-                              <button type="button" className="upsell-btn" onClick={() => setAmountFrom(String(FEE_THRESHOLD))}>GET GOOD RATE</button>
-                            </div>
-                          </>
+                          <div className="fee-mini" role="note">Transfer fee: <strong>${estimatedFee.toFixed(2)}</strong> CAD</div>
                         );
                       })()}
                       <button type="submit" className="btn primary w-full">Continue to Receiver Details</button>

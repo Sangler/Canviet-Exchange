@@ -621,6 +621,24 @@ exports.checkKycStatus = async (req, res) => {
             if (identityKey) user.identityKey = identityKey;
             try {
               await user.save();
+              
+              // Award referral points to both referrer and referred user
+              if (user.referredBy) {
+                try {
+                  // Award 2 points to the referrer (User A)
+                  await User.updateOne(
+                    { _id: user.referredBy },
+                    { $inc: { points: 2 } }
+                  );
+                  // Award 2 points to the referred user (User B) as welcome bonus
+                  await User.updateOne(
+                    { _id: user._id },
+                    { $inc: { points: 2 } }
+                  );
+                } catch (pointsErr) {
+                  console.warn('Failed to award referral points:', pointsErr?.message);
+                }
+              }
             } catch (saveErr) {
               if (saveErr && saveErr.code === 11000 && String(saveErr.message).includes('identityKey')) {
                 // Duplicate identity detected; align with webhook behavior
@@ -1022,6 +1040,24 @@ exports.shuftiWebhook = async (req, res) => {
       
       try {
         await user.save();
+        
+        // Award referral points to both referrer and referred user
+        if (user.referredBy) {
+          try {
+            // Award 2 points to the referrer (User A)
+            await User.updateOne(
+              { _id: user.referredBy },
+              { $inc: { points: 2 } }
+            );
+            // Award 2 points to the referred user (User B) as welcome bonus
+            await User.updateOne(
+              { _id: user._id },
+              { $inc: { points: 2 } }
+            );
+          } catch (pointsErr) {
+            console.warn('Failed to award referral points:', pointsErr?.message);
+          }
+        }
       } catch (saveErr) {
         if (saveErr && saveErr.code === 11000 && String(saveErr.message).includes('identityKey')) {
           // Duplicate identity detected: revert status and mark reason

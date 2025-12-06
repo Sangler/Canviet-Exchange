@@ -21,6 +21,28 @@ export default function HelpPage() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [userDataLoaded, setUserDataLoaded] = useState(false);
+  const [isSuspended, setIsSuspended] = useState(false);
+
+  // Check if user is suspended and scroll to help form
+  useEffect(() => {
+    if (token && user) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.suspended === true || payload.kycStatus === 'suspended') {
+          setIsSuspended(true);
+          // Scroll to help form after a short delay to ensure DOM is ready
+          setTimeout(() => {
+            const formSection = document.getElementById('help-form-section');
+            if (formSection) {
+              formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 500);
+        }
+      } catch (e) {
+        console.error('Failed to parse token:', e);
+      }
+    }
+  }, [token, user]);
 
   // Auto-fill user data when authenticated
   useEffect(() => {
@@ -253,15 +275,6 @@ export default function HelpPage() {
                           <li><strong>Rejected:</strong> Transfer could not be processed (contact support)</li>
                         </ul>
                       </div>
-
-                      <div className="mb-4">
-                        <h3 className="h5 mb-2">Can I cancel a transfer?</h3>
-                        <p className="mb-0">
-                          Transfers can only be cancelled if they are still in "Pending" status. 
-                          Contact our support team immediately if you need to cancel a transfer. 
-                          Once approved or completed, transfers cannot be cancelled.
-                        </p>
-                      </div>
                     </section>
 
                     {/* Troubleshooting */}
@@ -296,8 +309,18 @@ export default function HelpPage() {
                     </section>
 
                     {/* FAQ Submission Form */}
-                    <section className="mb-5">
+                    <section className="mb-5" id="help-form-section">
                       <h2 className="h3 mb-3">Submit Your Question</h2>
+                      
+                      {isSuspended && (
+                        <div className="alert alert-warning" role="alert">
+                          <strong>Account Suspended</strong>
+                          <p className="mb-0 mt-2">
+                            Your account has been suspended due to multiple duplicate identity attempts. 
+                            Please use the form below to contact our support team for assistance with your account.
+                          </p>
+                        </div>
+                      )}
                       
                       <div className="card bg-light">
                         <div className="card-body">

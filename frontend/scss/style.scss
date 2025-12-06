@@ -951,7 +951,7 @@ blockquote a:hover { text-decoration:underline; }
 .mode-btn:active { transform:scale(0.95); }
 .page-toolbar { position:sticky; top:0; z-index:1050; display:flex; justify-content:space-between; align-items:center; gap:16px; padding:8px 16px; background:var(--cui-body-bg,#fff); border-bottom:1px solid #e2e8f0; }
 .page-toolbar .toolbar-left, .page-toolbar .toolbar-right { display:flex; align-items:center; gap:14px; }
-.toolbar-back { display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-weight:600; color:#334155; padding:6px 10px; border-radius:8px; border:1px solid transparent; transition:background .15s ease, color .15s ease; }
+.toolbar-back { display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-weight:600; color:#64748b; padding:6px 10px; border-radius:8px; border:1px solid transparent; transition:background .15s ease, color .15s ease; }
 .toolbar-back:hover { background:#e2e8f0; color:#0f172a; }
 .toolbar-lang { display:inline-flex; align-items:center; gap:10px; font-size:14px; }
 .toolbar-lang .lang-link { text-decoration:none; color:#475569; font-weight:500; padding:4px 6px; border-radius:6px; transition:background .15s, color .15s; }
@@ -1516,7 +1516,7 @@ select[name="receiverBank"]:focus {
 
 /* Testimonials Section */
 .testimonials-section {
-  padding: 60px 0;
+  padding: 20px 0;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   
   .section-title {
@@ -1898,7 +1898,7 @@ select[name="receiverBank"]:focus {
   .receiving-methods-section,
   .how-it-works-section,
   .faq-section {
-    padding: 40px 0;
+    padding: 5px 0;
     
     .section-title {
       font-size: 1.6rem;

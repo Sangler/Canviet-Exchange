@@ -7,5 +7,6 @@ router.get('/me', auth, users.me)
 router.post('/phone', auth, users.setPhone)
 router.post('/profile', auth, users.updateProfile)
 router.delete('/close-account', auth, users.closeAccount)
+router.get('/referral/stats', auth, users.getReferralStats)
 
 module.exports = router

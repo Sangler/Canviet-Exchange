@@ -22,11 +22,25 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [referralCode, setReferralCode] = useState<string>('');
   const [errors, setErrors] = useState<{
     email?: string;
     phone?: string;
     password?: string;
   }>({});
+
+  // Capture referral code from URL
+  useEffect(() => {
+    const ref = router.query.ref || router.query.referral || router.query.referralCode;
+    if (ref && typeof ref === 'string') {
+      const code = ref.trim().toUpperCase();
+      setReferralCode(code);
+      // Store in sessionStorage for OAuth flow
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('pendingReferral', code);
+      }
+    }
+  }, [router.query]);
 
   // Check for OAuth errors in query params
   useEffect(() => {
@@ -431,7 +445,21 @@ export default function LoginPage() {
             <button
               type="button"
               className="social-btn"
-              onClick={() => { window.location.href = '/api/auth/google' }}
+              onClick={() => {
+                const ref = referralCode || (typeof window !== 'undefined' ? sessionStorage.getItem('pendingReferral') : null) || '';
+                const params = new URLSearchParams();
+                
+                if (ref) {
+                  params.set('state', ref);
+                }
+                
+                if (router.query.next) {
+                  params.set('next', router.query.next as string);
+                }
+                
+                const url = `/api/auth/google${params.toString() ? '?' + params.toString() : ''}`;
+                window.location.href = url;
+              }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
                 <path

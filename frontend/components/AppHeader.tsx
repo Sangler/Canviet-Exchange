@@ -174,13 +174,15 @@ const AppHeader: React.FC = () => {
         
         {/* Guest login/signup buttons */}
         {!user && (
-          <CHeaderNav className="ms-auto d-flex align-items-center gap-2">
-            <a href="/login" className="btn btn-outline-primary">
-              Login
-            </a>
-            <a href="/register" className="btn btn-primary">
-              Sign Up
-            </a>
+          <CHeaderNav className="ms-auto">
+            <div className="d-flex align-items-center justify-content-center gap-2">
+              <a href="/login" className="btn btn-outline-primary">
+                Login
+              </a>
+              <a href="/register" className="btn btn-primary">
+                Sign Up
+              </a>
+            </div>
           </CHeaderNav>
         )}
       </CContainer>

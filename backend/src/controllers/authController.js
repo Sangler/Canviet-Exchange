@@ -104,15 +104,6 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
-    // Check for account suspension
-    if (user.KYCStatus === 'suspended') {
-      return res.status(403).json({ 
-        message: 'Account suspended due to multiple duplicate identity attempts', 
-        code: 'account_suspended',
-        rejectionCount: user.KYCRejectionCount || 0
-      })
-    }
-
     // Check if user has a password hash (required for password login)
     // Google users who have set a password via reset flow can login with email/password
     if (!user.passwordHash) {
@@ -143,7 +134,8 @@ exports.login = async (req, res) => {
     email: user.email, 
     role: user.role, 
     firstName: user.firstName,
-    kycStatus: user.KYCStatus
+    kycStatus: user.KYCStatus,
+    suspended: user.KYCStatus === 'suspended'
   })
     return res.json({ token, user: user.toJSON() })
   } catch (err) {
@@ -171,11 +163,6 @@ exports.googleOAuth = async (req, res) => {
         console.warn('Google OAuth referral link failed:', e?.message)
       }
     }
-    // Check for account suspension
-    if (req.user.KYCStatus === 'suspended') {
-      return res.redirect(`${process.env.FRONTEND_URL}/login?error=account_suspended`)
-    }
-
     const token = jwt.sign(
       {
         sub: req.user._id,
@@ -184,6 +171,7 @@ exports.googleOAuth = async (req, res) => {
         role: req.user.role,
         firstName: req.user.firstName,
         kycStatus: req.user.KYCStatus,
+        suspended: req.user.KYCStatus === 'suspended'
       },
       process.env.JWT_SECRET,
       { expiresIn: process.env.ACCESS_EXPIRES || '15m' }
@@ -313,5 +301,51 @@ exports.resetPassword = async (req, res) => {
     }
     console.error('Reset password error:', err)
     return res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+exports.validateReferralCode = async (req, res) => {
+  try {
+    const code = (req.query.code || req.params.code || '').toString().trim().toUpperCase()
+    
+    if (!code) {
+      return res.status(400).json({ 
+        valid: false, 
+        message: 'Referral code is required' 
+      })
+    }
+    
+    if (code.length !== 10) {
+      return res.json({ 
+        valid: false, 
+        message: 'Referral code must be 10 characters' 
+      })
+    }
+    
+    const referrer = await User.findOne({ referralCode: code })
+      .select('firstName lastName referralCode')
+      .lean()
+    
+    if (!referrer) {
+      return res.json({ 
+        valid: false, 
+        message: 'Invalid referral code' 
+      })
+    }
+    
+    return res.json({ 
+      valid: true, 
+      referrer: {
+        firstName: referrer.firstName,
+        lastName: referrer.lastName
+      },
+      message: `You'll be referred by ${referrer.firstName} ${referrer.lastName}`
+    })
+  } catch (error) {
+    console.error('Validate referral error:', error)
+    return res.status(500).json({ 
+      valid: false, 
+      message: 'Error validating referral code' 
+    })
   }
 }

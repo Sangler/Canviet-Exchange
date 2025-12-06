@@ -125,7 +125,10 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         setAddressLine2((addr as any).addressLine2 || '');
         setCity(addr.city || '');
         setPostalCode(addr.postalCode || '');
-        setCountry(addr.country || 'Canada');
+        // Normalize country to match select option values (capitalize first letter)
+        const dbCountry = addr.country || 'Canada';
+        const normalizedCountry = dbCountry.charAt(0).toUpperCase() + dbCountry.slice(1).toLowerCase();
+        setCountry(normalizedCountry);
         // Populate province from database if available
         setProvince(addr.province || '');
         // DOB parse to YYYY-MM-DD
@@ -195,39 +198,68 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
     if (!addressInputRef.current) return;
     initCalledRef.current = true;
     try {
+      // Determine country code for componentRestrictions
+      const countryCode = country === 'Vietnam' ? 'vn' : 'ca';
+      
       const autocomplete = new googleAny.maps.places.Autocomplete(addressInputRef.current, {
         types: ['address'],
-        componentRestrictions: { country: country && country.length === 2 ? country : 'ca' }
+        componentRestrictions: { country: [countryCode] }
       });
 
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
         if (!place) return;
-        // parse address components
-        const comps = place.address_components || [];
-        let streetNumber = '';
-        let route = '';
-        let cityVal = '';
-        let provinceVal = '';
-        let postal = '';
-        let countryVal = '';
+        
+        // For Vietnam: save full formatted address to street field
+        if (country === 'Vietnam') {
+          const fullAddress = place.formatted_address || '';
+          if (fullAddress) setStreet(fullAddress);
+          
+          // Still parse components for city, province, country
+          const comps = place.address_components || [];
+          let cityVal = '';
+          let provinceVal = '';
+          let countryVal = '';
+          
+          comps.forEach((c: any) => {
+            const types = c.types || [];
+            if (types.includes('locality') || types.includes('administrative_area_level_2')) cityVal = c.long_name || '';
+            if (types.includes('administrative_area_level_1')) provinceVal = c.long_name || '';
+            if (types.includes('country')) countryVal = c.long_name || '';
+          });
+          
+          if (cityVal) setCity(cityVal);
+          if (provinceVal) setProvince(provinceVal);
+          if (countryVal) setCountry(countryVal);
+          // Vietnam doesn't use postal codes in the same way
+          setPostalCode('');
+        } else {
+          // For Canada: parse address components normally
+          const comps = place.address_components || [];
+          let streetNumber = '';
+          let route = '';
+          let cityVal = '';
+          let provinceVal = '';
+          let postal = '';
+          let countryVal = '';
 
-        comps.forEach((c: any) => {
-          const types = c.types || [];
-          if (types.includes('street_number')) streetNumber = c.long_name || '';
-          if (types.includes('route')) route = c.long_name || '';
-          if (types.includes('locality')) cityVal = c.long_name || '';
-          if (types.includes('administrative_area_level_1')) provinceVal = c.long_name || '';
-          if (types.includes('postal_code')) postal = c.long_name || '';
-          if (types.includes('country')) countryVal = c.long_name || '';
-        });
+          comps.forEach((c: any) => {
+            const types = c.types || [];
+            if (types.includes('street_number')) streetNumber = c.long_name || '';
+            if (types.includes('route')) route = c.long_name || '';
+            if (types.includes('locality')) cityVal = c.long_name || '';
+            if (types.includes('administrative_area_level_1')) provinceVal = c.long_name || '';
+            if (types.includes('postal_code')) postal = c.long_name || '';
+            if (types.includes('country')) countryVal = c.long_name || '';
+          });
 
-        const fullStreet = `${streetNumber} ${route}`.trim() || place.formatted_address || '';
-        if (fullStreet) setStreet(fullStreet);
-        if (cityVal) setCity(cityVal);
-        if (postal) setPostalCode(postal);
-        if (provinceVal) setProvince(provinceVal);
-        if (countryVal) setCountry(countryVal);
+          const fullStreet = `${streetNumber} ${route}`.trim() || place.formatted_address || '';
+          if (fullStreet) setStreet(fullStreet);
+          if (cityVal) setCity(cityVal);
+          if (postal) setPostalCode(postal);
+          if (provinceVal) setProvince(provinceVal);
+          if (countryVal) setCountry(countryVal);
+        }
       });
     } catch (err) {
       console.error('[maps] initAutocompleteOnce error', err);
@@ -445,25 +477,37 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       const trimmedProvince = province.trim();
       const trimmedCountry = country.trim();
 
-      // Validate postal code (Canadian format: A1A 1A1 or A1A1A1 -> 6 alphanumeric chars)
-      const postalNormalized = trimmedPostal.replace(/\s+/g, '').toUpperCase();
-      const postalRegex = /^[A-Z]\d[A-Z]\d[A-Z]\d$/;
-      if (!postalRegex.test(postalNormalized) || postalNormalized.length !== 6) {
-        surfaceError('Postal code must be in format A1A 1A1 (letters and digits, 6 characters).');
-        setSaving(false);
-        return;
+      // Validate postal code only for non-Vietnam countries (Canadian format: A1A 1A1 or A1A1A1 -> 6 alphanumeric chars)
+      if (trimmedCountry !== 'Vietnam') {
+        const postalNormalized = trimmedPostal.replace(/\s+/g, '').toUpperCase();
+        const postalRegex = /^[A-Z]\d[A-Z]\d[A-Z]\d$/;
+        if (!postalRegex.test(postalNormalized) || postalNormalized.length !== 6) {
+          surfaceError('Postal code must be in format A1A 1A1 (letters and digits, 6 characters).');
+          setSaving(false);
+          return;
+        }
       }
 
-      if (!trimmedStreet || !trimmedPostal || !trimmedCity || !trimmedCountry) {
-        surfaceError('Please complete your address (street, city, postal code, country).');
-        setSaving(false);
-        return;
-      }
+      // For Vietnam, only street and country are required
+      if (trimmedCountry === 'Vietnam') {
+        if (!trimmedStreet || !trimmedCountry) {
+          surfaceError('Please complete your address (street, country).');
+          setSaving(false);
+          return;
+        }
+      } else {
+        // For other countries, all fields are required
+        if (!trimmedStreet || !trimmedPostal || !trimmedCity || !trimmedCountry) {
+          surfaceError('Please complete your address (street, city, postal code, country).');
+          setSaving(false);
+          return;
+        }
 
-      if (!trimmedProvince) {
-        surfaceError('Please select your province.');
-        setSaving(false);
-        return;
+        if (!trimmedProvince) {
+          surfaceError('Please select your province.');
+          setSaving(false);
+          return;
+        }
       }
 
       if (!employmentStatus) {
@@ -867,10 +911,28 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
 
                 <section className="pi-section">
                   <label className="field-label" htmlFor="country">Country of residence</label>
-                  <select id="country" className="themed" value={country} onChange={(e)=> setCountry(e.target.value)} required>
+                  <select id="country" className="themed" value={country} onChange={(e)=> {
+                    const newCountry = e.target.value;
+                    setCountry(newCountry);
+                    
+                    // Only reset autocomplete if user selects an actual country (not "Select")
+                    if (newCountry !== 'Select') {
+                      // Reset autocomplete when country changes
+                      initCalledRef.current = false;
+                      // Clear address fields
+                      setStreet('');
+                      setCity('');
+                      setPostalCode('');
+                      setProvince('');
+                      // Reinitialize autocomplete with new country
+                      setTimeout(() => {
+                        try { initAutocompleteOnce(); } catch (err) { console.error('[maps] reinit error', err); }
+                      }, 100);
+                    }
+                  }} required>
+                    <option value="Select">Select</option>
                     <option value="Canada">Canada</option>
-                    {/* <option value="Vietnam">Vietnam</option> */}
-                    {/* <option value="USA">United States</option> */}
+                    <option value="Vietnam">Vietnam</option>
                   </select>
                 </section>
 
@@ -889,7 +951,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                   </div>
                   <div className="field-group">
                     <label htmlFor="city">City</label>
-                    <input id="city" className="themed" value={city} onChange={(e)=> setCity(e.target.value)} required disabled />
+                    <input id="city" className="themed" value={city} onChange={(e)=> setCity(e.target.value)} required={country !== 'Vietnam'} disabled />
                   </div>
                   <div className="field-group">
                     <label htmlFor="postal">Postcode</label>
@@ -898,15 +960,15 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                       className="themed"
                       value={postalCode}
                       onChange={(e)=> setPostalCode(e.target.value)}
-                      required
+                      required={country !== 'Vietnam'}
                       disabled
-                      pattern="[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d"
-                      title="Postal code format: A1A 1A1 (letters and digits)"
+                      pattern={country !== 'Vietnam' ? "[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d" : undefined}
+                      title={country !== 'Vietnam' ? "Postal code format: A1A 1A1 (letters and digits)" : undefined}
                     />
                   </div>
                   <div className="field-group">
                     <label htmlFor="province">Province / State</label>
-                    <input id="province" className="themed" value={province} onChange={(e)=> setProvince(e.target.value)} required disabled />
+                    <input id="province" className="themed" value={province} onChange={(e)=> setProvince(e.target.value)} required={country !== 'Vietnam'} disabled />
                   </div>
 
                 </section>

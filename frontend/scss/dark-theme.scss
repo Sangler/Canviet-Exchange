@@ -1,5 +1,45 @@
 /* ---- DARK MODE ---- */
 [data-coreui-theme="dark"] {
+  /* Page toolbar - dark mode */
+  .page-toolbar {
+    background: #1e293b;
+    border-bottom-color: #334155;
+  }
+  
+  .toolbar-back {
+    color: #cbd5e1;
+  }
+  
+  .toolbar-back:hover {
+    background: #334155;
+    color: #e6edf7;
+  }
+  
+  .toolbar-lang .lang-link {
+    color: #94a3b8;
+  }
+  
+  .toolbar-lang .lang-link.active {
+    background: #334155;
+    color: #e6edf7;
+  }
+  
+  .toolbar-lang .lang-link:hover {
+    background: #2d3748;
+    color: #cbd5e1;
+  }
+  
+  .toolbar-mode {
+    background: #334155;
+    border-color: #475569;
+    color: #94a3b8;
+  }
+  
+  .toolbar-mode:hover {
+    background: #475569;
+    color: #e6edf7;
+  }
+  
   /* Transfer pages - dark mode */
   .main-content { 
     background:#0f172a; 

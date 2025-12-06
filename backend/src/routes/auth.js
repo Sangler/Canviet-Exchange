@@ -9,6 +9,7 @@ const {
   forgotPassword,
   validateResetToken,
   resetPassword,
+  validateReferralCode,
 } = require("../controllers/authController");
 const { loginLimiter, registerLimiter } = require("../middleware/rateLimit");
 const {
@@ -55,6 +56,9 @@ router.get(
   },
   googleOAuth
 );
+
+// Referral validation route
+router.get("/referral/validate/:code", validateReferralCode);
 
 // Password reset routes
 router.post("/forgot-password", loginLimiter, forgotPassword);

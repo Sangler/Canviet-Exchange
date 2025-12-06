@@ -21,6 +21,11 @@ export default function OAuthCallback() {
         // Save token (session storage by default)
         setAuthToken(token, { persistent: false, setCookie: false })
         
+        // Clear pending referral from sessionStorage after successful OAuth
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('pendingReferral');
+        }
+        
         // Fetch user profile to check completeness
         const meResp = await fetch('/api/users/me', {
           headers: { Authorization: `Bearer ${token}` }

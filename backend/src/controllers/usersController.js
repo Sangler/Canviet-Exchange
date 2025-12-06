@@ -41,8 +41,17 @@ function isProfileComplete(u) {
   if (!u) return false
   if (!u.dateOfBirth) return false
   const addr = u.address || {}
-  const hasAddr = addr.street && addr.postalCode && addr.city && addr.country
-  if (!hasAddr) return false
+  
+  // For Vietnam, only street and country are required
+  if (addr.country === 'Vietnam') {
+    const hasAddr = addr.street && addr.country
+    if (!hasAddr) return false
+  } else {
+    // For other countries, all fields are required
+    const hasAddr = addr.street && addr.postalCode && addr.city && addr.country
+    if (!hasAddr) return false
+  }
+  
   if (!u.employmentStatus) return false
   return true
 }
@@ -85,9 +94,19 @@ exports.updateProfile = async (req, res) => {
 
     // Basic validation for required fields
     if (!dateOfBirth) return res.status(400).json({ message: 'dateOfBirth is required' })
-    if (!address || !address.street || !address.postalCode || !address.city || !address.country) {
-      return res.status(400).json({ message: 'Complete address is required' })
+    
+    // Address validation: For Vietnam, only street and country are required
+    if (!address || !address.street || !address.country) {
+      return res.status(400).json({ message: 'Street and country are required' })
     }
+    
+    // For non-Vietnam countries, validate all address fields
+    if (address.country !== 'Vietnam') {
+      if (!address.postalCode || !address.city) {
+        return res.status(400).json({ message: 'Complete address is required (street, city, postal code, country)' })
+      }
+    }
+    
     if (!employmentStatus) return res.status(400).json({ message: 'employmentStatus is required' })
 
     // Parse date
@@ -120,5 +139,46 @@ exports.updateProfile = async (req, res) => {
   } catch (err) {
     console.error('Users.updateProfile error:', err)
     return res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+exports.getReferralStats = async (req, res) => {
+  try {
+    const userId = req.auth?.sub
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' })
+    
+    const user = await User.findById(userId)
+      .select('referralCode referrals points')
+      .populate('referrals', 'firstName lastName createdAt KYCStatus')
+      .lean()
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    
+    // Calculate stats
+    const totalReferrals = user.referrals?.length || 0
+    const verifiedReferrals = user.referrals?.filter(r => r.KYCStatus === 'verified').length || 0
+    
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    
+    return res.json({
+      ok: true,
+      referralCode: user.referralCode,
+      shareLink: `${frontendUrl}/register?ref=${user.referralCode}`,
+      stats: {
+        totalReferrals,
+        verifiedReferrals,
+        points: user.points || 0
+      },
+      referrals: user.referrals?.map(r => ({
+        name: `${r.firstName} ${r.lastName}`,
+        joinedAt: r.createdAt,
+        verified: r.KYCStatus === 'verified'
+      })) || []
+    })
+  } catch (error) {
+    console.error('Get referral stats error:', error)
+    return res.status(500).json({ message: 'Error fetching referral stats' })
   }
 }

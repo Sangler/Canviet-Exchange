@@ -162,68 +162,32 @@ export default function Home() {
         <AppHeader />
 
 
-        <div className="body flex-grow-1 px-0 my-4 home-full-bleed">
+        <div className="body flex-grow-1 px-0 home-full-bleed">
           <div className="container">
             <div className="row g-0">
               <div className="col-12 w-100">
                 
                 {/* Testimonials / Reviews Section */}
-                <section className="testimonials-section mb-5">
+                <section className="testimonials-section">
                   <div className="container">
-                    <div className="text-center mb-4">
+                    <div className="text-center">
+                                  <div className="logo">
+              <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
+            </div>
                       <h2 className="section-title">What Our Customers Say</h2>
                       <div className="trust-badge">
                         <div className="stars">★★★★★</div>
                         <p className="mb-0"><strong>4.8 out of 5</strong> based on 1,200+ reviews</p>
                       </div>
                     </div>
-                    <div className="row g-4">
-                      <div className="col-md-4">
-                        <div className="testimonial-card">
-                          <div className="stars-small">★★★★★</div>
-                          <p className="testimonial-text">"Fastest and most reliable service I've used. Money arrived in Vietnam within hours!"</p>
-                          <div className="testimonial-author">
-                            <div className="author-avatar">MN</div>
-                            <div>
-                              <strong>Michael Nguyen</strong>
-                              <div className="text-muted small">Toronto, ON</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-md-4">
-                        <div className="testimonial-card">
-                          <div className="stars-small">★★★★★</div>
-                          <p className="testimonial-text">"Best rates compared to other services. I save hundreds every month sending money home."</p>
-                          <div className="testimonial-author">
-                            <div className="author-avatar">TP</div>
-                            <div>
-                              <strong>Tran Pham</strong>
-                              <div className="text-muted small">Vancouver, BC</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-md-4">
-                        <div className="testimonial-card">
-                          <div className="stars-small">★★★★★</div>
-                          <p className="testimonial-text">"Excellent customer support and transparent pricing. Highly recommend to everyone!"</p>
-                          <div className="testimonial-author">
-                            <div className="author-avatar">HL</div>
-                            <div>
-                              <strong>Hoa Le</strong>
-                              <div className="text-muted small">Montreal, QC</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </section>
                 
                  <div className="main mb-4 border-0t">
-                  <div className="main text-center py-5">
-                      <h1 className="display-4 mb-3">Welcome to CanViet Exchange</h1>
+                  <div className="main text-center py-4">
+                      <h1 className="display-4 mb-3">
+                        {rate ? `1 CAD = ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND` : 'Exchange Rate'}
+                      </h1>
                       <p className="lead text-medium-emphasis mb-4">
                         Send money from Canada{' '}
                         <img 

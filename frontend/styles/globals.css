@@ -4,3 +4,42 @@
 
 /* Keep Tailwind minimal for now; SCSS controls most theming.
    If you want a global font or light background, add it here carefully. */
+
+/* Referral Dashboard Styles */
+.letter-spacing-wide {
+  letter-spacing: 0.1em;
+}
+
+.referral-dashboard .form-control:focus {
+  border-color: var(--cui-primary);
+  box-shadow: 0 0 0 0.2rem rgba(var(--cui-primary-rgb), 0.25);
+}
+
+.input-success {
+  border-color: #28a745 !important;
+}
+
+.input-error {
+  border-color: #dc3545 !important;
+}
+
+.success-message,
+.error-message,
+.info-message {
+  display: block;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Register page validation feedback */
+.register-page .input-group .success-message {
+  color: #28a745;
+}
+
+.register-page .input-group .error-message {
+  color: #dc3545;
+}
+
+.register-page .input-group .info-message {
+  color: #666;
+}

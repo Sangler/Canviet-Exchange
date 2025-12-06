@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useColorModes } from '@coreui/react';
@@ -18,11 +18,55 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [referralValid, setReferralValid] = useState<boolean | null>(null);
+  const [referrerName, setReferrerName] = useState<string>('');
+  const [validatingReferral, setValidatingReferral] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; email?: string; phone?: string; password?: string; confirm?: string }>({});
+
+  // Capture referral code from URL
+  useEffect(() => {
+    const ref = router.query.ref || router.query.referral || router.query.referralCode;
+    if (ref && typeof ref === 'string') {
+      const code = ref.trim().toUpperCase();
+      setReferralCode(code);
+      if (code.length === 10) {
+        validateReferralCode(code);
+      }
+    }
+  }, [router.query]);
+
+  // Validate referral code
+  const validateReferralCode = async (code: string) => {
+    if (!code || code.length !== 10) {
+      setReferralValid(false);
+      setReferrerName('');
+      return;
+    }
+    
+    setValidatingReferral(true);
+    try {
+      const response = await fetch(`/api/auth/referral/validate/${code}`);
+      const data = await response.json();
+      
+      if (data.valid) {
+        setReferralValid(true);
+        setReferrerName(`${data.referrer.firstName} ${data.referrer.lastName}`);
+      } else {
+        setReferralValid(false);
+        setReferrerName('');
+      }
+    } catch (error) {
+      console.error('Referral validation error:', error);
+      setReferralValid(false);
+      setReferrerName('');
+    } finally {
+      setValidatingReferral(false);
+    }
+  };
 
   const validateStep1 = () => {
     const next: typeof errors = {};
@@ -204,11 +248,34 @@ export default function RegisterPage() {
                     id="referralCode" 
                     placeholder=" " 
                     value={referralCode} 
-                    onChange={(e) => setReferralCode(e.target.value.trim())} 
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase().slice(0, 10);
+                      setReferralCode(val);
+                      if (val.length === 10) {
+                        validateReferralCode(val);
+                      } else {
+                        setReferralValid(null);
+                        setReferrerName('');
+                      }
+                    }}
+                    maxLength={10}
+                    className={referralValid === false ? 'input-error' : referralValid === true ? 'input-success' : ''}
                   />
-                  <label htmlFor="referralCode">{t('auth.referralCode')}</label>
+                  <label htmlFor="referralCode">{t('auth.referralCode')} (Optional)</label>
                   <span className="input-border" />
-                  <span className="error-message"></span>
+                  {validatingReferral && (
+                    <span className="info-message" style={{ color: '#666' }}>Validating...</span>
+                  )}
+                  {referralValid === true && referrerName && (
+                    <span className="success-message" style={{ color: '#28a745' }}>
+                      ✓ You'll be referred by {referrerName}
+                    </span>
+                  )}
+                  {referralValid === false && referralCode.length === 10 && (
+                    <span className="error-message" style={{ color: '#dc3545' }}>
+                      ✗ Invalid referral code
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex-gap-12">
@@ -234,7 +301,7 @@ export default function RegisterPage() {
 
           <div className="alt-link">
             <span>{t('auth.alreadyHaveAccount')} </span>
-            <a href="/login">{t('auth.signIn')}</a>
+            <strong><a className="text-link" href="/login">{t('auth.signIn')}</a></strong>
           </div>
 
           {success && (
