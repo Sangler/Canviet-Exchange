@@ -14,10 +14,10 @@ function AppContent({ Component, pageProps }: AppProps) {
   const { token } = useAuth()
 
   useEffect(() => {
-    // Allow access to help page, login, register, and public pages
-    const allowedPaths = ['/general/help', '/terms-and-conditions', '/oauth-callback']
+    // Allow access to help page, terms and oauth callback pages
+    const allowedPaths = ['/general/help', '/general/terms-and-conditions', 'help', '/terms-and-conditions', '/oauth-callback']
     const isAllowedPath = allowedPaths.some(path => router.pathname.startsWith(path))
-    
+
     if (token && !isAllowedPath) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]))

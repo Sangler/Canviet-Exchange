@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SuspendedModal from '../../components/SuspendedModal';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/router';
 import { useLanguage } from '../../context/LanguageContext';
@@ -16,6 +17,7 @@ export default function HelpPage() {
     lastName: '',
     email: '',
     title: '',
+    topic: '',
     content: ''
   });
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -240,8 +242,7 @@ export default function HelpPage() {
                       <div className="mb-4">
                         <h3 className="h5 mb-2">How is your exchange rate calculated?</h3>
                         <p className="mb-0">
-                          In order to have <strong>an appealing rate</strong>, we use stablecoin-backed dollar sent to Recipient region and exchange it for native currency. 
-                          Our rate is calculated as: CAD → USDC → USD → VND to ensure accuracy and better pricing.
+                          In order to have <strong>an appealing rate</strong>, we utilize stablecoin-backed dollar sending encrypted currency across the world. Our exchange rate is calculated accuracy in timing and better pricing.
                         </p>
                       </div>
 
@@ -249,7 +250,7 @@ export default function HelpPage() {
                         <h3 className="h5 mb-2">Will the exchange rate change after I submit?</h3>
                         <p className="mb-0">
                           The exchange rate shown at the time of confirmation is locked in for your transfer. 
-                          Rates are updated every 60 seconds to reflect current market conditions.
+                          Rates are updated constantly to reflect current market conditions.
                         </p>
                       </div>
                     </section>
@@ -373,20 +374,56 @@ export default function HelpPage() {
                             </div>
 
                             <div className="mb-3">
-                              <label htmlFor="title" className="form-label">Question/Topic Title</label>
-                              <input
-                                type="text"
-                                className="form-control"
-                                id="title"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleInputChange}
-                                placeholder="Brief title for your question..."
-                                maxLength={300}
-                                required
+                              <label htmlFor="topic" className="form-label">Topic</label>
+                              <select
+                                id="topic"
+                                name="topic"
+                                className="form-select"
+                                value={formData.topic}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === 'other') {
+                                    setFormData(prev => ({ ...prev, topic: val, title: '' }));
+                                  } else {
+                                    setFormData(prev => ({ ...prev, topic: val, title: val }));
+                                  }
+                                }}
                                 disabled={submitStatus === 'submitting'}
-                              />
-                              <small className="text-muted">{formData.title.length}/300 characters</small>
+                                required
+                              >
+                                <option value="">Select a topic...</option>
+                                <option value={"Why my transfer is delayed more than expected time?"}>Why my transfer is delayed more than expected time?</option>
+                                <option value={"Why my transfer is completed but recipient has not received the money?"}>Why my transfer is completed but recipient has not received the money?</option>
+                                <option value={"How can I track my transfer?"}>How can I track my transfer?</option>
+                                <option value={"How do I change recipient information?"}>How do I change recipient information?</option>
+                                <option value={"Questions about fees and exchange rate"}>Questions about fees and exchange rate</option>
+                                <option value={"Why I cannot perform KYC with my documents?"}>Why I cannot perform KYC with my documents?</option>
+                                <option value={"Why my account is suspended?"}>Why my account is suspended?</option>
+                                <option value={"Report or Found a bug?"}>Report or Found a bug?</option>
+                                <option value={"other"}>Other (specify below)</option>
+                              </select>
+
+                              {formData.topic === 'other' ? (
+                                <div className="mt-2">
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    id="title"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleInputChange}
+                                    placeholder="Please describe your topic..."
+                                    maxLength={100}
+                                    required
+                                    disabled={submitStatus === 'submitting'}
+                                  />
+                                  <small className="text-muted">{formData.title.length}/100 characters</small>
+                                </div>
+                              ) : (
+                                formData.title && (
+                                  <small className="text-muted d-block mt-2">Selected topic will be used as the title.</small>
+                                )
+                              )}
                             </div>
 
                             <div className="mb-3">
@@ -399,11 +436,11 @@ export default function HelpPage() {
                                 value={formData.content}
                                 onChange={handleInputChange}
                                 placeholder="Please describe your question or provide feedback in detail..."
-                                maxLength={1000}
+                                maxLength={300}
                                 required
                                 disabled={submitStatus === 'submitting'}
                               />
-                              <small className="text-muted">{formData.content.length}/1000 characters</small>
+                              <small className="text-muted">{formData.content.length}/300 characters</small>
                             </div>
 
                             {errorMessage && (
@@ -440,6 +477,9 @@ export default function HelpPage() {
                         </div>
                       </div>
                     </section>
+
+                    {/* Suspended account modal rendered on this page */}
+                    <SuspendedModal open={isSuspended} onClose={() => setIsSuspended(false)} />
 
                     {/* Contact Support */}
                     <section className="mb-4">

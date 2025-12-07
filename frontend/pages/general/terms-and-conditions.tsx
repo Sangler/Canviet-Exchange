@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import SuspendedModal from '../../components/SuspendedModal';
 import AppSidebar from '../../components/AppSidebar';
 import AppHeader from '../../components/AppHeader';
 import AppFooter from '../../components/AppFooter';
@@ -10,6 +12,23 @@ import { cilMoon, cilSun, cilArrowLeft } from '@coreui/icons';
 export default function TermsAndConditions() {
   const { language, setLanguage } = useLanguage();
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
+  const { token } = useAuth();
+  const [isSuspended, setIsSuspended] = useState(false);
+
+  useEffect(() => {
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.suspended === true || payload.kycStatus === 'suspended') {
+          setIsSuspended(true);
+        }
+      } catch (e) {
+        console.error('Failed to parse token:', e);
+      }
+    } else {
+      setIsSuspended(false);
+    }
+  }, [token]);
 
   return (
     <div>
@@ -249,6 +268,8 @@ export default function TermsAndConditions() {
           </div>
         </div>
         <AppFooter />
+        {/* Suspended account modal for terms page */}
+        <SuspendedModal open={isSuspended} onClose={() => setIsSuspended(false)} />
       </div>
     </div>
   );

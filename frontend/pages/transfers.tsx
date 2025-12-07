@@ -1631,7 +1631,7 @@ export default function Transfer() {
                           <input 
                             type="text" 
                             name="receiverBankAccount" 
-                            placeholder="1234 5678 9012 345" 
+                            placeholder="ex1234 5678 9012 345" 
                             value={recipientAccountNumber}
                             onChange={(e) => {
                               // Remove all non-digit characters

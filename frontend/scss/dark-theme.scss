@@ -454,6 +454,24 @@
     color: #94a3b8;
   }
 
+  .suspended-modal {
+    background: #0b1220;
+    color: #e6eef8;
+    box-shadow: 0 10px 30px rgba(2,6,23,0.8);
+  }
+
+  .suspended-modal-overlay {
+    background: rgba(2,6,23,0.7);
+  }
+
+  .suspended-modal h2 {
+    color: #e6eef8;
+  }
+
+  .suspended-modal p {
+    color: #cbd5e1;
+  }
+
   /* Home hero section - dark mode */
   .hero-section {
     &::before {

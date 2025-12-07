@@ -1029,13 +1029,15 @@ exports.shuftiWebhook = async (req, res) => {
       const verifiedDob = normalizeDob(docData.dob);
       if (verifiedDob) user.dateOfBirth = verifiedDob;
       
-      // Save verified document number (IDNumber)
+      // Save live geo country from Shufti (do NOT store document number)
       try {
-        const docNumberRaw = (docData.document_number || '').toString();
-        const docNumber = docNumberRaw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-        if (docNumber && docNumber !== '1') {
-          user.IDNumber = docNumber;
-        }
+        // 'country' is set earlier from the webhook or the status poll
+        const geoCountryRaw = country || (verification_result?.client?.geo?.country) || '';
+        const geoCountryIso = toIso2Country(geoCountryRaw);
+        user.lastKycGeo = {
+          raw: geoCountryRaw || '',
+          iso2: geoCountryIso || '',
+        };
       } catch (_) {}
       
       try {

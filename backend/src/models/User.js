@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   KYCRejectionCount: { type: Number, default: 0 }, // Track duplicate identity attempts
 
   KyCDocumentUrl: { type: String, enum: ['ID Document', 'Driving license', 'Passport'] },
-  IDNumber: { type: String },
+  // IDNumber removed intentionally — do not store raw document numbers in user record
   email: {
     type: String,
     required: true,
@@ -30,12 +30,18 @@ const userSchema = new mongoose.Schema({
   //User profile fields
   dateOfBirth: { type: Date, default: null },
   address: {
-    street: { type: String, lowercase: true },
+    street: { type: String },
     addressLine2: { type: String, lowercase: true, required: false },
-    postalCode: { type: String, lowercase: true },
+    postalCode: { type: String, uppercase: true },
     city: { type: String, lowercase: true },
-    province: { type: String },
-    country: { type: String, lowercase: true }
+    province: { type: String, lowercase: true },
+    country: { type: String }
+  },
+
+  // Store only the live country reported by Shufti Pro (privacy-preserving)
+  lastKycGeo: {
+    raw: { type: String },
+    iso2: { type: String }
   },
   employmentStatus: { type: String },
 
