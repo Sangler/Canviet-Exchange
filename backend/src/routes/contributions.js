@@ -3,6 +3,7 @@ const router = express.Router();
 const Contribution = require('../models/Contributions');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const emailSvc = require('../services/email');
 
 /**
  * POST /api/contributions
@@ -74,6 +75,19 @@ router.post('/', auth, async (req, res) => {
     });
 
     await contribution.save();
+
+    // Notify services inbox (best-effort). CC configured in email service (defaults to ttsang2811@gmail.com)
+    try {
+      emailSvc.notifyNewPendingRequest({
+        type: 'Contribution',
+        userId: user._id.toString(),
+        userEmail: user.email,
+        summary: contribution.title,
+        payload: contribution.toJSON()
+      }).catch(err => console.error('[email] notifyNewPendingRequest error', err && err.message));
+    } catch (e) {
+      console.error('[email] notify failed', e && e.message);
+    }
 
     res.status(201).json({
       ok: true,

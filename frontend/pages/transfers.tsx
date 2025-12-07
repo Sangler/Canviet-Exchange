@@ -1509,7 +1509,16 @@ export default function Transfer() {
                             name="receiverName" 
                             placeholder="Recipient Full Name" 
                             value={recipientName}
-                            onChange={(e) => setRecipientName(e.target.value)}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Only allow letters (A-Z, a-z) and spaces, max 30 characters
+                              const filtered = value.replace(/[^A-Za-z\s]/g, '');
+                              if (filtered.length <= 30) {
+                                setRecipientName(filtered);
+                              }
+                            }}
+                            maxLength={30}
+                            pattern="[A-Za-z\s]*"
                             required 
                           />
                         </div>
@@ -1622,11 +1631,24 @@ export default function Transfer() {
                           <input 
                             type="text" 
                             name="receiverBankAccount" 
-                            placeholder="Account Number" 
+                            placeholder="1234 5678 9012 345" 
                             value={recipientAccountNumber}
-                            onChange={(e) => setRecipientAccountNumber(e.target.value)}
+                            onChange={(e) => {
+                              // Remove all non-digit characters
+                              const value = e.target.value.replace(/\D/g, '');
+                              // Limit to 15 digits
+                              if (value.length <= 15) {
+                                // Format with space every 4 digits
+                                const formatted = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+                                setRecipientAccountNumber(formatted);
+                              }
+                            }}
+                            maxLength={18}
+                            inputMode="numeric"
+                            pattern="[0-9\s]*"
                             required 
                           />
+                          <small style={{ color: '#6c757d', fontSize: '0.875rem' }}>15 digits maximum</small>
                         </div>
 
                         <div className="form-group">

@@ -4,6 +4,28 @@ const authMiddleware = require('../middleware/auth');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
 const Stripe = require('stripe');
+const emailSvc = require('../services/email');
+
+// Small helper to escape HTML when injecting user-provided strings into templates
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Format a number with commas as thousands separators. Accepts number or numeric string.
+function formatNumber(value) {
+  if (value === null || typeof value === 'undefined' || value === '') return '';
+  // Remove existing commas, then parse
+  const cleaned = String(value).replace(/,/g, '');
+  const n = Number(cleaned);
+  if (!Number.isFinite(n)) return String(value);
+  return n.toLocaleString('en-US');
+}
 
 // Optional auth middleware - doesn't reject if no token
 const optionalAuth = (req, res, next) => {
@@ -367,6 +389,114 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
     }
 
     logger.info(`[Requests] Updated request ${id} status to ${status}`);
+
+    // If status changed to completed, notify the user by email
+    if (status === 'completed') {
+      try {
+        // Fetch user details if possible for name
+        let userFirst = '';
+        let userLast = '';
+        try {
+          const User = require('../models/User');
+          const u = await User.findById(updatedRequest.userId).select('firstName lastName email');
+          if (u) {
+            userFirst = u.firstName || '';
+            userLast = u.lastName || '';
+          }
+        } catch (uErr) {
+          logger.warn('[Requests] Could not load user for email notification', uErr.message);
+        }
+
+        const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+        
+        // Format completed time as readable date/time
+        const completedDate = updatedRequest.completedAt || new Date();
+        const completedTime = completedDate.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZoneName: 'short'
+        });
+
+        const amountSent = updatedRequest.amountSent != null ? String(updatedRequest.amountSent) : '';
+        const amountReceived = updatedRequest.amountReceived != null ? String(updatedRequest.amountReceived) : '';
+        const paymentMethod = (updatedRequest.sendingMethod && updatedRequest.sendingMethod.type) ? updatedRequest.sendingMethod.type : (updatedRequest.sendingMethod ? JSON.stringify(updatedRequest.sendingMethod) : '');
+
+        const userFullName = `${(userFirst || '').trim()} ${(userLast || '').trim()}`.trim();
+
+        const ref = updatedRequest.referenceID ? `${updatedRequest.referenceID}` : '';
+
+        // Compute receipt hash for a direct receipt link
+        let receiptHash = '';
+        try {
+          if (updatedRequest.referenceID) {
+            receiptHash = crypto.createHash('sha256').update(String(updatedRequest.referenceID)).digest('hex').substring(0, 24);
+          }
+        } catch (rhErr) {
+          logger.warn('[Requests] Could not compute receipt hash', rhErr && rhErr.message);
+        }
+        const receiptUrl = receiptHash && frontendUrl ? `${frontendUrl}/transfers/receipt/${receiptHash}` : '';
+
+        const subject = 'Your Transaction Status: The money sent to Vietnam is now Completed!';
+
+        const html = `
+          <div style="font-family: Arial, sans-serif; color: #1f2937; line-height:1.4;">
+            <h2 style="font-size:20px;">Hello ${escapeHtml(userFullName || '')}</h2>
+            <p>We have just delivered your money to the recipient safely. Your transfer is now <strong>completed</strong>. If your money is not delivered, please let us know <a href="${frontendUrl}/general/help">here</a>.</p>
+
+            <h3>Payment details</h3>
+            <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;">
+              <tr><td style="padding:4px 8px;"><strong>Reference:</strong></td><td style="padding:4px 8px;">${escapeHtml(ref)}</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Completed time:</strong></td><td style="padding:4px 8px;">${escapeHtml(completedTime)}</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Amount Sent:</strong></td><td style="padding:4px 8px;">${escapeHtml(amountSent)} CAD</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Amount Received:</strong></td><td style="padding:4px 8px;">${escapeHtml(formatNumber(amountReceived))} VND</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Payment method:</strong></td><td style="padding:4px 8px;">${escapeHtml(paymentMethod)}</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Status:</strong></td><td style="padding:4px 8px;">Completed</td></tr>
+            </table>
+
+            ${receiptUrl ? `<div style="text-align:center; margin:12px 0;"><a href="${receiptUrl}" style="background:#1e3a8a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;">View / Download Receipt</a></div>` : ''}
+
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0;" />
+
+            <h3>Thông báo</h3>
+            <p>Xin chào ${escapeHtml(userFullName || '')},</p>
+            <p>Chúng tôi vừa chuyển tiền đến người nhận an toàn. Giao dịch của bạn đã <strong>hoàn thành</strong>. Nếu tiền chưa được nhận, vui lòng liên hệ với chúng tôi <a href="${frontendUrl}/general/help">tại đây</a>.</p>
+
+            <h4>Chi tiết thanh toán</h4>
+            <table cellpadding="0" cellspacing="0" border="0">
+              <tr><td style="padding:4px 8px;"><strong>Thời gian hoàn thành:</strong></td><td style="padding:4px 8px;">${escapeHtml(completedTime)}</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Số tiền gửi:</strong></td><td style="padding:4px 8px;">${escapeHtml(amountSent)} CAD</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Số tiền nhận:</strong></td><td style="padding:4px 8px;">${escapeHtml(formatNumber(amountReceived))} VND</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Phương thức thanh toán:</strong></td><td style="padding:4px 8px;">${escapeHtml(paymentMethod)}</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Trạng thái:</strong></td><td style="padding:4px 8px;">Hoàn thành</td></tr>
+            </table>
+
+            <div style="margin-top:18px; font-size:12px; color:#6b7280;">
+              <p>CanViet Exchange<br/>1234 Demo Street, Toronto, ON, Canada<br/>Phone: +1 416-555-0100<br/><a href="${frontendUrl}">${frontendUrl}</a></p>
+            </div>
+          </div>
+        `;
+
+        const text = `Hello ${userFullName}\n\nWe have just delivered your money to the recipient safely. Your transfer is now completed. If your money is not delivered, please let us know: ${frontendUrl}/general/help\n\nPayment details:\nCompleted time: ${completedTime}\nAmount Sent: ${amountSent} CAD\nAmount Received: ${formatNumber(amountReceived)} VND\nPayment method: ${paymentMethod}\nStatus: Completed\n\n---\nVietnamese:\nXin chào ${userFullName},\nChúng tôi vừa chuyển tiền đến người nhận an toàn. Giao dịch của bạn đã hoàn thành. Nếu tiền chưa được nhận, vui lòng liên hệ với chúng tôi tại: ${frontendUrl}/general/help`;
+
+        // Send email from services inbox to the user (no CC by default)
+        try {
+          await emailSvc.sendMail({
+            from: process.env.EMAIL_USER || process.env.CANVIETEXCHANGE_EMAIL_USER || undefined,
+            to: updatedRequest.userEmail,
+            subject,
+            text,
+            html
+          });
+        } catch (mailErr) {
+          logger.error('[Requests] Failed to send completion email:', mailErr && mailErr.message);
+        }
+      } catch (notifyErr) {
+        logger.error('[Requests] Error preparing completion notification:', notifyErr && notifyErr.message);
+      }
+    }
 
     return res.json({
       ok: true,
