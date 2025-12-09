@@ -107,10 +107,10 @@ function checkBrowserSupport(
 
   // Check browser versions (very-old thresholds)
   if (browser === 'Internet Explorer') return false; // No IE support
-  if (browser === 'Chrome' && versionNum < 40) return false;
-  if (browser === 'Firefox' && versionNum < 38) return false;
-  if (browser === 'Safari' && versionNum < 9) return false;
-  if (browser === 'Edge' && versionNum < 15) return false;
+  if (browser === 'Chrome' && versionNum < 15) return false;
+  if (browser === 'Firefox' && versionNum < 15) return false;
+  if (browser === 'Safari' && versionNum < 1) return false;
+  if (browser === 'Edge' && versionNum < 20) return false;
 
   return true;
 }

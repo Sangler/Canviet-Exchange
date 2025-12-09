@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { setAuthToken } from '../lib/auth'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function OAuthCallback() {
   const router = useRouter()
-  const [status, setStatus] = useState<string>('Processing...')
+  const { t } = useLanguage()
+  const [status, setStatus] = useState<string>(t('common.loading'))
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
@@ -12,7 +14,7 @@ export default function OAuthCallback() {
       const token = typeof q.token === 'string' ? q.token : (q.token && Array.isArray(q.token) ? q.token[0] : undefined)
       
       if (!token) {
-        setStatus('Authentication failed')
+        setStatus(t('common.error'))
         void router.replace('/login?error=oauth_failed')
         return
       }
@@ -39,7 +41,7 @@ export default function OAuthCallback() {
         const user = meData?.user
         const profileComplete = meData?.complete
         
-        setStatus('Redirecting...')
+        setStatus(t('auth.redirecting'))
         
         // Check if profile is complete for regular users
         if (user?.role === 'user' && !profileComplete) {

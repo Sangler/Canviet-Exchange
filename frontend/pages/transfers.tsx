@@ -4,6 +4,7 @@ import AppSidebar from '../components/AppSidebar';
 import AppHeader from '../components/AppHeader';
 import AppFooter from '../components/AppFooter';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import CIcon from '@coreui/icons-react';
 import { cilArrowCircleLeft } from '@coreui/icons';
 import { useRouter } from 'next/router';
@@ -31,6 +32,7 @@ type TransactionHistory = {
 export default function Transfer() {
   const router = useRouter();
   const { user, token } = useAuth();
+  const { t } = useLanguage();
   // Transaction history
   const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState<boolean>(true);
@@ -42,6 +44,13 @@ export default function Transfer() {
   const [selectedBank, setSelectedBank] = useState<string>('');
   const [customBankName, setCustomBankName] = useState<string>('');
   const [bankDropdownOpen, setBankDropdownOpen] = useState<boolean>(false);
+  const [receivingMethodDropdownOpen, setReceivingMethodDropdownOpen] = useState<boolean>(false);
+  
+  const receivingMethods = [
+    { value: 'bank', label: t('transfers.bankTransfer'), icon: '/bank-icons/bank-svgrepo-com.svg' },
+    { value: 'momo', label: t('transfers.momoWallet'), icon: '/bank-icons/momo.png' },
+    { value: 'zalopay', label: t('transfers.zalopayWallet'), icon: '/bank-icons/zalopay.jpeg' },
+  ];
   
   const vietnameseBanks = [
     { value: 'Vietcombank', label: 'Vietcombank', icon: '/bank-icons/vietcombank.png' },
@@ -49,13 +58,14 @@ export default function Transfer() {
     { value: 'Techcombank', label: 'Techcombank', icon: '/bank-icons/techcombank.png' },
     { value: 'MB', label: 'MB Bank', icon: '/bank-icons/mb.png' },
     { value: 'ACB', label: 'ACB', icon: '/bank-icons/acb.png' },
+    { value: 'BIDV', label: 'BIDV', icon: '/bank-icons/bidv.jpg' },
     { value: 'Vietinbank', label: 'VietinBank', icon: '/bank-icons/vietinbank.png' },
     { value: 'Shinhan', label: 'Shinhan Bank', icon: '/bank-icons/shinhan.png' },
-    { value: 'Others', label: 'Others', icon: undefined },
+    { value: 'Others', label: 'Others', icon: '/bank-icons/bank-svgrepo-com.svg' },
   ];
   
   // Fee rules
-  const FEE_CAD = 1.5;
+  const FEE_CAD = 1.5; // Always charge $1.50 CAD fee
   // Live CAD->VND rate handling
   const [rate, setRate] = useState<number | null>(null);
   const [prevRate, setPrevRate] = useState<number | null>(null);
@@ -180,6 +190,7 @@ export default function Transfer() {
   const [recipientPhone, setRecipientPhone] = useState<string>('');
   const [recipientName, setRecipientName] = useState<string>('');
   const [recipientAccountNumber, setRecipientAccountNumber] = useState<string>('');
+  const [recipientReceivingMethod, setRecipientReceivingMethod] = useState<string>('bank');
   const [transferContent, setTransferContent] = useState<string>('');
   // EFT details (EFT transfer) - SAFE to store
   const [bankAccountNumber, setBankAccountNumber] = useState<string>('');
@@ -284,6 +295,7 @@ export default function Transfer() {
         recipientPhone,
         recipientName,
         recipientAccountNumber,
+        recipientReceivingMethod,
         transferContent,
         selectedBank,
         customBankName,
@@ -297,7 +309,7 @@ export default function Transfer() {
     } catch (error) {
       console.warn('Failed to save transfer draft:', error);
     }
-  }, [step, amountFrom, amountTo, transferMethod, recipientPhoneCode, recipientPhone, recipientName, recipientAccountNumber, transferContent, selectedBank, customBankName, bankAccountNumber, bankTransitNumber, bankInstitutionNumber, isRestoringFromDraft]);
+  }, [step, amountFrom, amountTo, transferMethod, recipientPhoneCode, recipientPhone, recipientName, recipientAccountNumber, recipientReceivingMethod, transferContent, selectedBank, customBankName, bankAccountNumber, bankTransitNumber, bankInstitutionNumber, isRestoringFromDraft]);
 
   // Restore form data from localStorage on mount
   useEffect(() => {
@@ -332,6 +344,7 @@ export default function Transfer() {
       if (draft.recipientPhone) setRecipientPhone(draft.recipientPhone);
       if (draft.recipientName) setRecipientName(draft.recipientName);
       if (draft.recipientAccountNumber) setRecipientAccountNumber(draft.recipientAccountNumber);
+      if (draft.recipientReceivingMethod) setRecipientReceivingMethod(draft.recipientReceivingMethod);
       if (draft.transferContent) setTransferContent(draft.transferContent);
       if (draft.selectedBank) setSelectedBank(draft.selectedBank);
       if (draft.customBankName) setCustomBankName(draft.customBankName);
@@ -771,7 +784,7 @@ export default function Transfer() {
         const numericAmount = parseFloat(amountFrom.replace(/,/g, '')) || 0;
         if (!isCard) {
           // Compute fee client-side to show in UI and include in request
-          const localFee = (!isNaN(numericAmount) && numericAmount > 0 && numericAmount < FEE_THRESHOLD) ? FEE_CAD : 0;
+          const localFee = (!isNaN(numericAmount) && numericAmount > 0) ? FEE_CAD : 0;
           setTransferFee(localFee);
           setTransferTax(Number((localFee * 0.13).toFixed(2)));
         }
@@ -852,6 +865,7 @@ export default function Transfer() {
       setRecipientPhone('');
       setRecipientName('');
       setRecipientAccountNumber('');
+      setRecipientReceivingMethod('bank');
       setTransferContent('');
       setSelectedBank('');
       setCustomBankName('');
@@ -888,27 +902,26 @@ export default function Transfer() {
             {showKycReminder && (
               <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="KYC Reminder">
                 <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
-                  <h3 className="rate-modal-title">⚠️ Identity Verification Required</h3>
+                  <h3 className="rate-modal-title">{t('kyc.verificationRequired')}</h3>
                   <p className="rate-modal-p">
-                    To transfer money abroad, you need to complete a one-time process identity verification (KYC). 
-                    that takes 2-5 minutes.
+                    {t('kyc.verificationDescription')}
                   </p>
                   <p className="rate-modal-p">
-                    <strong>Why do we need this?</strong><br/>
-                    This process helps us keep your transfers secure and comply with countries regulations.
+                    <strong>{t('kyc.whyNeeded')}</strong><br/>
+                    {t('kyc.securityReason')}
                   </p>
                   <div className="rate-modal-actions" style={{ display: 'flex', gap: '10px' }}>
                     <button
                       className="btn btn-primary"
                       type="button"
                       onClick={() => { setShowKycReminder(false); startKycVerification(); }}
-                    >Start Verification</button>
+                    >{t('kyc.startVerification')}</button>
                     <button 
                       className="btn btn-outline-secondary" 
                       type="button" 
                       onClick={() => setShowKycReminder(false)}
                     >
-                      Remind Me Later
+                      {t('kyc.remindLater')}
                     </button>
                   </div>
                 </div>
@@ -922,39 +935,39 @@ export default function Transfer() {
                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
                   </svg>
                   <div className="flex-grow-1">
-                    <strong>Verify your identity</strong> to submit transfers. It only takes a few minutes.
+                    <strong>{t('kyc.verifyIdentity')}</strong> {t('kyc.toSubmitTransfers')}
                   </div>
-                  <button type="button" className="btn btn-sm btn-primary ms-3" onClick={startKycVerification}>Start Verifying</button>
+                  <button type="button" className="btn btn-sm btn-primary ms-3" onClick={startKycVerification}>{t('kyc.startVerifying')}</button>
                 </div>
               )}
             
             {showRateModal && (
               <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="Exchange rate details" onClick={() => setShowRateModal(false)}>
                 <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
-                  <h3 className="rate-modal-title">How we calculate your exchange rate</h3>
-                  <p className="rate-modal-p">We offer competitive exchange rates with a transparent margin applied to the market rate.</p>
-                  <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
-                  <p className="rate-modal-p">Send $1,000+ CAD to enjoy <strong>no transfer fee</strong>!</p>
-                  <p className="rate-modal-p note">*Note: Exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.</p>
+                  <h3 className="rate-modal-title">{t('transfers.rateCalculation')}</h3>
+                  <p className="rate-modal-p">{t('transfers.competitiveRates')}</p>
+                  <p className="rate-modal-p">{t('transfers.currentRate')}: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> {t('transfers.perCAD')}</p>
+                  <p className="rate-modal-p">{t('transfers.noFeePromo')}</p>
+                  <p className="rate-modal-p note">*{t('transfers.rateFluctuation')}</p>
                   <div className="rate-modal-actions">
-                    <button className="btn" type="button" onClick={() => setShowRateModal(false)}>Got it</button>
+                    <button className="btn" type="button" onClick={() => setShowRateModal(false)}>{t('common.gotIt')}</button>
                   </div>
                 </div>
               </div>
             )}
             <section className="introduction lt-md2:!pt-[52px] lt-md2:!pb-[36px] lt-md2:!px-[20px]">
               <div className="intro-inner">
-                <h1 className="trf">Fast, Secure, Friendly Transfers</h1>
+                <h1 className="trf">{t('transfers.title')}</h1>
                 <p className="intro-lead">
-                  Send money from Canada
+                  {t('transfers.sendMoney')}
                   <img className="flag" src="/flags/Flag_of_Canada.png" alt="Canada" title="Canada" />
-                  {' '}to Vietnam
+                  {' '}{t('transfers.toVietnam')}
                   <img className="flag" src="/flags/Flag_of_Vietnam.png" alt="Vietnam" title="Vietnam" />
-                  {' '}with transparent rates and fast delivery.
+                  {' '}{t('transfers.withTransparentRates')}
                 </p>
 
                 <div className="intro-cta lt-phone:flex-col lt-phone:items-stretch">
-                  <a href="#exchange" className="btn primary">Get Started</a>
+                  <a href="#exchange" className="btn primary">{t('home.hero.getStarted')}</a>
                 </div>
               </div>
               <div className="intro-decor" aria-hidden />
@@ -980,7 +993,7 @@ export default function Transfer() {
                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
                   </svg>
                   <div className="flex-grow-1">
-                    <strong>Welcome back!</strong> Continue where you are left off!
+                    <strong>{t('transfers.welcomeBack')}</strong> {t('transfers.continueWhereLeft')}
                   </div>
                   <button 
                     type="button" 
@@ -1011,19 +1024,19 @@ export default function Transfer() {
                 <ol className="steps relative z-0 lt-phone:!gap-[8px]" aria-label="Transfer steps">
                   <li className={`step ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`}>
                     <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">1</span>
-                    <span className="label">Recipient</span>
+                    <span className="label">{t('transfers.step1')}</span>
                   </li>
                   <li className={`step ${step === 2 ? 'active' : step > 2 ? 'completed' : ''} ${step === 2 && subStep === 1 ? 'half-completed' : ''}`}>
                     <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">2</span>
-                    <span className="label">Amount</span>
+                    <span className="label">{t('transfers.step2')}</span>
                   </li>
                   <li className={`step ${step === 3 ? 'active' : step > 3 ? 'completed' : ''}`}>
                     <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">3</span>
-                    <span className="label">Details</span>
+                    <span className="label">{t('transfers.step3')}</span>
                   </li>
                   <li className={`step ${step === 4 ? 'active' : ''}`}>
                     <span className="dot lt-phone:!w-[22px] lt-phone:!h-[22px] lt-phone:!text-[11px]">4</span>
-                    <span className="label">Review</span>
+                    <span className="label">{t('transfers.step4')}</span>
                   </li>
                 </ol>
               </div>
@@ -1047,7 +1060,7 @@ export default function Transfer() {
                       <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
                     <div className="flex-grow-1">
-                      <strong>Identity Verified!</strong> Your KYC verification is complete. You can send money now!
+                      <strong>{t('kyc.identityVerified')}</strong> {t('kyc.verificationComplete')} {t('kyc.canSendMoney')}
                     </div>
                     <button 
                       type="button" 
@@ -1061,7 +1074,7 @@ export default function Transfer() {
                 {/* Step 1 */}
                 {step === 1 && (
                   <section id="new-recipient" className="card exchange-form scroll-reveal">
-                    <h2>New Recipient in Vietnam<img className="flag" src="/flags/Flag_of_Vietnam.png" alt="Vietnam" title="Vietnam" />{' '}</h2>
+                    <h2>{t('transfers.newRecipient')}<img className="flag" src="/flags/Flag_of_Vietnam.png" alt="Vietnam" title="Vietnam" />{' '}</h2>
                     <form id="newRecipient" onSubmit={(e)=>{e.preventDefault(); setStep(2);}}>
                       <button type="button" className="btn primary new-recipient-btn" onClick={() => setStep(2)}>
                         <svg
@@ -1080,7 +1093,7 @@ export default function Transfer() {
                           <path d="M16 8h6" />
                           <path d="M19 5v6" />
                         </svg>
-                        New Recipient
+                        {t('transfers.newRecipient')}
                       </button>
                     </form>
                   </section>
@@ -1088,23 +1101,23 @@ export default function Transfer() {
 
                 {step === 1 && (
                   <section id="recent-transfer" className="card exchange-form scroll-reveal">
-                    <h2>Recent Transfers</h2>
+                    <h2>{t('transfers.recentTransfers')}</h2>
                     
                     {transactionsLoading ? (
                       <div className="text-center py-4">
-                        <p className="text-medium-emphasis">Loading your transfer history...</p>
+                        <p className="text-medium-emphasis">{t('common.loading')}</p>
                       </div>
                     ) : transactions.length === 0 ? (
                       <div className="text-center py-4">
                         <p className="text-medium-emphasis mb-3">
-                          You have not sent any money back to Vietnam yet. Make your first transfer now!
+                          {t('transfers.noTransfersYet')}
                         </p>
                         <button 
                           type="button" 
                           className="btn primary" 
                           onClick={() => setStep(2)}
                         >
-                          Start First Transfer
+                          {t('transfers.startFirstTransfer')}
                         </button>
                       </div>
                     ) : (
@@ -1112,11 +1125,11 @@ export default function Transfer() {
                         <table className="table table-hover">
                           <thead>
                             <tr>
-                              <th>Date</th>
-                              <th>Recipient</th>
-                              <th>Amount Sent</th>
-                              <th>Amount Received</th>
-                              <th>Status</th>
+                              <th>{t('dashboard.date')}</th>
+                              <th>{t('transfers.recipient')}</th>
+                              <th>{t('transfers.amountSent')}</th>
+                              <th>{t('transfers.amountReceived')}</th>
+                              <th>{t('dashboard.status')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1162,7 +1175,7 @@ export default function Transfer() {
                         {transactions.length > 5 && (
                           <div className="text-center mt-3">
                             <a href="/transfers-history" className="btn btn-outline-primary">
-                              View All Transfers
+                              {t('transfers.viewAllTransfers')}
                             </a>
                           </div>
                         )}
@@ -1174,7 +1187,7 @@ export default function Transfer() {
                 {/* Step 2.1 - Payment Method */}
                 {step === 2 && subStep === 0 && (
                   <>
-                    <h2>Select payment method</h2>
+                    <h2>{t('transfers.selectPaymentMethod')}</h2>
 
                     <section id="card" className="card transfer-details scroll-reveal">
                       <button
@@ -1186,9 +1199,9 @@ export default function Transfer() {
                         }}
                       >
                         <div className="dropdown-header-content">
-                          <h3>Proceed via Card</h3>
+                          <h3>{t('transfers.proceedViaCard')}</h3>
                           <div className="dropdown-header-details">
-                            <span className="delivery-info">Fastest Delivery</span>
+                            <span className="delivery-info">{t('transfers.fastestDelivery')}</span>
                             {displayRateFormatted && (
                               <span className="exchange-rate">1 CAD = {displayRateFormatted} VND</span>
                             )}
@@ -1215,7 +1228,7 @@ export default function Transfer() {
                                   <rect x="1" y="3" width="30" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
                                   <rect x="1" y="7" width="30" height="4" fill="currentColor" />
                                 </svg>
-                                <span className="payment-label">Debit card</span>
+                                <span className="payment-label">{t('transfers.debitCard')}</span>
                               </div>
                             </label>
                             <label className="radio payment-radio">
@@ -1231,7 +1244,7 @@ export default function Transfer() {
                                   <rect x="1" y="3" width="30" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
                                   <rect x="1" y="7" width="30" height="4" fill="currentColor" />
                                 </svg>
-                                <span className="payment-label">Credit card</span>
+                                <span className="payment-label">{t('transfers.creditCard')}</span>
                               </div>
                             </label>
                           </div>
@@ -1240,14 +1253,13 @@ export default function Transfer() {
                         {isCard && (
                           <div className="form-group delivery-notice">
                             <p className="notice-text">
-                              <strong>Expected delivery:</strong>{' '}
+                              <strong>{t('transfers.expectedDelivery')}:</strong>{' '}
                               {transferMethod === 'e-transfer' || transferMethod === 'debit' || transferMethod === 'credit'
-                                ? 'Within 24 hours'
-                                : '5-7 business days'}
+                                ? t('transfers.within24Hours')
+                                : t('transfers.businessDays')}
                             </p>
                             <p className="notice-subtext">
-                              Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays.
-                              Consider that your transfer might take longer than expected—this is normal!
+                              {t('transfers.processingNote')}
                             </p>
                           </div>
                         )}
@@ -1266,8 +1278,8 @@ export default function Transfer() {
                       >
                         <div className="dropdown-header-content">
                           <div className="dropdown-header-title">
-                            <span className="best-value-badge">BEST VALUE</span>
-                            <h3>Proceed via bank</h3>
+                            <span className="best-value-badge">{t('transfers.bestValue')}</span>
+                            <h3>{t('transfers.proceedViaBank')}</h3>
                           </div>
                           {baseRateFormatted && (
                             <span className="exchange-rate">1 CAD = {baseRateFormatted} VND</span>
@@ -1294,7 +1306,7 @@ export default function Transfer() {
                                   <rect x="2" y="4" width="28" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
                                   <path d="M6 8h8M6 12h12M6 16h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                                 </svg>
-                                <span className="payment-label">E-Transfer</span>
+                                <span className="payment-label">{t('transfers.eTransfer')}</span>
                               </div>
                             </label>
                             <label className="radio payment-radio">
@@ -1310,7 +1322,7 @@ export default function Transfer() {
                                   <rect x="2" y="4" width="28" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
                                   <circle cx="22" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
                                 </svg>
-                                <span className="payment-label">EFT</span><strong>RECOMMENDED</strong>
+                                <span className="payment-label">{t('transfers.eft')}</span><strong>{t('transfers.recommended')}</strong>
                               </div>
                             </label>
                           </div>
@@ -1319,14 +1331,14 @@ export default function Transfer() {
                         {isBank && (
                           <>
                             <div className="form-group">
-                              <label>User Email:</label>
+                              <label>{t('transfers.userEmail')}:</label>
                               <input type="email" value={user?.email || ''} disabled />
                             </div>
 
                             {transferMethod === 'EFT' && (
                               <div className="form-group two-col eft lt-phone:!grid-cols-1">
                                 <div>
-                                  <label>Account #</label>
+                                  <label>{t('transfers.accountNumber')}</label>
                                   <input 
                                     type="text" 
                                     name="senderBankAccount" 
@@ -1337,7 +1349,7 @@ export default function Transfer() {
                                   />
                                 </div>
                                 <div>
-                                  <label>Transit Number</label>
+                                  <label>{t('transfers.transitNumber')}</label>
                                   <input 
                                     type="text" 
                                     name="senderTransitNumber" 
@@ -1348,7 +1360,7 @@ export default function Transfer() {
                                   />
                                 </div>
                                 <div>
-                                  <label>Institution Number</label>
+                                  <label>{t('transfers.institutionNumber')}</label>
                                   <input 
                                     type="text" 
                                     name="senderInstitutionNumber" 
@@ -1364,11 +1376,10 @@ export default function Transfer() {
                             {isBank && (
                               <div className="form-group delivery-notice">
                                 <p className="notice-text">
-                                  <strong>Expected delivery:</strong> {transferMethod === 'e-transfer' || transferMethod === 'debit' || transferMethod === 'credit' ? 'Within 24 hours' : '5-7 business days'}
+                                  <strong>{t('transfers.expectedDelivery')}:</strong> {transferMethod === 'e-transfer' || transferMethod === 'debit' || transferMethod === 'credit' ? t('transfers.within24Hours') : t('transfers.businessDays')}
                                 </p>
                                 <p className="notice-subtext">
-                                  Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
-                                  Consider that your transfer might take longer than expected—this is normal!
+                                  {t('transfers.processingNote')}
                                 </p>
                               </div>
                             )}
@@ -1387,7 +1398,7 @@ export default function Transfer() {
                       className="btn primary w-full" 
                       onClick={() => setSubStep(1)}
                     >
-                      Continue to Amount
+                      {t('transfers.continueToAmount')}
                     </button>
                   </div>
                 )}
@@ -1397,11 +1408,11 @@ export default function Transfer() {
                   <section id="exchange" className="card exchange-form scroll-reveal">
                     <form id="moneyExchangeForm" onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
                       <div className="form-group">
-                        <label htmlFor="amountFrom">YOU SEND:</label>
+                        <label htmlFor="amountFrom">{t('transfers.youSend')}:</label>
                           {rate && (
                             <span className="label-inline-info">
 
-                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND <strong>Best Rate</strong>
+                              1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND <strong>{t('transfers.bestRate')}</strong>
                               <button
                                 type="button"
                                 aria-label="Rate details"
@@ -1419,7 +1430,7 @@ export default function Transfer() {
                           )}
                           {amountFrom && parseFloat(amountFrom) > 0 && effectiveRate && (
                             <span className="label-inline-info">
-                              Your rate: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND
+                              {t('transfers.yourRate')}: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND
                             </span>
                           )}
                         <div className="currency-input" role="group" aria-label="You send amount in CAD">
@@ -1427,7 +1438,7 @@ export default function Transfer() {
                             type="number"
                             id="amountFrom"
                             name="amountFrom"
-                            placeholder="Enter amount"
+                            placeholder={t('transfers.enterAmount')}
                             min={20}
                             max={9999}
                             step="0.01"
@@ -1446,14 +1457,14 @@ export default function Transfer() {
                       </div>
                       <div className="form-group">
                         <label htmlFor="amountTo">
-                          THEY RECEIVE:
+                          {t('transfers.theyReceive')}:
                         </label>
                         <div className="currency-input" role="group" aria-label="They receive amount in VND">
                           <input
                             type="text"
                             id="amountTo"
                             name="amountTo"
-                            placeholder="Enter VND amount"
+                            placeholder={t('transfers.enterVNDAmount')}
                             value={amountTo}
                             inputMode="numeric"
                             pattern="[0-9,]*"
@@ -1472,13 +1483,11 @@ export default function Transfer() {
                         const val = parseFloat(amountFrom);
                         // Prefer canonical fee from backend (transferFee). If not available yet,
                         // estimate locally using same business rule (charge $1.50 when amount < threshold).
-                        const estimatedFee = (typeof transferFee === 'number' && transferFee >= 0) ? transferFee : FEE_CAD;
-
                         return (
-                          <div className="fee-mini" role="note">Transfer fee: <strong>${estimatedFee.toFixed(2)}</strong> CAD</div>
+                          <div className="fee-mini" role="note">{t('transfers.transferFee')}: <strong>${FEE_CAD.toFixed(2)}</strong> CAD</div>
                         );
                       })()}
-                      <button type="submit" className="btn primary w-full">Continue to Receiver Details</button>
+                      <button type="submit" className="btn primary w-full">{t('transfers.continueToReceiverDetails')}</button>
                     </form>
                   </section>
                 )}
@@ -1488,8 +1497,30 @@ export default function Transfer() {
                 {/* Step 3 - Receiver Bank Details */}
                 {step === 3 && (
                   <>
-                    <h2>Receiver Bank Details</h2>
+                    <h2>{t('transfers.receiverBankDetails')}</h2>
 
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      // Check wallet limits before proceeding
+                      const vndAmount = parseFloat((amountTo || '').replace(/,/g, ''));
+                      const momoLimit = 10000000;
+                      const zaloPayLimit = 5000000;
+                      const isOverLimit = 
+                        (recipientReceivingMethod === 'momo' && vndAmount > momoLimit) ||
+                        (recipientReceivingMethod === 'zalopay' && vndAmount > zaloPayLimit);
+
+                      if (isOverLimit) {
+                        const limit = recipientReceivingMethod === 'momo' 
+                          ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(momoLimit)
+                          : new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(zaloPayLimit);
+                        const walletName = recipientReceivingMethod === 'momo' ? t('transfers.momoWallet') : t('transfers.zalopayWallet');
+                        alert(`${t('transfers.amountExceedsLimit')} ${walletName} ${t('transfers.limitOf')} ${limit} VND. ${t('transfers.pleaseReduce')}`);
+                        return;
+                      }
+
+                      // All validations passed, proceed to next step
+                      setStep(4);
+                    }}>
                     <section id="receiver" className="card transfer-details scroll-reveal">
                       {displayRateFormatted && (
                         <div className="dropdown-header-details receiver-rate">
@@ -1503,11 +1534,58 @@ export default function Transfer() {
                       <div className="dropdown-content expanded">
 
                         <div className="form-group">
-                          <label>Recipient Full Name</label>
+                          <label>{t('transfers.receivingMethod')}</label>
+                          <div className={`custom-bank-select ${receivingMethodDropdownOpen ? 'dropdown-open' : ''}`}>
+                            <button
+                              type="button"
+                              className="bank-select-trigger"
+                              onClick={() => setReceivingMethodDropdownOpen(!receivingMethodDropdownOpen)}
+                            >
+                              {recipientReceivingMethod ? (
+                                <div className="bank-option-display">
+                                  <img 
+                                    src={receivingMethods.find(m => m.value === recipientReceivingMethod)?.icon} 
+                                    alt=""
+                                    className="bank-icon"
+                                  />
+                                  <span>{receivingMethods.find(m => m.value === recipientReceivingMethod)?.label}</span>
+                                </div>
+                              ) : (
+                                <span className="placeholder">{t('transfers.selectReceivingMethod')}</span>
+                              )}
+                              <svg className="dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                            
+                            {receivingMethodDropdownOpen && (
+                              <div className="bank-options-list">
+                                {receivingMethods.map(method => (
+                                  <button
+                                    key={method.value}
+                                    type="button"
+                                    className={`bank-option ${recipientReceivingMethod === method.value ? 'selected' : ''}`}
+                                    onClick={() => {
+                                      setRecipientReceivingMethod(method.value);
+                                      setReceivingMethodDropdownOpen(false);
+                                    }}
+                                  >
+                                    <img src={method.icon} alt="" className="bank-icon" />
+                                    <span>{method.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <input type="hidden" name="receivingMethod" value={recipientReceivingMethod} required />
+                        </div>
+
+                        <div className="form-group">
+                          <label>{t('transfers.recipientFullName')}</label>
                           <input 
                             type="text" 
                             name="receiverName" 
-                            placeholder="Recipient Full Name" 
+                            placeholder={t('transfers.recipientFullName')} 
                             value={recipientName}
                             onChange={(e) => {
                               const value = e.target.value;
@@ -1523,11 +1601,66 @@ export default function Transfer() {
                           />
                         </div>
 
+                        {(() => {
+                          const vndAmount = parseFloat((amountTo || '').replace(/,/g, ''));
+                          const momoLimit = 10000000; // 10M VND
+                          const zaloPayLimit = 5000000; // 5M VND
+                          const isOverLimit = 
+                            (recipientReceivingMethod === 'momo' && vndAmount > momoLimit) ||
+                            (recipientReceivingMethod === 'zalopay' && vndAmount > zaloPayLimit);
+                          
+                          if (isOverLimit) {
+                            const limit = recipientReceivingMethod === 'momo' 
+                              ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(momoLimit)
+                              : new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(zaloPayLimit);
+                            const walletName = recipientReceivingMethod === 'momo' ? t('transfers.momoWallet') : t('transfers.zalopayWallet');
+                            
+                            return (
+                              <div className="alert alert-danger d-flex align-items-center mt-3" role="alert">
+                                <svg 
+                                  width="24" 
+                                  height="24" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2" 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round"
+                                  className="me-2"
+                                >
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                                </svg>
+                                <div>
+                                  <strong>{t('transfers.amountExceedsLimit')} {walletName} {t('transfers.limit')}!</strong>
+                                  <p className="mb-0 small">{t('transfers.limitedAmount')} {walletName} {t('transfers.is')} {limit} VND.</p>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+
                         <div className="form-group">
-                          <label>Recipient Phone Number</label>
+                          <label>
+                            {recipientReceivingMethod === 'bank' ? t('transfers.phoneExample') : 
+                             recipientReceivingMethod === 'momo' ? t('transfers.momoPhoneNumber') : 
+                             t('transfers.zalopayPhoneNumber')}
+                          </label>
                           <div className="phone-row">
-                            <select className="code themed" value={recipientPhoneCode} onChange={(e) => setRecipientPhoneCode(e.target.value)}>
-                              <option value="+1">+1</option>
+                            <select 
+                              className="code themed" 
+                              value={recipientPhoneCode} 
+                              onChange={(e) => setRecipientPhoneCode(e.target.value)}
+                              disabled={(() => {
+                                const vndAmount = parseFloat((amountTo || '').replace(/,/g, ''));
+                                return (
+                                  (recipientReceivingMethod === 'momo' && vndAmount > 10000000) ||
+                                  (recipientReceivingMethod === 'zalopay' && vndAmount > 5000000)
+                                );
+                              })()}
+                            >
                               <option value="+84">+84</option>
                             </select>
                             <input 
@@ -1540,50 +1673,62 @@ export default function Transfer() {
                                   setRecipientPhone(value);
                                 }
                               }} 
-                              placeholder="Recipient phone number" 
+                              placeholder={
+                                recipientReceivingMethod === 'bank' ? t('transfers.recipientPhoneNumber') :
+                                recipientReceivingMethod === 'momo' ? t('transfers.momoPhoneNumber') :
+                                t('transfers.zalopayPhoneNumber')
+                              }
                               maxLength={10}
                               pattern="[0-9]{10}"
-                              required 
+                              required
+                              disabled={(() => {
+                                const vndAmount = parseFloat((amountTo || '').replace(/,/g, ''));
+                                return (
+                                  (recipientReceivingMethod === 'momo' && vndAmount > 10000000) ||
+                                  (recipientReceivingMethod === 'zalopay' && vndAmount > 5000000)
+                                );
+                              })()}
                             />
                           </div>
                           <input type="hidden" name="receiverPhoneNumber" value={`${recipientPhoneCode}${recipientPhone}`} />
-                          <p>Please enter the correct recipient's phone number!</p>
+                          <p>{t('transfers.enterCorrectPhone')}</p>
                         </div>
 
-                        <div className="form-group">
-                          <label>Receiver Bank:</label>
-                          <div className={`custom-bank-select ${bankDropdownOpen ? 'dropdown-open' : ''}`}>
-                            <button
-                              type="button"
-                              className="bank-select-trigger"
-                              onClick={() => setBankDropdownOpen(!bankDropdownOpen)}
-                            >
-                              {selectedBank ? (
-                                <div className="bank-option-display">
-                                  {selectedBank === 'Others' ? (
-                                    <span>{customBankName || 'Others'}</span>
-                                  ) : (
-                                    <>
-                                      <img 
-                                        src={vietnameseBanks.find(b => b.value === selectedBank)?.icon} 
-                                        alt=""
-                                        className="bank-icon"
-                                      />
-                                      <span>{vietnameseBanks.find(b => b.value === selectedBank)?.label}</span>
-                                    </>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="placeholder">Select a Bank</span>
-                              )}
-                              <svg className="dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
-                                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            </button>
+                        {recipientReceivingMethod === 'bank' && (
+                          <div className="form-group">
+                            <label>{t('transfers.bank')}:</label>
+                            <div className={`custom-bank-select ${bankDropdownOpen ? 'dropdown-open' : ''}`}>
+                              <button
+                                type="button"
+                                className="bank-select-trigger"
+                                onClick={() => setBankDropdownOpen(!bankDropdownOpen)}
+                              >
+                                {selectedBank ? (
+                                  <div className="bank-option-display">
+                                    {selectedBank === 'Others' ? (
+                                      <span>{customBankName || 'Others'}</span>
+                                    ) : (
+                                      <>
+                                        <img 
+                                          src={vietnameseBanks.find(b => b.value === selectedBank)?.icon} 
+                                          alt=""
+                                          className="bank-icon"
+                                        />
+                                        <span>{vietnameseBanks.find(b => b.value === selectedBank)?.label}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="placeholder">{t('transfers.selectBank')}</span>
+                                )}
+                                <svg className="dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                  <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
                             
                             {bankDropdownOpen && (
                               <div className="bank-options-list">
-                                <div className="bank-option-placeholder">Select a Bank</div>
+                                <div className="bank-option-placeholder">{t('transfers.selectBank')}</div>
                                 {vietnameseBanks.map((bank) => (
                                   <button
                                     key={bank.value}
@@ -1609,16 +1754,17 @@ export default function Transfer() {
                             )}
                           </div>
                           <input type="hidden" name="receiverBank" value={selectedBank === 'Others' ? customBankName : selectedBank} required />
-                        </div>
+                          </div>
+                        )}
 
                         {/* Show custom bank name input if "Others" is selected */}
-                        {selectedBank === 'Others' && (
+                        {recipientReceivingMethod === 'bank' && selectedBank === 'Others' && (
                           <div className="form-group">
-                            <label>Bank Name</label>
+                            <label>{t('transfers.bankName')}</label>
                             <input 
                               type="text" 
                               name="customBankName" 
-                              placeholder="Enter bank name" 
+                              placeholder={t('transfers.enterBankName')} 
                               value={customBankName}
                               onChange={(e) => setCustomBankName(e.target.value)}
                               required 
@@ -1626,13 +1772,14 @@ export default function Transfer() {
                           </div>
                         )}
 
-                        <div className="form-group">
-                          <label>Account #</label>
-                          <input 
-                            type="text" 
-                            name="receiverBankAccount" 
-                            placeholder="ex1234 5678 9012 345" 
-                            value={recipientAccountNumber}
+                        {recipientReceivingMethod === 'bank' && (
+                          <div className="form-group">
+                            <label>{t('transfers.bankAccountNumber')}</label>
+                            <input 
+                              type="text" 
+                              name="receiverBankAccount" 
+                              placeholder="1234 5678 9012 345"
+                              value={recipientAccountNumber}
                             onChange={(e) => {
                               // Remove all non-digit characters
                               const value = e.target.value.replace(/\D/g, '');
@@ -1648,87 +1795,73 @@ export default function Transfer() {
                             pattern="[0-9\s]*"
                             required 
                           />
-                          <small style={{ color: '#6c757d', fontSize: '0.875rem' }}>15 digits maximum</small>
-                        </div>
+                          <small style={{ color: '#6c757d', fontSize: '0.875rem' }}>{t('transfers.maxDigits')}</small>
+                          </div>
+                        )}
 
                         <div className="form-group">
-                          <label>Content</label>
+                          <label>{t('transfers.content')}</label>
                           <input 
                             type="text" 
                             name="transferContent" 
-                            placeholder="Message to recipient (Optional)" 
+                            placeholder={t('transfers.messageToRecipient')} 
                             value={transferContent}
                             onChange={(e) => setTransferContent(e.target.value)}
                           />
                         </div>
                       </div>
                     </section>
-                  </>
-                )}
 
-                {step === 3 && (
-                  <div className="step-actions">
-                    <button type="button" className="btn primary w-full" onClick={() => setStep(4)}>
-                      Continue to Review
-                    </button>
-                  </div>
+                    <div className="step-actions">
+                      <button 
+                        type="submit" 
+                        className="btn primary w-full"
+                      >
+                        {t('transfers.continueToReview')}
+                      </button>
+                    </div>
+                    </form>
+                  </>
                 )}
 
                 {step === 4 && (
                   <section id="review" className="card scroll-reveal">
-                    <h2>Review &amp; Submit</h2>
+                    <h2>{t('transfers.reviewSubmit')}</h2>
                     <div className="review-grid">
-                      <div><strong>Email:</strong> {user?.email || '-'}</div>
-                      <div><strong>Amount:</strong> {amountFrom || '0'} CAD</div>
-                      {(() => {
-                        const val = parseFloat(amountFrom);
-                        const fee = (typeof transferFee === 'number' && transferFee >= 0)
-                          ? transferFee
-                          : (val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0);
-                        const isApplied = fee === 0; // Show "Applied" when fee is 0.00
-                        return (
-                          <div
-                            className="fee-review"
-                            title={isApplied ? `No fee applied at $${FEE_THRESHOLD.toLocaleString()}+` : `Fee charged: $${fee.toFixed(2)} CAD`}
-                          >
-                            <span className="fee-label">Fee</span>
-
-                            <span className={`fee-amount ${isApplied ? 'zero' : 'value'}`}>${fee.toFixed(2)} CAD</span>
-                            <span className={`fee-badge ${isApplied ? 'applied' : 'charged'}`}>
-                              {isApplied ? 'Applied' : 'Charged'}
-                            </span>
-                            <span className="fee-note">{`No fee at $${FEE_THRESHOLD.toLocaleString()} CAD`}</span>
-                          </div>
-                        );
-                      })()}
+                      <div><strong>{t('transfers.email')}:</strong> {user?.email || '-'}</div>
+                      <div><strong>{t('transfers.amount')}:</strong> {(parseFloat(amountFrom || '0') + FEE_CAD).toFixed(2)} CAD</div>
+                      <div className="fee-review">
+                        <span className="fee-label">{t('transfers.fee')}</span>
+                        <span className="fee-amount value">${FEE_CAD.toFixed(2)} CAD</span>
+                        <span className="fee-badge charged">{t('transfers.charged')}</span>
+                        <span className="fee-note">{t('transfers.feeNote')}</span>
+                      </div>
                       {(() => {
                         const val = parseFloat(amountFrom);
                         if (!isNaN(val) && typeof effectiveRate === 'number') {
-                          const fee = (typeof transferFee === 'number' && transferFee >= 0) ? transferFee : (val > 0 && val < FEE_THRESHOLD ? FEE_CAD : 0);
-                          const net = Math.max(val - fee, 0);
+                          const net = Math.max(val - FEE_CAD, 0);
                           const vnd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(net * (effectiveRate || 0));
                           const rateFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate || 0);
                           return (
                             <div>
-                              <strong>They receive:</strong> {vnd} VNĐ{' '}
+                              <strong>{t('transfers.theyReceive')}:</strong> {vnd} VNĐ{' '}
                               <span className="fee-note">(${net.toFixed(2)} CAD × {rateFormatted})</span>
                             </div>
                           );
                         }
-                        return <div><strong>They receive:</strong> {amountTo || '0'} VNĐ</div>;
+                        return <div><strong>{t('transfers.theyReceive')}:</strong> {amountTo || '0'} VNĐ</div>;
                       })()}
-                      <div><strong>Method:</strong> {transferMethod}</div>
-                      <div><strong>Recipient:</strong> {recipientName || '-'}</div>
-                      <div><strong>Bank:</strong> {selectedBank === 'Others' ? customBankName || 'Others' : selectedBank}</div>
-                      <div><strong>Account #:</strong> {recipientAccountNumber || '-'}</div>
+                      <div><strong>{t('transfers.method')}:</strong> {transferMethod}</div>
+                      <div><strong>{t('transfers.recipient')}:</strong> {recipientName || '-'}</div>
+                      <div><strong>{t('transfers.bank')}:</strong> {selectedBank === 'Others' ? customBankName || 'Others' : selectedBank}</div>
+                      <div><strong>{t('transfers.accountNumber')}:</strong> {recipientAccountNumber || '-'}</div>
                     </div>
                     <div className="form-group delivery-notice">
                       <p className="notice-text">
-                        <strong>Expected delivery:</strong> {transferMethod === 'e-transfer' || transferMethod === 'debit' || transferMethod === 'credit' ? 'Within 24 hours' : '5-7 business days'}
+                        <strong>{t('transfers.expectedDelivery')}:</strong> {transferMethod === 'e-transfer' || transferMethod === 'debit' || transferMethod === 'credit' ? t('transfers.within24Hours') : t('transfers.businessDays')}
                       </p>
                       <p className="notice-subtext">
-                        Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. 
-                        Consider that your transfer might take longer than expected—this is normal!
+                        {t('transfers.processingNote')}
                       </p>
                     </div>
                     {paymentFlowBusy && (
@@ -1736,7 +1869,7 @@ export default function Transfer() {
                         <div className="payment-overlay-inner">
                           <div className="spinner" aria-hidden />
                           <div className="payment-overlay-text">
-                            Processing payment — please do not close this window.
+                            {t('transfers.processingPayment')}
                           </div>
                         </div>
                       </div>
@@ -1745,7 +1878,7 @@ export default function Transfer() {
                     {/* Stripe Payment Section - Only show for card payments and KYC verified users */}
                     {isCard && kycStatus === 'verified' && (
                       <div className="payment-section-review">
-                        <h3>Payment</h3>
+                        <h3>{t('transfers.payment')}</h3>
                         {clientSecret ? (
                           <div className="stripe-payment-wrapper">
                             <Elements stripe={stripePromise} options={{ clientSecret }}>
@@ -1761,7 +1894,7 @@ export default function Transfer() {
                         ) : (
                           <div className="form-group">
                             <p className="text-center">
-                              {paymentProcessing ? 'Initializing secure payment...' : 'Loading payment form...'}
+                              {paymentProcessing ? t('transfers.initializingPayment') : t('transfers.loadingPaymentForm')}
                             </p>
                           </div>
                         )}
@@ -1777,13 +1910,13 @@ export default function Transfer() {
                           required
                         />
                         <span>
-                          <a href="/general/terms-and-conditions" target="_blank" rel="noopener noreferrer">Terms and Conditions</a> Read & Agreed!
+                          <a href="/general/terms-and-conditions" target="_blank" rel="noopener noreferrer">{t('termsAndConditions.title')}</a> {t('transfers.readAgreed')}
                         </span>
                       </label>
                     </div>
                     
                     <div className="review-actions">
-                      <button type="button" className="btn ghost" onClick={() => setStep(3)}>Back</button>
+                      <button type="button" className="btn ghost" onClick={() => setStep(3)}>{t('transfers.back')}</button>
                       <form onSubmit={onTransferSubmit}>
                         <button 
                           type="submit" 
@@ -1802,7 +1935,7 @@ export default function Transfer() {
                               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                             </svg>
                           )}
-                          {submitting ? 'Submitting…' : kycStatus === 'verified' ? 'Submit Transfer (Verified)' : 'Submit Transfer'}
+                          {submitting ? t('transfers.submitting') : kycStatus === 'verified' ? t('transfers.submitTransferVerified') : t('transfers.submitTransfer')}
                         </button>
                       </form>
                     </div>
@@ -1811,25 +1944,25 @@ export default function Transfer() {
               </div>
 
               <section className="features scroll-reveal">
-                <h3>Why choose us</h3>
+                <h3>{t('transfers.whyChooseUs')}</h3>
                 <div className="features-grid">
                   <div className="feature card">
-                    <h4>Low Fees</h4>
-                    <p>Competitive rates and transparent fees. No hidden charges.</p>
+                    <h4>{t('transfers.lowFees')}</h4>
+                    <p>{t('transfers.lowFeesDesc')}</p>
                   </div>
                   <div className="feature card">
-                    <h4>Fast Delivery</h4>
+                    <h4>{t('transfers.fastDelivery')}</h4>
 
                   </div>
                   <div className="feature card">
-                    <h4>Secure</h4>
-                    <p>Encrypted transfers and verified partners.</p>
+                    <h4>{t('transfers.secure')}</h4>
+                    <p>{t('transfers.secureDesc')}</p>
                   </div>
                 </div>
               </section>
 
               <section className="testimonials scroll-reveal">
-                <h3>What customers say</h3>
+                <h3>{t('transfers.testimonials')}</h3>
                 <div className="testimonials-grid">
                   <blockquote className="card">“Great service — fast and easy!” <a href="https://www.facebook.com/momo.16111997" target="_blank" rel="noreferrer"><cite>- Momo</cite></a></blockquote>
                   <blockquote className="card">“Transparent fees and quick confirmation.” <a href="https://www.facebook.com/toan.lam.9" target="_blank" rel="noreferrer"><cite>- Tony Lam</cite></a></blockquote>

@@ -3,9 +3,11 @@ import { useRouter } from "next/router";
 import AppHeader from "../components/AppHeader";
 import AppFooter from "../components/AppFooter";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Home() {
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   // Minimal local state to render the exchange form on the homepage
@@ -174,7 +176,7 @@ export default function Home() {
                                   <div className="logo">
               <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
             </div>
-                      <h2 className="section-title">What Our Customers Say</h2>
+                      <h2 className="section-title">{t('home.hero.title')}</h2>
                       <div className="trust-badge">
                         <div className="stars">★★★★★</div>
                         <p className="mb-0"><strong>4.8 out of 5</strong> based on 1,200+ reviews</p>
@@ -210,17 +212,29 @@ export default function Home() {
                 <div className="main mb-4 border-0 bg-gradient">
                   <div className="main-body hero-section text-center py-5">
                     <div className="hero-media" aria-hidden="true">
-                      <img className="hero-img-base" src="/mainpage/banner_vietname.png" alt="" />
-                      <img className="hero-img-blur" src="/mainpage/banner_vietname.png" alt="" />
+                      <div
+                        className="hero-video-frame"
+                      >
+                        <video
+                          className="hero-video"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          controls={false}
+                        >
+                          <source src="/mainpage/CanViet_Exchange_Video_Banner.mp4" type="video/mp4" />
+                        </video>
+                      </div>
                     </div>
                     <div className="hero-content">
 
                         <div className="d-flex gap-3 justify-content-center flex-wrap">
                         <a href="/register" className="btn btn-primary btn-lg">
-                          Get Started
+                          {t('home.hero.getStarted')}
                         </a>
                         <a href="/login" className="btn btn-outline-primary btn-lg">
-                          Sign In
+                          {t('auth.signIn')}
                         </a>
                       </div>
 
@@ -235,14 +249,14 @@ export default function Home() {
                     <div className="main-body">
                       <div className="row align-items-center">
                         <div className="col-md-6 mb-3 mb-md-0">
-                          <h1 className="h3">See Your Rate Instantly</h1>
-                          <p className="text-medium-emphasis">Calculate exactly how much your loved ones will receive. No surprises, no hidden fees.</p>
+                          <h1 className="h3">{t('home.calculator.title')}</h1>
+                          <p className="text-medium-emphasis">{t('home.hero.subtitle')}</p>
                           <hr />
                           <div className="d-flex align-items-center gap-3">
                             <div className="fs-1">💰</div>
                             <div>
-                              <strong>What you see is what they get</strong>
-                              <div className="small text-medium-emphasis">Live rates updated every minute</div>
+                              <strong>{t('home.features.bestRates')}</strong>
+                              <div className="small text-medium-emphasis">{t('home.calculator.rateUpdated')}</div>
                             </div>
                           </div>
                         </div>
@@ -331,18 +345,7 @@ export default function Home() {
                                     <div className="payment-icons d-flex justify-content-center gap-3 flex-wrap">
                                       <div className="payment-icon" title="Interac e-Transfer">
                                         <div>
-                                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="icon-interac">
-                                            <rect width="40" height="40" rx="8" fill="#FFC400"/>
-                                            <g transform="translate(8, 10)">
-                                              <path d="M8 15 L8 8 L11 8 L11 4 L14 4 L14 8 L17 8 L17 15" fill="#2B2B2B" stroke="#2B2B2B" strokeWidth="1.5" strokeLinejoin="round"/>
-                                              <rect x="4" y="15" width="3" height="5" rx="1.5" fill="#2B2B2B"/>
-                                              <rect x="7.5" y="15" width="3" height="5" rx="1.5" fill="#2B2B2B"/>
-                                              <rect x="11" y="15" width="3" height="5" rx="1.5" fill="#2B2B2B"/>
-                                              <rect x="14.5" y="15" width="3" height="5" rx="1.5" fill="#2B2B2B"/>
-                                              <path d="M14 4 L14 0 L17 0 L17 3" fill="#2B2B2B"/>
-                                              <circle cx="18" cy="0.5" r="1" fill="#2B2B2B"/>
-                                            </g>
-                                          </svg>
+                                          <img src="/bank-icons/interac-etransfer.jpeg" alt="Interac e-Transfer" width="40" height="40" style={{ borderRadius: '8px' }} />
                                         </div>
                                         <span className="small">Interac</span>
                                       </div>
@@ -378,38 +381,9 @@ export default function Home() {
                                   </div>
                                 </div>
 
-                                {(() => {
-                                  const val = parseFloat((amountFrom || '').toString().replace(/,/g, ''));
-                                  const FEE_CAD = 1.5;
-                                  const FEE_THRESHOLD = 1000;
-                                  if (!isNaN(val) && val >= FEE_THRESHOLD) {
-                                    return (
-                                      <div className="alert alert-success d-flex align-items-center mt-3" role="alert">
-                                        <svg 
-                                          width="24" 
-                                          height="24" 
-                                          viewBox="0 0 24 24" 
-                                          fill="none" 
-                                          stroke="currentColor" 
-                                          strokeWidth="2" 
-                                          strokeLinecap="round" 
-                                          strokeLinejoin="round"
-                                          className="me-2"
-                                        >
-                                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                          <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                        </svg>
-                                        <div>
-                                          <strong>Congrats!</strong> NO Transfer fee applied.
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-
-                                  return (
-                                    <div className="fee-mini" role="note">Transfer fee: <strong>${FEE_CAD.toFixed(2)}</strong> CAD - No fee if sending 1000 CAD</div>
-                                  );
-                                })()}
+                                <div className="fee-mini" role="note">
+                                  Transfer fee: <strong>$1.50</strong> CAD
+                                </div>
 
                           <p className="main-text">Secure transfers and verified partners</p>
                         </div>

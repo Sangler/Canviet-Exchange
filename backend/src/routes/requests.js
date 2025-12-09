@@ -408,17 +408,7 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
         }
 
         const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
-        
-        // Format completed time as readable date/time
-        const completedDate = updatedRequest.completedAt || new Date();
-        const completedTime = completedDate.toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZoneName: 'short'
-        });
+        const completedTime = (updatedRequest.completedAt || new Date()).toISOString();
 
         const amountSent = updatedRequest.amountSent != null ? String(updatedRequest.amountSent) : '';
         const amountReceived = updatedRequest.amountReceived != null ? String(updatedRequest.amountReceived) : '';
@@ -426,6 +416,8 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
 
         const userFullName = `${(userFirst || '').trim()} ${(userLast || '').trim()}`.trim();
 
+        // Compose a more specific subject and preheader for inbox preview
+        const niceAmount = formatNumber(amountSent || amountReceived || '');
         const ref = updatedRequest.referenceID ? `${updatedRequest.referenceID}` : '';
 
         // Compute receipt hash for a direct receipt link
@@ -438,11 +430,19 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
           logger.warn('[Requests] Could not compute receipt hash', rhErr && rhErr.message);
         }
         const receiptUrl = receiptHash && frontendUrl ? `${frontendUrl}/transfers/receipt/${receiptHash}` : '';
+        const subject = ref ? `Transfer ${ref} — ${niceAmount} CAD — Completed` : `Your transfer is completed`;
 
-        const subject = 'Your Transaction Status: The money sent to Vietnam is now Completed!';
+        const preheader = ref
+          ? `Transfer ${ref} for ${niceAmount} CAD has been completed.`
+          : `Your transfer has been completed.`;
 
         const html = `
           <div style="font-family: Arial, sans-serif; color: #1f2937; line-height:1.4;">
+            <!-- Preheader (hidden) -->
+            <div style="display:none;max-height:0px;overflow:hidden;">${escapeHtml(preheader)}</div>
+            <div style="text-align:center; padding: 20px 0;">
+              <img src="${emailSvc.LOGO_DATA_URI}" alt="CanViet Exchange" style="height: 60px;" />
+            </div>
             <h2 style="font-size:20px;">Hello ${escapeHtml(userFullName || '')}</h2>
             <p>We have just delivered your money to the recipient safely. Your transfer is now <strong>completed</strong>. If your money is not delivered, please let us know <a href="${frontendUrl}/general/help">here</a>.</p>
 

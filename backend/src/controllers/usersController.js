@@ -15,6 +15,30 @@ exports.me = async (req, res) => {
   }
 }
 
+exports.updatePreferences = async (req, res) => {
+  try {
+    const userId = req.auth?.sub
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' })
+    const { receiveTransferEmails, receiveNewEmails } = req.body || {}
+
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ message: 'User not found' })
+
+    if (typeof receiveTransferEmails === 'boolean') {
+      user.receiveTransferEmails = receiveTransferEmails
+    }
+    if (typeof receiveNewEmails === 'boolean') {
+      user.receiveNewEmails = receiveNewEmails
+    }
+    user.updatedAt = new Date()
+    await user.save()
+    return res.json({ ok: true, user: user.toJSON() })
+  } catch (err) {
+    console.error('Users.updatePreferences error:', err)
+    return res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 exports.setPhone = async (req, res) => {
   try {
     const userId = req.auth?.sub

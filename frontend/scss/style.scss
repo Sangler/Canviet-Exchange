@@ -536,6 +536,61 @@ button[disabled] { opacity:.7; cursor:wait; }
 /* Small icon helper used in home hero flags */
 .icon-small { width: 28px; height: auto; vertical-align: middle; }
 
+/* Homepage hero video frame and video */
+.hero-video-frame {
+  border: 3px solid rgba(122, 122, 245, 0.85);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+
+.hero-video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Responsive sizing for hero video across devices */
+@media (max-width: 576px) {
+  .hero-video-frame {
+    border-width: 2px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+  }
+  .hero-video {
+    max-height: 220px;
+    object-fit: cover;
+  }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+  .hero-video {
+    max-height: 300px;
+    object-fit: cover;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  .hero-video {
+    max-height: 380px;
+    object-fit: cover;
+  }
+}
+
+@media (min-width: 993px) and (max-width: 1200px) {
+  .hero-video {
+    max-height: 440px;
+    object-fit: cover;
+  }
+}
+
+@media (min-width: 1201px) {
+  .hero-video {
+    max-height: 520px;
+    object-fit: cover;
+  }
+}
+
 /* Centered page flex helper (used by oauth callback) */
 .page-center-flex { display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column; gap: 1rem; }
 

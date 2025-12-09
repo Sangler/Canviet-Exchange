@@ -23,7 +23,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<MeResponse['user'] | null>(null);
   // Form state (prefill with user once loaded)
-  const [country, setCountry] = useState<string>('Canada');
+  const [country, setCountry] = useState<string>('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [preferredName, setPreferredName] = useState('');
@@ -215,33 +215,29 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
           const fullAddress = place.formatted_address || '';
           if (fullAddress) setStreet(fullAddress);
           
-          // Still parse components for city, province, country
+          // Still parse components for city, province (but NOT country - user sets that via dropdown)
           const comps = place.address_components || [];
           let cityVal = '';
           let provinceVal = '';
-          let countryVal = '';
           
           comps.forEach((c: any) => {
             const types = c.types || [];
             if (types.includes('locality') || types.includes('administrative_area_level_2')) cityVal = c.long_name || '';
             if (types.includes('administrative_area_level_1')) provinceVal = c.long_name || '';
-            if (types.includes('country')) countryVal = c.long_name || '';
           });
           
           if (cityVal) setCity(cityVal);
           if (provinceVal) setProvince(provinceVal);
-          if (countryVal) setCountry(countryVal);
           // Vietnam doesn't use postal codes in the same way
           setPostalCode('');
         } else {
-          // For Canada: parse address components normally
+          // For Canada: parse address components normally (but NOT country - user sets that via dropdown)
           const comps = place.address_components || [];
           let streetNumber = '';
           let route = '';
           let cityVal = '';
           let provinceVal = '';
           let postal = '';
-          let countryVal = '';
 
           comps.forEach((c: any) => {
             const types = c.types || [];
@@ -250,7 +246,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
             if (types.includes('locality')) cityVal = c.long_name || '';
             if (types.includes('administrative_area_level_1')) provinceVal = c.long_name || '';
             if (types.includes('postal_code')) postal = c.long_name || '';
-            if (types.includes('country')) countryVal = c.long_name || '';
           });
 
           const fullStreet = `${streetNumber} ${route}`.trim() || place.formatted_address || '';
@@ -258,7 +253,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
           if (cityVal) setCity(cityVal);
           if (postal) setPostalCode(postal);
           if (provinceVal) setProvince(provinceVal);
-          if (countryVal) setCountry(countryVal);
         }
       });
     } catch (err) {
@@ -477,17 +471,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       const trimmedProvince = province.trim();
       const trimmedCountry = country.trim();
 
-      // Validate postal code only for non-Vietnam countries (Canadian format: A1A 1A1 or A1A1A1 -> 6 alphanumeric chars)
-      if (trimmedCountry !== 'Vietnam') {
-        const postalNormalized = trimmedPostal.replace(/\s+/g, '').toUpperCase();
-        const postalRegex = /^[A-Z]\d[A-Z]\d[A-Z]\d$/;
-        if (!postalRegex.test(postalNormalized) || postalNormalized.length !== 6) {
-          surfaceError('Postal code must be in format A1A 1A1 (letters and digits, 6 characters).');
-          setSaving(false);
-          return;
-        }
-      }
-
       // For Vietnam, only street and country are required
       if (trimmedCountry === 'Vietnam') {
         if (!trimmedStreet || !trimmedCountry) {
@@ -496,7 +479,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
           return;
         }
       } else {
-        // For other countries, all fields are required
+        // For other countries (Canada), validate postal code and all fields
         if (!trimmedStreet || !trimmedPostal || !trimmedCity || !trimmedCountry) {
           surfaceError('Please complete your address (street, city, postal code, country).');
           setSaving(false);
@@ -505,6 +488,15 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
 
         if (!trimmedProvince) {
           surfaceError('Please select your province.');
+          setSaving(false);
+          return;
+        }
+
+        // Validate Canadian postal code format (A1A 1A1 or A1A1A1 -> 6 alphanumeric chars)
+        const postalNormalized = trimmedPostal.replace(/\s+/g, '').toUpperCase();
+        const postalRegex = /^[A-Z]\d[A-Z]\d[A-Z]\d$/;
+        if (!postalRegex.test(postalNormalized) || postalNormalized.length !== 6) {
+          surfaceError('Postal code must be in format A1A 1A1 (letters and digits, 6 characters).');
           setSaving(false);
           return;
         }
@@ -919,7 +911,6 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                     if (newCountry !== 'Select') {
                       // Reset autocomplete when country changes
                       initCalledRef.current = false;
-                      // Clear address fields
                       setStreet('');
                       setCity('');
                       setPostalCode('');

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getAuthToken } from '../lib/auth';
+import { useLanguage } from '../context/LanguageContext';
 import Head from 'next/head';
 
 export default function KycCallbackPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [status, setStatus] = useState<'checking' | 'verified' | 'pending' | 'failed'>('checking');
-  const [message, setMessage] = useState('Checking your verification status...');
+  const [message, setMessage] = useState(t('common.loading'));
 
   useEffect(() => {
     async function handleKycCallback() {
@@ -14,7 +16,7 @@ export default function KycCallbackPage() {
         const token = getAuthToken();
         if (!token) {
           setStatus('failed');
-          setMessage('Authentication required. Redirecting to login...');
+          setMessage(t('auth.redirecting'));
           setTimeout(() => router.push('/login'), 2000);
           return;
         }
@@ -32,7 +34,7 @@ export default function KycCallbackPage() {
 
         if (kycData.kycStatus === 'verified') {
           setStatus('verified');
-          setMessage('✅ Identity Verified! Redirecting you back to complete your transfer...');
+          setMessage(`✅ ${t('kyc.verificationComplete')}! ${t('auth.redirecting')}...`);
 
           // Simply redirect to transfers page with success flag
           setTimeout(() => {
@@ -41,13 +43,13 @@ export default function KycCallbackPage() {
 
         } else if (kycData.kycStatus === 'pending') {
           setStatus('pending');
-          setMessage('⏳ Your verification is still being processed. Please check back in a few minutes.');
+          setMessage(`⏳ ${t('kyc.verificationInProgress')}. ${t('auth.redirecting')}...`);
           setTimeout(() => router.push('/transfers'), 3000);
         } else if (kycData.kycStatus === 'rejected') {
           setStatus('failed');
           
           // Handle different rejection reasons
-          let rejectionMessage = '❌ Verification failed. ';
+          let rejectionMessage = `❌ ${t('auth.verificationFailed')}. `;
           if (kycData.code === 'duplicate_identity') {
             rejectionMessage += 'Duplicate user found. This identity is already registered with another account.';
           } else if (kycData.code === 'documentation_mismatch') {
@@ -66,18 +68,18 @@ export default function KycCallbackPage() {
           setTimeout(() => router.push('/transfers'), 5000);
         } else if (kycData.kycStatus === 'suspended') {
           setStatus('failed');
-          setMessage('❌ Account suspended due to multiple failed verification attempts. Please contact support.');
+          setMessage(`❌ ${t('suspended.title')}. ${t('suspended.contactSupport')}.`);
           setTimeout(() => router.push('/transfers'), 5000);
         } else {
           setStatus('failed');
-          setMessage('❌ Verification was not successful. Please try again.');
+          setMessage(`❌ ${t('auth.verificationFailed')}. Please try again.`);
           setTimeout(() => router.push('/transfers'), 3000);
         }
 
       } catch (error: any) {
         console.error('KYC callback error:', error);
         setStatus('failed');
-        setMessage(`Error: ${error.message}. Redirecting to transfers...`);
+        setMessage(`${t('common.error')}: ${error.message}. ${t('auth.redirecting')}...`);
         setTimeout(() => router.push('/transfers'), 3000);
       }
     }

@@ -792,6 +792,13 @@ exports.shuftiWebhook = async (req, res) => {
       return res.status(404).json({ ok: false, message: 'User not found' });
     }
 
+  
+    // Prevent duplicate webhook processing: if this reference was already processed, skip
+    if (user.KYCReference === reference && (user.KYCStatus === 'verified' || user.KYCStatus === 'rejected')) {
+      console.log('[Shufti Webhook] Duplicate webhook detected for reference:', reference, '- already processed');
+      return res.json({ ok: true, message: 'Webhook already processed' });
+    }
+
     // Update user KYC status based on event
     if (event === 'verification.accepted') {
       // Webhook only sends flags; poll Shufti to get full verification_data

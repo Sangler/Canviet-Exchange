@@ -5,12 +5,15 @@ import AppHeader from '../components/AppHeader';
 import AppFooter from '../components/AppFooter';
 import ReferralDashboard from '../components/ReferralDashboard';
 import RequireAuth from '../components/RequireAuth';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ReferralPage() {
+  const { t } = useLanguage();
+  
   return (
     <RequireAuth>
       <Head>
-        <title>Referral Program - CanViet Exchange</title>
+        <title>{t('referral.title')} - CanViet Exchange</title>
         <meta name="description" content="Invite friends and earn rewards with CanViet Exchange referral program" />
       </Head>
       
@@ -22,7 +25,7 @@ export default function ReferralPage() {
             <div className="container-lg">
               <div className="row">
                 <div className="col-12">
-                  <h1 className="mb-4">Referral Program</h1>
+                  <h1 className="mb-4">{t('referral.title')}</h1>
                   <ReferralDashboard />
                 </div>
               </div>

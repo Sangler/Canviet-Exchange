@@ -1,7 +1,10 @@
 import React from 'react';
 import { CFooter } from '@coreui/react';
+import { useLanguage } from '../context/LanguageContext';
 
 const AppFooter: React.FC = () => {
+  const { t } = useLanguage();
+  
   return (
     <CFooter className="px-4 py-4">
       <div className="container-fluid">
@@ -10,26 +13,26 @@ const AppFooter: React.FC = () => {
           <div className="col-md-3 mb-3 mb-md-0">
             <div>
               <a href="/" className="text-decoration-none fw-bold">
-                CanViet Exchange
+                {t('footer.brand')}
               </a>
               <p className="small text-medium-emphasis mt-2 mb-0">
-                &copy; 2025 Money Transfer Platform.
+                &copy; 2025 {t('footer.copyright')}
               </p>
             </div>
           </div>
 
           {/* Support Section */}
           <div className="col-md-3 mb-3 mb-md-0">
-            <h6 className="fw-bold mb-2">Support</h6>
+            <h6 className="fw-bold mb-2">{t('footer.support')}</h6>
             <ul className="list-unstyled mb-0">
               <li className="mb-2">
                 <a href="/general/help" className="text-decoration-none text-medium-emphasis">
-                  Help Center
+                  {t('footer.helpCenter')}
                 </a>
               </li>
               <li className="mb-2">
                 <a href="/general/terms-and-conditions" className="text-decoration-none text-medium-emphasis">
-                  Terms & Conditions
+                  {t('footer.termsConditions')}
                 </a>
               </li>
             </ul>
@@ -37,16 +40,16 @@ const AppFooter: React.FC = () => {
 
           {/* Company Section */}
           <div className="col-md-3 mb-3 mb-md-0">
-            <h6 className="fw-bold mb-2">Company</h6>
+            <h6 className="fw-bold mb-2">{t('footer.company')}</h6>
             <ul className="list-unstyled mb-0">
               <li className="mb-2">
                 <a href="/about" className="text-decoration-none text-medium-emphasis">
-                  About Us
+                  {t('footer.aboutUs')}
                 </a>
               </li>
               <li className="mb-2">
                 <a href="/license" className="text-decoration-none text-medium-emphasis">
-                  License
+                  {t('footer.license')}
                 </a>
               </li>
             </ul>
@@ -54,7 +57,7 @@ const AppFooter: React.FC = () => {
 
           {/* Connect Section */}
           <div className="col-md-3 mb-3 mb-md-0">
-            <h6 className="fw-bold mb-2">Connect</h6>
+            <h6 className="fw-bold mb-2">{t('footer.connect')}</h6>
             <div className="d-flex gap-3">
               <a 
                 href="https://facebook.com" 

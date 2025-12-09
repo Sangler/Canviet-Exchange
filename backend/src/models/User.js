@@ -7,7 +7,6 @@ const userSchema = new mongoose.Schema({
   KYCRejectionCount: { type: Number, default: 0 }, // Track duplicate identity attempts
 
   KyCDocumentUrl: { type: String, enum: ['ID Document', 'Driving license', 'Passport'] },
-  // IDNumber removed intentionally — do not store raw document numbers in user record
   email: {
     type: String,
     required: true,
@@ -38,7 +37,6 @@ const userSchema = new mongoose.Schema({
     country: { type: String }
   },
 
-  // Store only the live country reported by Shufti Pro (privacy-preserving)
   lastKycGeo: {
     raw: { type: String },
     iso2: { type: String }
@@ -92,9 +90,11 @@ const userSchema = new mongoose.Schema({
 
   // Privacy-preserving unique identity fingerprint derived from verified KYC fields
   identityKey: { type: String, sparse: true },
-
+  
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
+  receiveTransferEmails: { type: Boolean, default: true },
+  receiveNewEmails: { type: Boolean, default: true },
 });
 
 // Explicit indexes to ensure uniqueness constraints are created in MongoDB

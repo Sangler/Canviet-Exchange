@@ -108,7 +108,7 @@ const requestSchema = new mongoose.Schema({
     // Transfer content/message
     transferContent: {
       type: String,
-      maxlength: 50
+      maxlength: 30
     }
   },
   

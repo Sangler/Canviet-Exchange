@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAuthToken } from '../lib/auth';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 type RequestItem = {
   _id: string;
@@ -22,6 +23,7 @@ type RequestItem = {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isAdmin = user?.role === 'admin';
   const [data, setData] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,14 +110,14 @@ export default function DashboardPage() {
 
   return (
     <div className="container">
-      <h1 className="mb-4">{isAdmin ? 'All User Requests' : 'Your Requests'}</h1>
+      <h1 className="mb-4 text-center">{isAdmin ? t('dashboard.allUserRequests') : t('dashboard.yourRequests')}</h1>
       
       {/* Date Filter */}
       {!loading && data.length > 0 && (
         <div className="card mb-3 p-3">
           <div className="row align-items-center">
             <div className="col-auto">
-              <label htmlFor="dateFilter" className="form-label mb-0">Filter by Date:</label>
+              <label htmlFor="dateFilter" className="form-label mb-0">{t('dashboard.filterByDate')}</label>
             </div>
             <div className="col-auto">
               <input
@@ -135,13 +137,13 @@ export default function DashboardPage() {
                   className="btn btn-sm btn-secondary"
                   onClick={() => setFilterDate('')}
                 >
-                  Clear Filter
+                  {t('dashboard.clearFilter')}
                 </button>
               </div>
             )}
             <div className="col-auto ms-auto">
               <small className="text-muted">
-                Showing {paginatedData.length} of {filteredData.length} requests
+                {t('dashboard.showing')} {paginatedData.length} {t('dashboard.of')} {filteredData.length} {t('dashboard.requests')}
               </small>
             </div>
           </div>
@@ -149,22 +151,22 @@ export default function DashboardPage() {
       )}
 
       {loading ? (
-        <div className="card">Loading…</div>
+        <div className="card">{t('dashboard.loading')}</div>
       ) : data.length === 0 ? (
-        <div className="card empty">{isAdmin ? 'No requests found in the system.' : 'No requests yet. Create your first transfer to see it here.'}</div>
+        <div className="card empty">{isAdmin ? t('dashboard.noRequests') : t('dashboard.startFirstTransfer')}</div>
       ) : filteredData.length === 0 ? (
-        <div className="card empty">No requests found for the selected date.</div>
+        <div className="card empty">{t('dashboard.noRequests')}</div>
       ) : (
         <div className="card">
           <table>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Submitted</th>
-                <th>Amount</th>
-                <th>Rate</th>
-                <th>Status</th>
-                <th>Recipient Name</th>
+                <th>{t('dashboard.referenceId')}</th>
+                <th>{t('dashboard.date')}</th>
+                <th>{t('dashboard.amountSent')}</th>
+                <th>{t('dashboard.rate')}</th>
+                <th>{t('dashboard.status')}</th>
+                <th>{t('dashboard.recipient')}</th>
               </tr>
             </thead>
             <tbody>
@@ -195,10 +197,10 @@ export default function DashboardPage() {
                           }`}
                           style={{ minWidth: '120px' }}
                         >
-                          <option value="pending">Pending</option>
-                          <option value="approved">Approved</option>
-                          <option value="completed">Completed</option>
-                          <option value="reject">Rejected</option>
+                          <option value="pending">{t('dashboard.pending')}</option>
+                          <option value="approved">{t('dashboard.approved')}</option>
+                          <option value="completed">{t('dashboard.completed')}</option>
+                          <option value="reject">{t('dashboard.rejected')}</option>
                         </select>
                       ) : (
                         <span className={`badge ${
@@ -227,17 +229,17 @@ export default function DashboardPage() {
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
               >
-                Previous
+                {t('dashboard.pagination.previous')}
               </button>
               <span className="px-3">
-                Page {currentPage} of {totalPages}
+                {t('dashboard.pagination.page')} {currentPage} {t('dashboard.of')} {totalPages}
               </span>
               <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
               >
-                Next
+                {t('dashboard.pagination.next')}
               </button>
             </div>
           )}

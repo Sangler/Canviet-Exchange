@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { detectBrowser, getCompatibilityWarning, dismissCompatibilityWarning } from '../lib/browserCompatibility';
+import { useLanguage } from '../context/LanguageContext';
 
 /**
  * Browser compatibility warning banner
@@ -52,7 +53,7 @@ export default function BrowserCompatibilityWarning() {
           type="button"
           className="browser-warning-dismiss"
           onClick={handleDismiss}
-          aria-label="Dismiss warning"
+          aria-label={warning.includes('browser') ? 'Dismiss warning' : 'Dismiss warning'}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path
