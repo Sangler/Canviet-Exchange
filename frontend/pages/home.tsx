@@ -164,10 +164,10 @@ export default function Home() {
         <AppHeader />
 
 
-        <div className="body flex-grow-1 px-0 home-full-bleed">
-          <div className="container">
+        <div className="body flex-grow-1 home-full-bleed">
+          <div className="home-container-fullwidth">
             <div className="row g-0">
-              <div className="col-12 w-100">
+              <div className="col-12 w-100 home-col-no-padding">
                 
                 {/* Testimonials / Reviews Section */}
                 <section className="testimonials-section">
@@ -208,9 +208,18 @@ export default function Home() {
                   </div>
                 </div>
 
-                
-                <div className="main mb-4 border-0 bg-gradient">
-                  <div className="main-body hero-section text-center py-5">
+                    <div className="hero-content">
+                        <div className="d-flex gap-3 justify-content-center flex-wrap w-100">
+                        <a href="/register" className="btn btn-primary btn-lg">
+                          {t('home.hero.getStarted')}
+                        </a>
+                        <a href="/login" className="btn btn-outline-primary btn-lg">
+                          {t('auth.signIn')}
+                        </a>
+                      </div>
+                    </div>
+                <div className="hero-fullwidth-wrapper">
+                  <div className="main-body hero-section text-center">
                     <div className="hero-media" aria-hidden="true">
                       <div
                         className="hero-video-frame"
@@ -227,22 +236,9 @@ export default function Home() {
                         </video>
                       </div>
                     </div>
-                    <div className="hero-content">
-
-                        <div className="d-flex gap-3 justify-content-center flex-wrap">
-                        <a href="/register" className="btn btn-primary btn-lg">
-                          {t('home.hero.getStarted')}
-                        </a>
-                        <a href="/login" className="btn btn-outline-primary btn-lg">
-                          {t('auth.signIn')}
-                        </a>
-                      </div>
-
-                    </div>
                   </div>
                 </div>
 
-                
                 <div className="hero-card">
 
                   <section className="main mb-4">
@@ -345,7 +341,7 @@ export default function Home() {
                                     <div className="payment-icons d-flex justify-content-center gap-3 flex-wrap">
                                       <div className="payment-icon" title="Interac e-Transfer">
                                         <div>
-                                          <img src="/bank-icons/interac-etransfer.jpeg" alt="Interac e-Transfer" width="40" height="40" style={{ borderRadius: '8px' }} />
+                                          <img src="/bank-icons/interac-etransfer.jpeg" alt="Interac e-Transfer" width="40" height="40" className="interac-icon-rounded" />
                                         </div>
                                         <span className="small">Interac</span>
                                       </div>
