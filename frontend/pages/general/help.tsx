@@ -10,7 +10,7 @@ import { cilMoon, cilSun, cilArrowLeft } from '@coreui/icons';
 export default function HelpPage() {
   const { user, token } = useAuth();
   const router = useRouter();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   const [formData, setFormData] = useState({
     firstName: '',
@@ -206,120 +206,86 @@ export default function HelpPage() {
               <div className="col-lg-10">
                 <div className="card">
                   <div className="card-body p-4 p-md-5">
-                    <h1 className="mb-4">Help Center</h1>
+                    <h1 className="mb-4">{t('help.helpCenter.title')}</h1>
 
                     <section className="mb-5">
-                      <h2 className="h3 mb-3">Getting Started</h2>
+                      <h2 className="h3 mb-3">{t('help.helpCenter.gettingStarted.title')}</h2>
                       
                       <div className="mb-4">
-                        <h3 className="h5 mb-2">Do I need to verify my identity?</h3>
-                        <p className="mb-0">
-                          Email verification is required for all accounts. Additional identity verification may be required 
-                          for larger transfers to comply with Canadian financial regulations.
-                        </p>
+                        <h3 className="h5 mb-2">{t('help.helpCenter.gettingStarted.q1.q')}</h3>
+                        <p className="mb-0">{t('help.helpCenter.gettingStarted.q1.a')}</p>
                       </div>
                     </section>
 
                     {/* Sending Money */}
                     <section className="mb-5">
-                      <h2 className="h3 mb-3">Sending Money</h2>
+                      <h2 className="h3 mb-3">{t('help.helpCenter.sendingMoney.title')}</h2>
                       
                       <div className="mb-4">
-                        <h3 className="h5 mb-2">Why does my transfer take longer than expected?</h3>
-                        <ul className="mb-0">
-                          <li><strong>Card payments:</strong> within 24 business hours</li>
-                          <li><strong>E-Transfer:</strong> Within 24 business hours</li>
-                          <li><strong>Electronic Funds Transfers (EFT):</strong> 5-7 business days</li>
-                        </ul>
-                        <p className="mt-2 mb-0">
-                          <em>Note: Processing time may vary based on payment method, recipient bank, and other factors.</em>
-                        </p>
+                        <h3 className="h5 mb-2">{t('help.helpCenter.sendingMoney.q1.q')}</h3>
+                        <div dangerouslySetInnerHTML={{ __html: t('help.helpCenter.sendingMoney.q1.a') }} />
                       </div>
                     </section>
 
                     {/* Fees & Exchange Rates */}
                     <section className="mb-5">
+                      <h2 className="h3 mb-3">{t('help.helpCenter.feesRates.title')}</h2>
+                      
                       <div className="mb-4">
-                        <h3 className="h5 mb-2">How is your exchange rate calculated?</h3>
-                        <p className="mb-0">
-                          In order to have <strong>an appealing rate</strong>, we utilize stablecoin-backed dollar sending encrypted currency across the world. Our exchange rate is calculated accuracy in timing and better pricing.
-                        </p>
+                        <h3 className="h5 mb-2">{t('help.helpCenter.feesRates.q1.q')}</h3>
+                        <p className="mb-0" dangerouslySetInnerHTML={{ __html: t('help.helpCenter.feesRates.q1.a') }} />
                       </div>
 
                       <div className="mb-4">
-                        <h3 className="h5 mb-2">Will the exchange rate change after I submit?</h3>
-                        <p className="mb-0">
-                          The exchange rate shown at the time of confirmation is locked in for your transfer. 
-                          Rates are updated constantly to reflect current market conditions.
-                        </p>
+                        <h3 className="h5 mb-2">{t('help.helpCenter.feesRates.q2.q')}</h3>
+                        <p className="mb-0">{t('help.helpCenter.feesRates.q2.a')}</p>
                       </div>
                     </section>
 
                     {/* Tracking & Status */}
                     <section className="mb-5">
-                      <h2 className="h3 mb-3">Tracking & Status</h2>
+                      <h2 className="h3 mb-3">{t('help.helpCenter.tracking.title')}</h2>
                       
                       <div className="mb-4">
-                        <h3 className="h5 mb-2">How do I track my transfer?</h3>
-                        <p className="mb-0">
-                          Log in to your account and navigate to "Transfer History" in the dashboard. 
-                          You'll see the status of all your transfers with details including transaction ID, amount, and delivery status. You can also share the tracking link with your recipient.
-                        </p>
+                        <h3 className="h5 mb-2">{t('help.helpCenter.tracking.q1.q')}</h3>
+                        <p className="mb-0" dangerouslySetInnerHTML={{ __html: t('help.helpCenter.tracking.q1.a') }} />
                       </div>
 
                       <div className="mb-4">
-                        <h3 className="h5 mb-2">What do the different statuses mean?</h3>
-                        <ul className="mb-0">
-                          <li><strong>Pending:</strong> We've received your request and are processing it</li>
-                          <li><strong>Approved:</strong> Transfer approved and funds are being sent to recipient</li>
-                          <li><strong>Completed:</strong> Recipient has received the money</li>
-                          <li><strong>Rejected:</strong> Transfer could not be processed (contact support)</li>
-                        </ul>
+                        <h3 className="h5 mb-2">{t('help.helpCenter.tracking.q2.q')}</h3>
+                        <div dangerouslySetInnerHTML={{ __html: t('help.helpCenter.tracking.q2.a') }} />
                       </div>
                     </section>
 
                     {/* Troubleshooting */}
                     <section className="mb-5">
-                      <h2 className="h3 mb-3">Troubleshooting</h2>
+                      <h2 className="h3 mb-3">{t('help.helpCenter.troubleshooting.title')}</h2>
                       
                       <div className="mb-4">
-                        <h3 className="h5 mb-2">My transfer is taking longer than expected. What should I do?</h3>
-                        <p className="mb-0">
-                          Processing times can vary based on payment method, recipient bank policies, weekends, and holidays. 
-                          If your transfer is significantly delayed beyond the estimated delivery time, please contact our support team 
-                          with your transaction ID.
+                        <h3 className="h5 mb-2">{t('help.helpCenter.troubleshooting.q1.q')}</h3>
+                        <p className="mb-0">{t('help.helpCenter.troubleshooting.q1.a')}
                         </p>
                       </div>
 
                       <div className="mb-4">
-                        <h3 className="h5 mb-2">I entered the wrong recipient information. What can I do?</h3>
-                        <p className="mb-0">
-                          Contact support immediately if the transfer is still in "Pending" status. We may be able to correct 
-                          the information or cancel the transfer. Once approved or completed, we cannot modify recipient details.
-                        </p>
+                        <h3 className="h5 mb-2">{t('help.helpCenter.troubleshooting.q2.q')}</h3>
+                        <p className="mb-0">{t('help.helpCenter.troubleshooting.q2.a')}</p>
                       </div>
 
                       <div className="mb-4">
-                        <h3 className="h5 mb-2">Why was my transfer rejected?</h3>
-                        <p className="mb-0">
-                          Transfers may be rejected due to incorrect recipient information, compliance issues, 
-                          insufficient verification, or payment processing failures. Check your email for specific details 
-                          or contact support for assistance.
-                        </p>
+                        <h3 className="h5 mb-2">{t('help.helpCenter.troubleshooting.q3.q')}</h3>
+                        <div className="mb-0" dangerouslySetInnerHTML={{ __html: t('help.helpCenter.troubleshooting.q3.a') }} />
                       </div>
                     </section>
 
                     {/* FAQ Submission Form */}
                     <section className="mb-5" id="help-form-section">
-                      <h2 className="h3 mb-3">Submit Your Question</h2>
+                      <h2 className="h3 mb-3">{t('help.helpCenter.submitQuestion.title')}</h2>
                       
                       {isSuspended && (
                         <div className="alert alert-warning" role="alert">
-                          <strong>Account Suspended</strong>
-                          <p className="mb-0 mt-2">
-                            Your account has been suspended due to multiple duplicate identity attempts. 
-                            Please use the form below to contact our support team for assistance with your account.
-                          </p>
+                          <strong>{t('help.helpCenter.submitQuestion.suspendedAlert.title')}</strong>
+                          <p className="mb-0 mt-2">{t('help.helpCenter.submitQuestion.suspendedAlert.message')}</p>
                         </div>
                       )}
                       
@@ -328,7 +294,7 @@ export default function HelpPage() {
                           <form onSubmit={handleSubmit}>
                             <div className="row">
                               <div className="col-md-6 mb-3">
-                                <label htmlFor="firstName" className="form-label">First Name</label>
+                                <label htmlFor="firstName" className="form-label">{t('help.helpCenter.submitQuestion.form.firstName')}</label>
                                 <input
                                   type="text"
                                   className="form-control"
@@ -336,14 +302,14 @@ export default function HelpPage() {
                                   name="firstName"
                                   value={formData.firstName}
                                   onChange={handleInputChange}
-                                  placeholder="Enter your first name"
+                                  placeholder={t('help.helpCenter.submitQuestion.form.firstName')}
                                   required
                                   disabled={submitStatus === 'submitting' || (userDataLoaded && !!formData.firstName)}
                                 />
                               </div>
 
                               <div className="col-md-6 mb-3">
-                                <label htmlFor="lastName" className="form-label">Last Name</label>
+                                <label htmlFor="lastName" className="form-label">{t('help.helpCenter.submitQuestion.form.lastName')}</label>
                                 <input
                                   type="text"
                                   className="form-control"
@@ -351,7 +317,7 @@ export default function HelpPage() {
                                   name="lastName"
                                   value={formData.lastName}
                                   onChange={handleInputChange}
-                                  placeholder="Enter your last name"
+                                  placeholder={t('help.helpCenter.submitQuestion.form.lastName')}
                                   required
                                   disabled={submitStatus === 'submitting' || (userDataLoaded && !!formData.lastName)}
                                 />
@@ -359,7 +325,7 @@ export default function HelpPage() {
                             </div>
 
                             <div className="mb-3">
-                              <label htmlFor="email" className="form-label">Email</label>
+                              <label htmlFor="email" className="form-label">{t('help.helpCenter.submitQuestion.form.email')}</label>
                               <input
                                 type="email"
                                 className="form-control"
@@ -367,14 +333,14 @@ export default function HelpPage() {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleInputChange}
-                                placeholder="Enter your email"
+                                placeholder={t('help.helpCenter.submitQuestion.form.email')}
                                 required
                                 disabled={submitStatus === 'submitting' || (userDataLoaded && !!formData.email)}
                               />
                             </div>
 
                             <div className="mb-3">
-                              <label htmlFor="topic" className="form-label">Topic</label>
+                              <label htmlFor="topic" className="form-label">{t('help.helpCenter.submitQuestion.form.topic')}</label>
                               <select
                                 id="topic"
                                 name="topic"
@@ -391,19 +357,13 @@ export default function HelpPage() {
                                 disabled={submitStatus === 'submitting'}
                                 required
                               >
-                                <option value="">Select a topic...</option>
-                                <option value={"Why my transfer is delayed more than expected time?"}>Why my transfer is delayed more than expected time?</option>
-                                <option value={"Why my transfer is completed but recipient has not received the money?"}>Why my transfer is completed but recipient has not received the money?</option>
-                                <option value={"How can I track my transfer?"}>How can I track my transfer?</option>
-                                <option value={"How do I change recipient information?"}>How do I change recipient information?</option>
-                                <option value={"Questions about fees and exchange rate"}>Questions about fees and exchange rate</option>
-                                <option value={"Why I cannot perform KYC with my documents?"}>Why I cannot perform KYC with my documents?</option>
-                                <option value={"Why my account is suspended?"}>Why my account is suspended?</option>
-                                <option value={"Report or Found a bug?"}>Report or Found a bug?</option>
-                                <option value={"other"}>Other (specify below)</option>
+                                <option value="">{t('help.helpCenter.submitQuestion.form.topicPlaceholder')}</option>
+                                {t('help.helpCenter.submitQuestion.form.topicOptions', { returnObjects: true }).map((opt: string, idx: number) => (
+                                  <option key={idx} value={opt}>{opt}</option>
+                                ))}
                               </select>
 
-                              {formData.topic === 'other' ? (
+                              {formData.topic === 'other' || formData.topic === t('help.helpCenter.submitQuestion.form.topicOptions', { returnObjects: true })[8] ? (
                                 <div className="mt-2">
                                   <input
                                     type="text"
@@ -412,22 +372,23 @@ export default function HelpPage() {
                                     name="title"
                                     value={formData.title}
                                     onChange={handleInputChange}
-                                    placeholder="Please describe your topic..."
+                                    placeholder={t('help.helpCenter.submitQuestion.form.titlePlaceholder')}
                                     maxLength={100}
                                     required
                                     disabled={submitStatus === 'submitting'}
                                   />
-                                  <small className="text-muted">{formData.title.length}/100 characters</small>
+                                  <small className="text-muted">{formData.title.length}/100 {t('help.helpCenter.submitQuestion.form.charactersLimit')}</small>
+                                  <small className="text-muted d-block">{t('help.helpCenter.submitQuestion.form.titleNote')}</small>
                                 </div>
                               ) : (
                                 formData.title && (
-                                  <small className="text-muted d-block mt-2">Selected topic will be used as the title.</small>
+                                  <small className="text-muted d-block mt-2">{t('help.helpCenter.submitQuestion.form.titleNote')}</small>
                                 )
                               )}
                             </div>
 
                             <div className="mb-3">
-                              <label htmlFor="content" className="form-label">Your Question/Feedback</label>
+                              <label htmlFor="content" className="form-label">{t('help.helpCenter.submitQuestion.form.content')}</label>
                               <textarea
                                 className="form-control"
                                 id="content"
@@ -435,12 +396,12 @@ export default function HelpPage() {
                                 rows={5}
                                 value={formData.content}
                                 onChange={handleInputChange}
-                                placeholder="Please describe your question or provide feedback in detail..."
+                                placeholder={t('help.helpCenter.submitQuestion.form.contentPlaceholder')}
                                 maxLength={300}
                                 required
                                 disabled={submitStatus === 'submitting'}
                               />
-                              <small className="text-muted">{formData.content.length}/300 characters</small>
+                              <small className="text-muted">{formData.content.length}/300 {t('help.helpCenter.submitQuestion.form.charactersLimit')}</small>
                             </div>
 
                             {errorMessage && (
@@ -451,27 +412,37 @@ export default function HelpPage() {
 
                             {submitStatus === 'success' && (
                               <div className="alert alert-success" role="alert">
-                                <strong>Thank you!</strong> Your feedback has been submitted successfully. Our team will review it shortly.
+                                {t('help.helpCenter.submitQuestion.form.successMessage')}
                               </div>
                             )}
 
                             <div className="d-flex gap-2">
-                              <button 
-                                type="submit" 
-                                className="btn btn-primary"
-                                disabled={submitStatus === 'submitting' || submitStatus === 'success'}
-                              >
-                                {submitStatus === 'submitting' ? (
-                                  <>
-                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                    Submitting...
-                                  </>
-                                ) : submitStatus === 'success' ? (
-                                  '✓ Submitted'
-                                ) : (
-                                  'Submit Feedback'
-                                )}
-                              </button>
+                              {!token ? (
+                                <button 
+                                  type="button" 
+                                  className="btn btn-primary"
+                                  onClick={() => router.push('/login')}
+                                >
+                                  {t('help.helpCenter.submitQuestion.form.loginButton')}
+                                </button>
+                              ) : (
+                                <button 
+                                  type="submit" 
+                                  className="btn btn-primary"
+                                  disabled={submitStatus === 'submitting' || submitStatus === 'success'}
+                                >
+                                  {submitStatus === 'submitting' ? (
+                                    <>
+                                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                      {t('help.helpCenter.submitQuestion.form.submittingButton')}
+                                    </>
+                                  ) : submitStatus === 'success' ? (
+                                    '✓ ' + t('help.helpCenter.submitQuestion.form.submitButton')
+                                  ) : (
+                                    t('help.helpCenter.submitQuestion.form.submitButton')
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </form>
                         </div>
@@ -483,29 +454,25 @@ export default function HelpPage() {
 
                     {/* Contact Support */}
                     <section className="mb-4">
-                      <h2 className="h3 mb-3">Still Need Help?</h2>
+                      <h2 className="h3 mb-3">{t('help.helpCenter.stillNeedHelp.title')}</h2>
                       <div className="alert alert-info show">
-                        <h4 className="alert-heading h5">Contact Our Support Team</h4>
-                        <p className="mb-2">
-                          If you couldn't find the answer to your question, contact our support team directly!
-                        </p>
+                        <h4 className="alert-heading h5">{t('help.helpCenter.stillNeedHelp.contactTeam')}</h4>
+                        <p className="mb-2">{t('help.helpCenter.stillNeedHelp.intro')}</p>
                         
                         <hr />
-                        <p className="mb-0">
-                          <strong>Email:</strong> services@canvietexchange.com<br />
-                          <strong>Hours:</strong> Monday - Friday, 9:00 AM - 5:00 PM PST<br />
-                          <strong>Response Time:</strong> Within 24 hours
-                        </p>
+                        {t('help.helpCenter.stillNeedHelp.details', { returnObjects: true }).map((detail: string, idx: number) => (
+                          <p key={idx} className="mb-0" dangerouslySetInnerHTML={{ __html: detail }} />
+                        ))}
                       </div>
                     </section>
 
                     {/* Back to Home */}
                     <div className="text-center mt-5">
                       <a href="/transfers" className="btn btn-primary">
-                        Start a Transfer
+                        {t('help.helpCenter.stillNeedHelp.actions.submitQuestion')}
                       </a>
                       <a href="/dashboard" className="btn btn-outline-secondary ms-2">
-                        Go to Dashboard
+                        {t('help.helpCenter.stillNeedHelp.actions.viewHistory')}
                       </a>
                     </div>
                   </div>

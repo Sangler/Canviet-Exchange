@@ -2,7 +2,7 @@ const crypto = require('crypto')
 const { getRedisClient } = require('./redis')
 
 const PEPPER = process.env.OTP_PEPPER || ''
-const OTP_TTL_SEC = Number(process.env.OTP_TTL_SEC || process.env.OTP_TTL_SECONDS || 300)
+const OTP_TTL_SEC = Number(process.env.OTP_TTL_SECONDS || 60)
 const MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5)
 const logger = require('../utils/logger')
 

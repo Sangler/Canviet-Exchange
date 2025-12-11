@@ -44,10 +44,92 @@ function isCanadianNumber(phone) {
   return typeof phone === 'string' && phone.startsWith('+1') && phone.replace(/\D/g, '').length === 11
 }
 
+/**
+ * Validates phone number using Twilio Lookup v2 API
+ * Returns validation result and line type information
+ * Cost: Basic lookup is FREE, line_type_intelligence costs $0.005 per lookup
+ */
+async function validatePhoneWithLookup(phone) {
+  if (!twilioClient) {
+    logger.warn('[twilio.service] Lookup skipped - Twilio client not initialized')
+    return { valid: true, skipped: true } // Skip validation if Twilio not configured
+  }
+
+  const enableLookup = (process.env.TWILIO_ENABLE_LOOKUP || 'true').toLowerCase() === 'true'
+  if (!enableLookup) {
+    logger.debug('[twilio.service] Lookup disabled via TWILIO_ENABLE_LOOKUP')
+    return { valid: true, skipped: true }
+  }
+
+  try {
+    // Use Basic Lookup (FREE) to validate phone number format
+    const lookup = await twilioClient.lookups.v2
+      .phoneNumbers(phone)
+      .fetch()
+
+    if (!lookup.valid) {
+      const errors = lookup.validationErrors || []
+      logger.warnMeta('[twilio.service] Lookup validation failed', { phone: phone.slice(0,5)+'***', errors })
+      return { 
+        valid: false, 
+        reason: 'invalid_number',
+        errors: errors
+      }
+    }
+
+    // Restrict to Canada (CA) and US (US) only
+    const allowedCountries = ['CA', 'US']
+    if (!allowedCountries.includes(lookup.countryCode)) {
+      logger.warnMeta('[twilio.service] Phone number from unsupported country', { 
+        phone: phone.slice(0,5)+'***',
+        countryCode: lookup.countryCode 
+      })
+      return { 
+        valid: false, 
+        reason: 'unsupported_country',
+        countryCode: lookup.countryCode,
+        message: 'Only Canada and US phone numbers are supported'
+      }
+    }
+
+    logger.infoMeta('[twilio.service] Lookup validation passed', { 
+      phone: phone.slice(0,5)+'***',
+      countryCode: lookup.countryCode,
+      nationalFormat: lookup.nationalFormat
+    })
+
+    return { 
+      valid: true, 
+      phoneNumber: lookup.phoneNumber,
+      nationalFormat: lookup.nationalFormat,
+      countryCode: lookup.countryCode
+    }
+  } catch (err) {
+    // If lookup fails (e.g., network error, rate limit), log but don't block OTP
+    logger.errorMeta('[twilio.service] Lookup API error', err, { phone: phone.slice(0,5)+'***' })
+    return { valid: true, skipped: true, error: err.message }
+  }
+}
+
 async function issuePhoneOtp(phone, opts = {}) {
-  const { length = 6, ttlSeconds = Number(process.env.OTP_TTL_SECONDS || 300), sendSms = true } = opts
+  const { length = 6, ttlSeconds = Number(process.env.OTP_TTL_SECONDS || 60), sendSms = true } = opts
   if (!phone) return { ok: false, reason: 'phone_required' }
   if (!isCanadianNumber(phone)) return { ok: false, reason: 'invalid_phone' }
+
+  // Validate phone number using Twilio Lookup v2 API before sending SMS
+  const lookupResult = await validatePhoneWithLookup(phone)
+  if (!lookupResult.valid) {
+    logger.warnMeta('[twilio.service] Phone validation failed', { 
+      phone: phone.slice(0,5)+'***', 
+      reason: lookupResult.reason,
+      errors: lookupResult.errors 
+    })
+    return { 
+      ok: false, 
+      reason: lookupResult.reason || 'invalid_phone',
+      validationErrors: lookupResult.errors 
+    }
+  }
 
   const redis = await getRedisClient()
   const key = `otp:phone:${phone}`
@@ -143,4 +225,4 @@ async function verifyPhoneOtp(phone, code) {
   return ok ? { ok: true } : { ok: false, reason: 'invalid_code' }
 }
 
-module.exports = { issuePhoneOtp, verifyPhoneOtp, isCanadianNumber }
+module.exports = { issuePhoneOtp, verifyPhoneOtp, isCanadianNumber, validatePhoneWithLookup }

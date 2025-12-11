@@ -308,12 +308,20 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       const data = await resp.json();
       
       if (!resp.ok) {
+        // Check if it's a phone validation error from Twilio Lookup
+        if (data?.reason === 'invalid_number' || data?.reason === 'invalid_phone') {
+          throw new Error('Please enter an existing phone number.');
+        }
+        // Check if it's a country restriction error
+        if (data?.reason === 'unsupported_country') {
+          throw new Error('Only Canada and US phone numbers are supported.');
+        }
         throw new Error(data?.message || 'Failed to send verification code');
       }
       
       setPhoneOtpSent(true);
       // Start UI countdown using server-provided TTL when available
-      const expires = typeof data?.expiresIn === 'number' ? Number(data.expiresIn) : 60
+      const expires = typeof data?.expiresIn === 'number' ? Number(data.expiresIn) : 61
       setOtpCountdown(expires);
       setError(null);
     } catch (err: any) {

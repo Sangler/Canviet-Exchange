@@ -2,6 +2,7 @@ import { Provider } from 'react-redux'
 import type { AppProps } from 'next/app'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
+import Script from 'next/script'
 import store from '../store/store'
 import '../styles/globals.css'
 import '../scss/style.scss'
@@ -39,6 +40,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       <LanguageProvider>
         <AuthProvider>
           <BrowserCompatibilityWarning />
+          <Script src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" strategy="afterInteractive" />
           <AppContent Component={Component} pageProps={pageProps} />
         </AuthProvider>
       </LanguageProvider>

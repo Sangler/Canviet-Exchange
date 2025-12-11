@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { getAuthToken, logout } from '../lib/auth';
 import { useLanguage } from '../context/LanguageContext';
+import { getSafeRedirectPath } from '../lib/routeValidation';
 import RequireAuth from '../components/RequireAuth';
 
 export default function VerifyEmailPage() {
@@ -131,7 +132,7 @@ export default function VerifyEmailPage() {
       
       if (!resp.ok) throw new Error(data?.message || t('auth.verificationFailed'));
       
-      const next = (router.query.next as string) || '/';
+      const next = getSafeRedirectPath(router.query.next, '/dashboard');
       await router.replace(next);
     } catch (e: any) {
       setStatus(e?.message || t('auth.verificationFailed'));

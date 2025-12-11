@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { setAuthToken } from "../lib/auth";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { getSafeRedirectPath } from "../lib/routeValidation";
 import { CSpinner, useColorModes } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import { cilMoon, cilSun } from "@coreui/icons";
@@ -52,17 +53,13 @@ export default function LoginPage() {
   }, [router.query.error]);
 
   // If user is already authenticated, redirect away from /login
+  // Uses getSafeRedirectPath to validate the 'next' parameter and prevent 404 errors
   useEffect(() => {
     if (authLoading) return;
     const isAuthed = Boolean(token) && Boolean(user);
     if (isAuthed) {
-      const nextParam = Array.isArray(router.query.next)
-        ? router.query.next[0]
-        : router.query.next;
-      const target =
-        typeof nextParam === "string" && nextParam.startsWith("/")
-          ? nextParam
-          : "/transfers";
+      // Validates route exists before redirecting, falls back to /transfers if invalid
+      const target = getSafeRedirectPath(router.query.next, '/transfers');
       void router.replace(target);
     }
   }, [authLoading, token, user, router, router.query.next]);
@@ -128,14 +125,8 @@ export default function LoginPage() {
       }
 
       setSuccess(true);
-      // Compute intended next page
-      const nextParam = Array.isArray(router.query.next)
-        ? router.query.next[0]
-        : router.query.next;
-      const target =
-        typeof nextParam === "string" && nextParam.startsWith("/")
-          ? nextParam
-          : "/transfers";
+      // Compute intended next page with validation
+      const target = getSafeRedirectPath(router.query.next, '/transfers');
 
       // If email is not verified, go straight to /verify-email with the intended target
       let emailVerified: boolean | undefined = userFromLogin?.emailVerified;
@@ -434,7 +425,7 @@ export default function LoginPage() {
                 </svg>
               </div>
             </button>
-            <p className="form-note small text-medium-emphasis mt-3 text-center">By using our services, you agree to our <a href="/general/terms-and-conditions" className="text-link">terms &amp; conditions</a></p>
+            <p className="form-note small text-medium-emphasis mt-3 text-center">{t('common.form-note')} <a href="/general/terms-and-conditions" className="text-link">{t('common.form-note-href')}</a></p>
           </form>
 
           <div className="divider">

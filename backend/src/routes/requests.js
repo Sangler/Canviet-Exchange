@@ -389,19 +389,92 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
     }
 
     logger.info(`[Requests] Updated request ${id} status to ${status}`);
-
-    // If status changed to completed, notify the user by email
-    if (status === 'completed') {
+    // If status changed to approved, notify the admin/services inbox for follow-up
+    if (status === 'approved') {
       try {
-        // Fetch user details if possible for name
+        const ref = updatedRequest.referenceID || '';
+        const summary = ref ? `Request ${ref} approved` : `Request ${updatedRequest._id} approved`;
+        // Send admin notification (best-effort)
+        emailSvc.notifyNewPendingRequest({
+          type: 'Request Approved',
+          userId: String(updatedRequest.userId || ''),
+          userEmail: updatedRequest.userEmail || '',
+          summary,
+          payload: updatedRequest
+        }).catch(err => logger.warn('[email] notifyNewPendingRequest (approved) failed', err && err.message));
+      } catch (notifyErr) {
+        logger.warn('[Requests] Failed to send admin notification for approved request', notifyErr && notifyErr.message);
+      }
+    }
+
+    // If status changed to approved, also send brief notification to the user (if they accept transfer emails)
+    if (status === 'approved') {
+      try {
+        // Load user preferences and email
+        let userReceiveEmails = true;
+        let userEmailAddr = updatedRequest.userEmail || '';
         let userFirst = '';
         let userLast = '';
         try {
           const User = require('../models/User');
-          const u = await User.findById(updatedRequest.userId).select('firstName lastName email');
+          const u = await User.findById(updatedRequest.userId).select('firstName lastName email receiveTransferEmails');
+          if (u) {
+            if (typeof u.receiveTransferEmails === 'boolean') userReceiveEmails = u.receiveTransferEmails;
+            if (u.email) userEmailAddr = u.email;
+            userFirst = u.firstName || '';
+            userLast = u.lastName || '';
+          }
+        } catch (uErr) {
+          logger.warn('[Requests] Could not load user for approved-email notification', uErr && uErr.message);
+        }
+
+        if (!userReceiveEmails) {
+          logger.info('[Requests] User opted out of transfer emails; skipping approved email', { requestId: updatedRequest._id, userId: updatedRequest.userId });
+        } else if (userEmailAddr) {
+          const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+          const userFull = `${(userFirst || '').trim()} ${(userLast || '').trim()}`.trim();
+          const ref = updatedRequest.referenceID ? `${updatedRequest.referenceID}` : '';
+          const subject = ref ? `Transfer ${ref} — Funds received` : 'We have received your funds';
+          const text = `Hello ${userFull || ''}\n\nWe have received your funds and will proceed to send them to the recipient. You can view your transfer in your account: ${frontendUrl}/transfers\n\nIf you'd like to leave feedback, please review us on Trustpilot: https://www.trustpilot.com/review/canvietexchange.com\n\nTo opt out of these emails, go to ${frontendUrl}/settings and turn off Receive transfer emails.`;
+          const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.4;">` +
+            `<div style="text-align:center;padding:20px 0;"><img src="${emailSvc.LOGO_DATA_URI}" alt="CanViet Exchange" style="height:50px;"/></div>` +
+            `<div style="padding:12px;"><h2>Hi ${escapeHtml(userFull || '')}</h2><p>We have received your funds and will now proceed to send them to the recipient. You can view the transfer in your account: <a href="${frontendUrl}/transfers">${frontendUrl}/transfers</a>.</p>` +
+            `<p style="text-align:center;margin:12px 0;"><a href="https://www.trustpilot.com/review/canvietexchange.com" target="_blank" rel="noopener noreferrer" style="background:#00b67a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;">Review us on Trustpilot</a></p>` +
+            `<p style="font-size:12px;color:#6b7280;">To stop receiving these emails, go to <a href="${frontendUrl}/settings">${frontendUrl}/settings</a> and turn off &quot;Receive transfer emails&quot;, then save changes.</p></div></body></html>`;
+
+          try {
+            await emailSvc.sendMail({
+              from: process.env.EMAIL_USER || process.env.CANVIETEXCHANGE_EMAIL_USER || undefined,
+              to: userEmailAddr,
+              bcc: process.env.TRUSTPILOT_INVITE_EMAIL || 'canvietexchange.com+61a7cdf283@invite.trustpilot.com',
+              subject,
+              text,
+              html
+            });
+          } catch (mailErr) {
+            logger.error('[Requests] Failed to send approved email to user:', mailErr && mailErr.message);
+          }
+        }
+      } catch (err) {
+        logger.error('[Requests] Error preparing approved notification:', err && err.message);
+      }
+    }
+    // If status changed to completed, notify the user by email
+    if (status === 'completed') {
+      try {
+        // Fetch user details if possible for name and email preferences
+        let userFirst = '';
+        let userLast = '';
+        let userReceiveEmails = true; // default true
+        let userEmailAddr = updatedRequest.userEmail || '';
+        try {
+          const User = require('../models/User');
+          const u = await User.findById(updatedRequest.userId).select('firstName lastName email receiveTransferEmails');
           if (u) {
             userFirst = u.firstName || '';
             userLast = u.lastName || '';
+            if (typeof u.receiveTransferEmails === 'boolean') userReceiveEmails = u.receiveTransferEmails;
+            if (u.email) userEmailAddr = u.email;
           }
         } catch (uErr) {
           logger.warn('[Requests] Could not load user for email notification', uErr.message);
@@ -460,6 +533,13 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
 
             <hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0;" />
 
+            <!-- Trustpilot review CTA -->
+            <div style="text-align:center; margin:16px 0;">
+              <p style="margin:8px 0;">If you're happy with our service, please leave us a review on Trustpilot.</p>
+              <p style="margin:8px 0;"><a href="https://www.trustpilot.com/review/canvietexchange.com" target="_blank" rel="noopener noreferrer" style="background:#00b67a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;">Leave a review on Trustpilot</a></p>
+              <p style="margin:12px 0;font-size:12px;color:#6b7280;">To opt out of transfer completion emails, go to <a href="${frontendUrl}/settings">${frontendUrl}/settings</a>, turn off "Receive transfer emails", then save changes.</p>
+            </div>
+
             <h3>Thông báo</h3>
             <p>Xin chào ${escapeHtml(userFullName || '')},</p>
             <p>Chúng tôi vừa chuyển tiền đến người nhận an toàn. Giao dịch của bạn đã <strong>hoàn thành</strong>. Nếu tiền chưa được nhận, vui lòng liên hệ với chúng tôi <a href="${frontendUrl}/general/help">tại đây</a>.</p>
@@ -481,17 +561,23 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
 
         const text = `Hello ${userFullName}\n\nWe have just delivered your money to the recipient safely. Your transfer is now completed. If your money is not delivered, please let us know: ${frontendUrl}/general/help\n\nPayment details:\nCompleted time: ${completedTime}\nAmount Sent: ${amountSent} CAD\nAmount Received: ${formatNumber(amountReceived)} VND\nPayment method: ${paymentMethod}\nStatus: Completed\n\n---\nVietnamese:\nXin chào ${userFullName},\nChúng tôi vừa chuyển tiền đến người nhận an toàn. Giao dịch của bạn đã hoàn thành. Nếu tiền chưa được nhận, vui lòng liên hệ với chúng tôi tại: ${frontendUrl}/general/help`;
 
-        // Send email from services inbox to the user (no CC by default)
-        try {
-          await emailSvc.sendMail({
-            from: process.env.EMAIL_USER || process.env.CANVIETEXCHANGE_EMAIL_USER || undefined,
-            to: updatedRequest.userEmail,
-            subject,
-            text,
-            html
-          });
-        } catch (mailErr) {
-          logger.error('[Requests] Failed to send completion email:', mailErr && mailErr.message);
+        // Respect user's preference: if they opted out of transfer emails, skip sending
+        if (!userReceiveEmails) {
+          logger.info('[Requests] User opted out of transfer emails; skipping completion email for request', { requestId: updatedRequest._id, userId: updatedRequest.userId });
+        } else {
+          // Send email from services inbox to the user and BCC Trustpilot invite address (best-effort)
+          try {
+            await emailSvc.sendMail({
+              from: process.env.EMAIL_USER || process.env.CANVIETEXCHANGE_EMAIL_USER || undefined,
+              to: userEmailAddr,
+              bcc: process.env.TRUSTPILOT_INVITE_EMAIL || 'canvietexchange.com+61a7cdf283@invite.trustpilot.com',
+              subject,
+              text,
+              html
+            });
+          } catch (mailErr) {
+            logger.error('[Requests] Failed to send completion email:', mailErr && mailErr.message);
+          }
         }
       } catch (notifyErr) {
         logger.error('[Requests] Error preparing completion notification:', notifyErr && notifyErr.message);

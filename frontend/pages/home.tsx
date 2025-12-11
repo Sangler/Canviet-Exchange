@@ -169,17 +169,30 @@ export default function Home() {
             <div className="row g-0">
               <div className="col-12 w-100 home-col-no-padding">
                 
-                {/* Testimonials / Reviews Section */}
+                {/* Testimonials / Reviews Section (Trustpilot link only) */}
                 <section className="testimonials-section">
                   <div className="container">
                     <div className="text-center">
-                                  <div className="logo">
-              <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
-            </div>
+                      <div className="logo">
+                        <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
+                      </div>
                       <h2 className="section-title">{t('home.hero.title')}</h2>
                       <div className="trust-badge">
-                        <div className="stars">★★★★★</div>
-                        <p className="mb-0"><strong>4.8 out of 5</strong> based on 1,200+ reviews</p>
+                        <p className="mb-0">
+                          <a
+                            href="https://www.trustpilot.com/review/canvietexchange.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="trustpilot-link"
+                          >
+                            See our reviews on{' '}<img
+                              src="/flags/Trustpilot_Logo.svg"
+                              alt="Trustpilot"
+                              className="trustpilot-icon"
+                              style={{ height: '1rem', verticalAlign: 'middle', margin: '0 0.35rem' }}
+                            /> Trustpilot!
+                          </a>
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -188,22 +201,22 @@ export default function Home() {
                  <div className="main mb-4 border-0t">
                   <div className="main text-center py-4">
                       <h1 className="display-4 mb-3">
-                        {rate ? `1 CAD = ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND` : 'Exchange Rate'}
+                        {rate ? `1 CAD = ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND` : t('home.exchangeFallback')}
                       </h1>
                       <p className="lead text-medium-emphasis mb-4">
-                        Send money from Canada{' '}
+                        {t('home.sendFromCanada')}{' '}
                         <img 
                           src="/flags/Flag_of_Canada.png" 
                           alt="Canada" 
                           className="icon-small" 
-                        />
-                        {' '}to Vietnam{' '}
+                        />{' '}
+                        {t('home.toVietnam')}{' '}
                         <img 
                           src="/flags/Flag_of_Vietnam.png" 
                           alt="Vietnam" 
                           className="icon-small" 
-                        />
-                        {' '}with transparent rates and fast delivery.
+                        />{' '}
+                        {t('home.withRatesAndDelivery')}
                       </p>
                   </div>
                 </div>
@@ -267,7 +280,7 @@ export default function Home() {
                                     {rate && (
                                       <div className="form-group mb-2">
                                         <div className="label-inline-info">
-                                          1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND <strong>Best Rate</strong>
+                                          1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND <strong>{t('home.bestRateLabel')}</strong>
                                           <button
                                             type="button"
                                             aria-label="Rate details"
@@ -283,7 +296,7 @@ export default function Home() {
                                           </button>
                                         </div>
                                         {amountFrom && parseFloat(amountFrom) > 0 && effectiveRate && (
-                                          <div className="label-inline-info mt-1">Your rate: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND</div>
+                                          <div className="label-inline-info mt-1">{t('home.calculator.yourRate')}: 1 CAD = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate)} VND</div>
                                         )}
                                       </div>
                                     )}
@@ -294,14 +307,14 @@ export default function Home() {
                                           type="number"
                                           id="amountFrom"
                                           name="amountFrom"
-                                          placeholder="You Send CAD"
+                                          placeholder={t('home.placeholders.youSend')}
                                           min={20}
                                           max={9999}
                                           step="0.01"
                                           value={amountFrom}
                                           onChange={(e) => formatCurrencyInput(e, 'from')}
                                           inputMode="decimal"
-                                          aria-label="You send"
+                                          aria-label={t('home.calculator.youSend')}
                                         />
                                         <div className="currency-suffix" aria-hidden="true">
                                           <img className="flag" src="/flags/Flag_of_Canada.png" alt="" />
@@ -318,12 +331,12 @@ export default function Home() {
                                           type="text"
                                           id="amountTo"
                                           name="amountTo"
-                                          placeholder="They Receive VND"
+                                          placeholder={t('home.placeholders.theyReceive')}
                                           value={amountTo}
                                           onChange={(e) => formatCurrencyInput(e, 'to')}
                                           inputMode="numeric"
                                           pattern="[0-9,]*"
-                                          aria-label="They receive"
+                                          aria-label={t('home.calculator.recipientGets')}
                                         />
                                         <div className="currency-suffix" aria-hidden="true">
                                           <img className="flag" src="/flags/Flag_of_Vietnam.png" alt="" />
@@ -337,7 +350,7 @@ export default function Home() {
                                 {/* Payment Methods Display */}
                                 <div className="payment-methods-preview mt-4">
                                   <div className="text-center mb-3">
-                                    <strong className="d-block mb-2">Payment Methods:</strong>
+                                    <strong className="d-block mb-2">{t('home.paymentMethodsLabel')}</strong>
                                     <div className="payment-icons d-flex justify-content-center gap-3 flex-wrap">
                                       <div className="payment-icon" title="Interac e-Transfer">
                                         <div>
@@ -353,7 +366,7 @@ export default function Home() {
                                             <rect x="8" y="15" width="24" height="3" fill="#4A90E2"/>
                                           </svg>
                                         </div>
-                                        <span className="small">Card</span>
+                                        <span className="small">{t('home.payment.card')}</span>
                                       </div>
                                       <div className="payment-icon" title="Bank Transfer">
                                         <div>
@@ -371,17 +384,17 @@ export default function Home() {
                                             </g>
                                           </svg>
                                         </div>
-                                        <span className="small">Bank</span>
+                                        <span className="small">{t('home.payment.bank')}</span>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
 
                                 <div className="fee-mini" role="note">
-                                  Transfer fee: <strong>$1.50</strong> CAD
+                                  {t('home.feeLabel')} <strong>$1.50</strong> CAD
                                 </div>
 
-                          <p className="main-text">Secure transfers and verified partners</p>
+                          <p className="main-text">{t('home.mainText')}</p>
                         </div>
                       </div>
                     </div>
@@ -394,8 +407,8 @@ export default function Home() {
                 <section className="receiving-methods-section mb-5">
                   <div className="container">
                     <div className="text-center mb-4">
-                      <h2 className="section-title">Flexible Receiving Options in Vietnam</h2>
-                      <p className="text-medium-emphasis">Your recipient can receive money through multiple convenient methods</p>
+                      <h2 className="section-title">{t('home.receiving.title')}</h2>
+                      <p className="text-medium-emphasis">{t('home.receiving.subtitle')}</p>
                     </div>
                     <div className="row g-4">
                       <div className="col-6 col-md-3">
@@ -407,8 +420,8 @@ export default function Home() {
                               </svg>
                             </div>
                           </div>
-                          <strong className="d-block mt-2">Bank Transfer</strong>
-                          <p className="small text-muted mb-0">Vietcombank, BIDV, Techcombank, VPBank...</p>
+                          <strong className="d-block mt-2">{t('home.receiving.bankTransfer')}</strong>
+                          <p className="small text-muted mb-0">{t('home.receiving.bankList')}</p>
                         </div>
                       </div>
                       <div className="col-6 col-md-3">
@@ -421,8 +434,8 @@ export default function Home() {
                               </svg>
                             </div>
                           </div>
-                          <strong className="d-block mt-2">Momo Wallet</strong>
-                          <p className="small text-muted mb-0">Instant to e-wallet</p>
+                          <strong className="d-block mt-2">{t('home.receiving.momo')}</strong>
+                          <p className="small text-muted mb-0">{t('home.receiving.momoDesc')}</p>
                         </div>
                       </div>
                       <div className="col-6 col-md-3">
@@ -435,8 +448,8 @@ export default function Home() {
                               </svg>
                             </div>
                           </div>
-                          <strong className="d-block mt-2">ZaloPay</strong>
-                          <p className="small text-muted mb-0">Fast e-wallet transfer</p>
+                          <strong className="d-block mt-2">{t('home.receiving.zalopay')}</strong>
+                          <p className="small text-muted mb-0">{t('home.receiving.zalopayDesc')}</p>
                         </div>
                       </div>
                       <div className="col-6 col-md-3">
@@ -450,8 +463,8 @@ export default function Home() {
                               </svg>
                             </div>
                           </div>
-                          <strong className="d-block mt-2">Cash Pickup</strong>
-                          <p className="small text-muted mb-0">At partner locations</p>
+                          <strong className="d-block mt-2">{t('home.receiving.cashPickup')}</strong>
+                          <p className="small text-muted mb-0">{t('home.receiving.cashPickupDesc')}</p>
                         </div>
                       </div>
                     </div>
@@ -461,29 +474,29 @@ export default function Home() {
                 {/* Why choose us */}
                 <div className="main mt-4">
                   <div className="main-header">
-                    <h4 className="mb-0 text-center">Why choose us?</h4>
+                    <h4 className="mb-0 text-center">{t('home.why.title')}</h4>
                   </div>
                   <div className="main-body">
                     <div className="row">
                       <div className="col-md-3 mb-3 text-center">
                         <div className="display-6 mb-2">1️⃣</div>
-                        <h6>Best rate</h6>
-                        <p className="text-medium-emphasis small"> Enjoy one of the most competitive exchange rates on the market.</p>
+                        <h6>{t('home.why.bestRate')}</h6>
+                        <p className="text-medium-emphasis small">{t('home.why.bestRateDesc')}</p>
                       </div>
                       <div className="col-md-3 mb-3 text-center">
                         <div className="display-6 mb-2">2️⃣</div>
-                        <h6>Lowest fee</h6>
-                        <p className="text-medium-emphasis small">Save more with transparent & low transfer fees.</p>
+                        <h6>{t('home.why.lowestFee')}</h6>
+                        <p className="text-medium-emphasis small">{t('home.why.lowestFeeDesc')}</p>
                       </div>
                       <div className="col-md-3 mb-3 text-center">
                         <div className="display-6 mb-2">3️⃣</div>
-                        <h6>Guaranteed Delivered</h6>
-                        <p className="text-medium-emphasis small">Your money arrives safely and reliably every single time.</p>
+                        <h6>{t('home.why.guaranteed')}</h6>
+                        <p className="text-medium-emphasis small">{t('home.why.guaranteedDesc')}</p>
                       </div>
                       <div className="col-md-3 mb-3 text-center">
                         <div className="display-6 mb-2">4️⃣</div>
-                        <h6>Track Transfer</h6>
-                        <p className="text-medium-emphasis small">Monitor your transfers and resend easily</p>
+                        <h6>{t('home.why.track')}</h6>
+                        <p className="text-medium-emphasis small">{t('home.why.trackDesc')}</p>
                       </div>
                     </div>
                   </div>
@@ -510,32 +523,28 @@ export default function Home() {
                         <div className="col-md-6">
                           <div className="referral-content">
                             <div className="referral-tag mb-3">
-                              <span>💝 SPECIAL OFFER</span>
+                              <span>💝 {t('home.referralSection.specialOfferTag')}</span>
                             </div>
-                            <h2 className="referral-title mb-3">Refer Friends & Earn Rewards</h2>
-                            <p className="referral-description mb-4">
-                              Share the love and get rewarded! Invite your friends to use CanViet Exchange. 
-                              When they complete their first transfer, <strong>you both earn exclusive bonuses</strong>. 
-                              It's our way of saying thank you for spreading the word.
-                            </p>
+                            <h2 className="referral-title mb-3">{t('home.referralSection.title')}</h2>
+                            <p className="referral-description mb-4">{t('home.referralSection.description')}</p>
                             <div className="referral-benefits mb-4">
                               <div className="benefit-item">
                                 <div className="benefit-icon">✨</div>
                                 <div>
-                                  <strong>Instant Bonus</strong>
-                                  <p className="mb-0 small">Get rewards when your friend signs up</p>
+                                  <strong>{t('home.referralSection.instantBonus')}</strong>
+                                  <p className="mb-0 small">{t('home.referralSection.instantBonusDesc')}</p>
                                 </div>
                               </div>
                               <div className="benefit-item">
                                 <div className="benefit-icon">🚀</div>
                                 <div>
-                                  <strong>Unlimited Referrals</strong>
-                                  <p className="mb-0 small">No limit on how many friends you can refer</p>
+                                  <strong>{t('home.referralSection.unlimitedReferrals')}</strong>
+                                  <p className="mb-0 small">{t('home.referralSection.unlimitedReferralsDesc')}</p>
                                 </div>
                               </div>
                             </div>
                             <a href="/register" className="btn btn-primary btn-lg referral-btn">
-                              Start Referring Now
+                              {t('home.referralSection.cta')}
                               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="ms-2">
                                 <path d="M10 0l10 10-10 10-1.5-1.5L15.2 11H0V9h15.2L8.5 1.5z"/>
                               </svg>
@@ -553,14 +562,14 @@ export default function Home() {
         {showRateModal && (
           <div className="rate-modal-overlay" role="dialog" aria-modal="true" aria-label="Exchange rate details" onClick={() => setShowRateModal(false)}>
             <div className="rate-modal" role="document" onClick={(e) => e.stopPropagation()}>
-              <h3 className="rate-modal-title">How we calculate your rate</h3>
-              <p className="rate-modal-p">We offer competitive exchange rates with a transparent margin applied to the market rate.</p>
-              <p className="rate-modal-p">Your current exchange rate: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> per CAD</p>
-              <p className="rate-modal-p">Send $1,000+ CAD to enjoy <strong>no transfer fee</strong>!</p>
+              <h3 className="rate-modal-title">{t('home.rateModal.title')}</h3>
+              <p className="rate-modal-p">{t('home.rateModal.p1')}</p>
+              <p className="rate-modal-p">{t('home.rateModal.currentRate')} <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> {t('home.rateModal.perCAD') || t('home.rateModal.p1')}</p>
+              <p className="rate-modal-p">{t('home.rateModal.noFeePromo')}</p>
 
-              <p className="rate-modal-p note">*Note: Currency exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.</p>
+              <p className="rate-modal-p note">{t('home.rateModal.note')}</p>
               <div className="rate-modal-actions">
-                <button className="btn" type="button" onClick={() => setShowRateModal(false)}>Got it</button>
+                <button className="btn" type="button" onClick={() => setShowRateModal(false)}>{t('home.rateModal.gotIt')}</button>
               </div>
             </div>
           </div>
@@ -570,8 +579,8 @@ export default function Home() {
         <section className="how-it-works-section py-5">
           <div className="container">
             <div className="text-center mb-5">
-              <h2 className="section-title">How Money Transfer Works</h2>
-              <p className="lead text-medium-emphasis">Send money to Vietnam in 4 simple steps</p>
+              <h2 className="section-title">{t('home.howItWorksFull.title')}</h2>
+              <p className="lead text-medium-emphasis">{t('home.howItWorksFull.subtitle')}</p>
             </div>
             
             {/* 4 Steps Process */}
@@ -580,48 +589,48 @@ export default function Home() {
                 <div className="step-card">
                   <div className="step-number">1</div>
                   <div className="step-icon">📝</div>
-                  <h5 className="step-title">Create Account</h5>
-                  <p className="step-description">Sign up for free in under 2 minutes. No hidden fees or commitments.</p>
+                  <h5 className="step-title">{t('home.howItWorksFull.step1Title')}</h5>
+                  <p className="step-description">{t('home.howItWorksFull.step1Desc')}</p>
                 </div>
               </div>
               <div className="col-md-6 col-lg-3">
                 <div className="step-card">
                   <div className="step-number">2</div>
                   <div className="step-icon">💳</div>
-                  <h5 className="step-title">Enter Details</h5>
-                  <p className="step-description">Add recipient information and choose payment method. We keep your data secure.</p>
+                  <h5 className="step-title">{t('home.howItWorksFull.step2Title')}</h5>
+                  <p className="step-description">{t('home.howItWorksFull.step2Desc')}</p>
                 </div>
               </div>
               <div className="col-md-6 col-lg-3">
                 <div className="step-card">
                   <div className="step-number">3</div>
                   <div className="step-icon">✅</div>
-                  <h5 className="step-title">Confirm & Pay</h5>
-                  <p className="step-description">Review the rate and total, then complete your secure payment instantly.</p>
+                  <h5 className="step-title">{t('home.howItWorksFull.step3Title')}</h5>
+                  <p className="step-description">{t('home.howItWorksFull.step3Desc')}</p>
                 </div>
               </div>
               <div className="col-md-6 col-lg-3">
                 <div className="step-card">
                   <div className="step-number">4</div>
                   <div className="step-icon">🚀</div>
-                  <h5 className="step-title">Money Delivered</h5>
-                  <p className="step-description">Track your transfer in real-time. Money typically arrives within hours!</p>
+                  <h5 className="step-title">{t('home.howItWorksFull.step4Title')}</h5>
+                  <p className="step-description">{t('home.howItWorksFull.step4Desc')}</p>
                 </div>
               </div>
             </div>
 
             {/* CTA Buttons */}
             <div className="text-center">
-              <h3 className="mb-4">Ready to send money?</h3>
+              <h3 className="mb-4">{t('home.howItWorksFull.ctaTitle')}</h3>
               <div className="d-flex gap-3 justify-content-center flex-wrap">
                 <a href="/register" className="btn btn-primary btn-lg px-5">
-                  Sign Up Now
+                  {t('home.howItWorksFull.ctaSignUp')}
                 </a>
                 <a href="/login" className="btn btn-outline-primary btn-lg px-5">
-                  Log In
+                  {t('home.howItWorksFull.ctaLogin')}
                 </a>
               </div>
-              <p className="mt-3 text-muted small">Join thousands of satisfied customers sending money home</p>
+              <p className="mt-3 text-muted small">{t('home.howItWorksFull.ctaSubtitle')}</p>
             </div>
           </div>
         </section>
@@ -630,8 +639,8 @@ export default function Home() {
         <section className="faq-section py-5">
           <div className="container">
             <div className="text-center mb-5">
-              <h2 className="section-title">Frequently Asked Questions</h2>
-              <p className="text-medium-emphasis">Everything you need to know about sending money to Vietnam</p>
+              <h2 className="section-title">{t('home.faq.title')}</h2>
+              <p className="text-medium-emphasis">{t('home.faq.subtitle')}</p>
             </div>
             <div className="row justify-content-center">
               <div className="col-lg-8">
@@ -640,91 +649,77 @@ export default function Home() {
                   <div className="accordion-item">
                     <h3 className="accordion-header" id="faq1">
                       <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
-                        How long does it take for money to arrive in Vietnam?
+                        {t('home.faq.q1.q')}
                       </button>
                     </h3>
                     <div id="collapse1" className="accordion-collapse collapse show" aria-labelledby="faq1" data-bs-parent="#faqAccordion">
-                      <div className="accordion-body">
-                        Most transfers arrive within <strong>1-4 hours</strong> during business hours in Vietnam. Bank transfers may take up to 24 hours depending on the receiving bank's processing time. E-wallet transfers (Momo, ZaloPay) are typically instant.
-                      </div>
+                      <div className="accordion-body" dangerouslySetInnerHTML={{ __html: t('home.faq.q1.a') }} />
                     </div>
                   </div>
 
                   <div className="accordion-item">
                     <h3 className="accordion-header" id="faq2">
                       <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
-                        What are the fees for sending money?
+                        {t('home.faq.q2.q')}
                       </button>
                     </h3>
                     <div id="collapse2" className="accordion-collapse collapse" aria-labelledby="faq2" data-bs-parent="#faqAccordion">
-                      <div className="accordion-body">
-                        Our standard transfer fee is <strong>$1.50 CAD</strong>. However, if you send <strong>$1,000 CAD or more</strong>, we waive the transfer fee completely! There are no hidden charges - what you see is what you pay.
-                      </div>
+                      <div className="accordion-body" dangerouslySetInnerHTML={{ __html: t('home.faq.q2.a') }} />
                     </div>
                   </div>
 
                   <div className="accordion-item">
                     <h3 className="accordion-header" id="faq3">
                       <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
-                        Is my money safe and secure?
+                        {t('home.faq.q3.q')}
                       </button>
                     </h3>
                     <div id="collapse3" className="accordion-collapse collapse" aria-labelledby="faq3" data-bs-parent="#faqAccordion">
-                      <div className="accordion-body">
-                        Absolutely! We use <strong>bank-level encryption</strong> and comply with Canadian financial regulations. Your personal and financial information is protected with industry-leading security measures. All transfers are tracked and guaranteed.
-                      </div>
+                      <div className="accordion-body" dangerouslySetInnerHTML={{ __html: t('home.faq.q3.a') }} />
                     </div>
                   </div>
 
                   <div className="accordion-item">
                     <h3 className="accordion-header" id="faq4">
                       <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
-                        What payment methods can I use?
+                        {t('home.faq.q4.q')}
                       </button>
                     </h3>
                     <div id="collapse4" className="accordion-collapse collapse" aria-labelledby="faq4" data-bs-parent="#faqAccordion">
-                      <div className="accordion-body">
-                        You can send money using <strong>Interac e-Transfer</strong>, <strong>Credit/Debit Card</strong>, or <strong>Bank Transfer</strong>. Each method is secure and processed quickly. Interac e-Transfer is typically the fastest option for Canadian customers.
-                      </div>
+                      <div className="accordion-body" dangerouslySetInnerHTML={{ __html: t('home.faq.q4.a') }} />
                     </div>
                   </div>
 
                   <div className="accordion-item">
                     <h3 className="accordion-header" id="faq5">
                       <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5" aria-expanded="false" aria-controls="collapse5">
-                        How do I track my transfer?
+                        {t('home.faq.q5.q')}
                       </button>
                     </h3>
                     <div id="collapse5" className="accordion-collapse collapse" aria-labelledby="faq5" data-bs-parent="#faqAccordion">
-                      <div className="accordion-body">
-                        After completing your transfer, you'll receive a <strong>tracking number</strong> via email. You can log into your account anytime to check the status in real-time. We'll also notify you when the money has been successfully delivered.
-                      </div>
+                      <div className="accordion-body" dangerouslySetInnerHTML={{ __html: t('home.faq.q5.a') }} />
                     </div>
                   </div>
 
                   <div className="accordion-item">
                     <h3 className="accordion-header" id="faq6">
                       <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse6" aria-expanded="false" aria-controls="collapse6">
-                        What information do I need about the recipient?
+                        {t('home.faq.q6.q')}
                       </button>
                     </h3>
                     <div id="collapse6" className="accordion-collapse collapse" aria-labelledby="faq6" data-bs-parent="#faqAccordion">
-                      <div className="accordion-body">
-                        For <strong>bank transfers</strong>, you'll need the recipient's full name, bank account number, and bank name. For <strong>e-wallets</strong> (Momo/ZaloPay), you just need their registered phone number. We guide you through each step to make it easy.
-                      </div>
+                      <div className="accordion-body" dangerouslySetInnerHTML={{ __html: t('home.faq.q6.a') }} />
                     </div>
                   </div>
 
                   <div className="accordion-item">
                     <h3 className="accordion-header" id="faq7">
                       <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse7" aria-expanded="false" aria-controls="collapse7">
-                        Can I cancel or modify a transfer?
+                        {t('home.faq.q7.q')}
                       </button>
                     </h3>
                     <div id="collapse7" className="accordion-collapse collapse" aria-labelledby="faq7" data-bs-parent="#faqAccordion">
-                      <div className="accordion-body">
-                        You can cancel a transfer <strong>within 30 minutes</strong> of initiating it, as long as the money hasn't been sent yet. Contact our support team immediately if you need to make changes. Once the transfer is processed, modifications are not possible, but our support team is here to help with any issues.
-                      </div>
+                      <div className="accordion-body" dangerouslySetInnerHTML={{ __html: t('home.faq.q7.a') }} />
                     </div>
                   </div>
 
@@ -732,7 +727,7 @@ export default function Home() {
               </div>
             </div>
             <div className="text-center mt-4">
-              <p className="text-medium-emphasis">Still have questions? <a href="/general/help" className="text-primary">Contact our support team</a></p>
+              <p className="text-medium-emphasis">{t('home.faq.stillHaveQuestions')} <a href="/general/help" className="text-primary">{t('home.faq.contactSupport')}</a></p>
             </div>
           </div>
         </section>

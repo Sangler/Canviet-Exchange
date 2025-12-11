@@ -8,7 +8,7 @@ type Translations = typeof en;
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, options?: { returnObjects?: boolean }) => any;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -36,7 +36,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   // Translation function with dot notation support (e.g., "auth.welcome")
-  const t = (key: string): string => {
+  const t = (key: string, options?: { returnObjects?: boolean }): any => {
     const keys = key.split('.');
     let value: any = translations[language];
     
@@ -44,8 +44,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
-        return key; // Return key if translation not found
+        // If returnObjects is expected but key not found, return empty array
+        return options?.returnObjects ? [] : key;
       }
+    }
+    
+    // If returnObjects is true, return the value as-is (can be array or object)
+    if (options?.returnObjects) {
+      return value !== undefined ? value : [];
     }
     
     return typeof value === 'string' ? value : key;

@@ -58,7 +58,7 @@ function getTransporter() {
   return transporter;
 }
 
-async function sendMail({ from, to, cc, subject, text, html }) {
+async function sendMail({ from, to, cc, bcc, subject, text, html }) {
   const t = getTransporter();
   if (!t) return Promise.reject(new Error('Email transporter not configured'));
 
@@ -66,6 +66,7 @@ async function sendMail({ from, to, cc, subject, text, html }) {
     from: from || EMAIL_FROM,
     to,
     cc,
+    bcc,
     subject,
     text,
     html,

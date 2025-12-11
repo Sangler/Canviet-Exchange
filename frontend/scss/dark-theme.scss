@@ -139,65 +139,76 @@
     color: #e6edf7;
   }
 
-  .bank-select-trigger:hover {
-    border-color: #64748b;
-  }
+    .trust-badge {
+      /* Dark mode: subtle pill that blends with page */
+      display: inline-block;
+      background: rgba(255,255,255,0.02) !important;
+      box-shadow: none !important;
+      border: none !important;
+      margin-bottom: 0;
+      padding: 8px 14px !important;
+      text-align: center;
+      .trustpilot-link {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: center;
+        text-decoration: none;
+        color: #cbd5e1 !important;
+      }
+      .rev-label { font-weight:700; color:#e6edf7 !important; }
+      .rev-summary { color:#94a3b8 !important; font-size:0.85rem; }
+    }
 
-  .bank-select-trigger .placeholder {
-    color: #cbd5e1;
-    font-weight: 400;
-    opacity: 1;
-    background: transparent;
-    display: inline;
-  }
+    /* Trustpilot Widget - Dark Mode: remove all borders/shadows to blend with UI */
+    .trust-badge {
+      .trustpilot-widget,
+      #tp-widget-wrapper,
+      .tp-widget-wrapper {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        display: inline-block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        text-align: center !important;
 
-  .bank-options-list {
-    background: #1e293b;
-    border-color: #475569;
-  }
+        a,
+        #profileUrl,
+        .button {
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          color: #60a5fa !important;
+          padding: 6px 12px !important;
+          line-height: 1.4 !important;
+          display: inline-block !important;
 
-  .bank-option {
-    background: #1e293b;
-    color: #e6edf7;
-  }
+          &:hover {
+            color: #93c5fd !important;
+            background: transparent !important;
+          }
+        }
 
-  .bank-option:hover {
-    background: #24324a;
-  }
+        /* Override any backgrounds or borders coming from Trustpilot */
+        * {
+          background-color: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
 
-  .bank-option.selected {
-    background: #0c4a6e;
-    color: #7dd3fc;
-  }
-  
-  /* Receipt page - dark mode */
-  .alert {
-    color: inherit;
-  }
-
-  .alert-success {
-    background: #064e3b;
-    border-color: #065f46;
-    color: #6ee7b7;
-  }
-
-  .alert-success .alert-heading {
-    color: #86efac;
-  }
-
-  .alert-info {
-    background: #0c2340;
-    border-color: #1e3a5f;
-    color: #bae6fd;
-  }
-
-  .alert-info h6 {
-    color: #7dd3fc;
-  }
-
-  .alert-info a {
-    color: #38bdf8;
-  }
+        /* Ensure iframe (if used) has no border and blends in */
+        iframe {
+          background: transparent !important;
+          border: none !important;
+          width: 100% !important;
+          height: 52px !important;
+          max-height: 52px !important;
+        }
+      }
+    }
 
   .alert-info a:hover {
     color: #7dd3fc;

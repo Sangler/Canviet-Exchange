@@ -23,7 +23,7 @@ async function sendSms(phone, code) {
 }
 
 const OTP_LENGTH = Number(process.env.OTP_LENGTH || 6);
-const OTP_TTL_SECONDS = Number(process.env.OTP_TTL_SECONDS || 300); // 5 min default
+const OTP_TTL_SECONDS = Number(process.env.OTP_TTL_SECONDS || 60); // 1 min default
 
 function maskDestination(value) {
   if (!value) return '';

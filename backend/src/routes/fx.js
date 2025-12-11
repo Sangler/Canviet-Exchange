@@ -126,8 +126,10 @@ router.get('/cad-vnd', async (_req, res) => {
     // Step 4: Calculate VND per CAD = (VND/USD) ÷ (CAD/USD)
     const cadToVnd = usdVndData.rate / cadPerUsd;
 
-    // Apply business margin of +50 VND
-    const withMargin = cadToVnd + 50;
+    // Apply configurable business margin (in VND). Read from env `ADD_MARGIN_RATE`.
+    // Default margin is 50 VND if not configured.
+    const addMargin = Number(process.env.ADD_MARGIN_RATE || 50);
+    const withMargin = cadToVnd + addMargin;
 
 
     return res.json({ 
@@ -140,7 +142,7 @@ router.get('/cad-vnd', async (_req, res) => {
         cadPerUsd: cadPerUsd,
         usdVnd: usdVndData.rate,
         baseRate: Math.round(cadToVnd),
-        margin: 0
+        margin: addMargin
       },
       sources: {
         usdcCad: 'coinbase.com',
