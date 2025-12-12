@@ -1,0 +1,140 @@
+{
+  "info": {
+    "name": "canvietexchange API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "8c2f4b2a-cb01-4a65-8b5a-5f0b9b3e5a0d"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","health"]
+            }
+          }
+        },
+        {
+          "name": "GET /api/healthz",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/healthz",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","healthz"]
+            }
+          }
+        },
+        {
+          "name": "GET /api/dev/indexes (dev)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dev/indexes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","dev","indexes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"P@ssw0rd123\",\n  \"lastName\": \"Doe\",\n  \"firstName\": \"Alice\",\n  \"phone\": \"+15551234567\",\n  \"dateOfBirth\": \"1990-05-20\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"postalCode\": \"94016\",\n    \"city\": \"San Francisco\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","auth","register"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let json = {}",
+                  "try { json = pm.response.json(); } catch(e) {}",
+                  "if (json && json.token) { pm.environment.set('token', json.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"P@ssw0rd123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","auth","login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let json = {}",
+                  "try { json = pm.response.json(); } catch(e) {}",
+                  "if (json && json.token) { pm.environment.set('token', json.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET /api/users/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{token}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","users","me"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {"key":"baseUrl","value":"http://localhost:5000"},
+    {"key":"token","value":""}
+  ]
+}

@@ -1,13 +1,15 @@
 import Link from "next/link";
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Navbar() {
+  const { t } = useLanguage();
+  
   return (
     <nav className="bg-gray-800 p-4 text-white flex justify-between">
-      <div className="font-bold">NexTransfer</div>
+      <div className="font-bold">{t('navbar.brand') || 'CanViet Exchange'}</div>
       <div className="space-x-4">
-        <Link href="/">Home</Link>
-        <Link href="/transfer">Transfer</Link>
-        <Link href="/admin">Admin</Link>
+        <Link href="/">{t('navbar.home')}</Link>
+        <Link href="/transfers">{t('navbar.transfer')}</Link>
       </div>
     </nav>
   );

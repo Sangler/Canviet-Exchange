@@ -15,6 +15,8 @@ import {
   cilUser,
   cilCreditCard,
   cilSettings,
+  cilHistory,
+  cilPeople
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -22,8 +24,9 @@ const _nav = [
   {
     component: CNavItem,
     name: 'Dashboard',
-    to: '/admin',
+    to: '/',
     icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+    roles: 'admin',
     badge: {
       color: 'info',
       text: 'NEW',
@@ -31,140 +34,53 @@ const _nav = [
   },
   {
     component: CNavTitle,
-    name: 'NexTransfer',
+    name: 'Transfer',
   },
   {
     component: CNavItem,
-    name: 'Transfers',
-    to: '/admin/transfers',
+    name: 'Send Money',
+    to: '/transfers',
     icon: <CIcon icon={cilCreditCard} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: 'Users',
-    to: '/admin/users',
-    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
+    name: 'History Transaction',
+    to: '/transfers-history',
+    // visible to users only (not admin)
+    roles: 'user',
+    icon: <CIcon icon={cilHistory} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'All Requests',
+    to: '/transfers-history',
+    // visible to admin only - shows all user requests
+    roles: 'admin',
+    icon: <CIcon icon={cilHistory} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: 'Analytics',
-    to: '/admin/analytics',
+    to: '/analytics',
+    roles: "admin",
     icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: 'Settings',
-    to: '/admin/settings',
+    name: 'Referral Program',
+    to: '/referral',
+    roles: 'user',
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Settings & Profile',
+    to: '/settings',
     icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
   },
-  {
-    component: CNavTitle,
-    name: 'Theme',
-  },
-  {
-    component: CNavItem,
-    name: 'Colors',
-    to: '/admin/colors',
-    icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Typography',
-    to: '/admin/typography',
-    icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavTitle,
-    name: 'Components',
-  },
-  {
-    component: CNavGroup,
-    name: 'Base',
-    to: '/admin/base',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'Cards',
-        to: '/admin/base/cards',
-      },
-      {
-        component: CNavItem,
-        name: 'Tables',
-        to: '/admin/base/tables',
-      },
-    ],
-  },
-  {
-    component: CNavGroup,
-    name: 'Buttons',
-    to: '/admin/buttons',
-    icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'Buttons',
-        to: '/admin/buttons/buttons',
-      },
-    ],
-  },
-  {
-    component: CNavGroup,
-    name: 'Forms',
-    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'Form Control',
-        to: '/admin/forms/form-control',
-      },
-    ],
-  },
-  {
-    component: CNavItem,
-    name: 'Charts',
-    to: '/admin/charts',
-    icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavGroup,
-    name: 'Icons',
-    icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'CoreUI Free',
-        to: '/admin/icons/coreui-icons',
-      },
-    ],
-  },
-  {
-    component: CNavGroup,
-    name: 'Notifications',
-    icon: <CIcon icon={cilBell} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'Alerts',
-        to: '/admin/notifications/alerts',
-      },
-      {
-        component: CNavItem,
-        name: 'Badges',
-        to: '/admin/notifications/badges',
-      },
-    ],
-  },
-  {
-    component: CNavItem,
-    name: 'Widgets',
-    to: '/admin/widgets',
-    icon: <CIcon icon={cilCalculator} customClassName="nav-icon" />,
-    badge: {
-      color: 'info',
-      text: 'NEW',
-    },
-  },
+  
+
+  // Components section removed per request
 ]
 
 export default _nav

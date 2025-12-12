@@ -1,0 +1,158 @@
+require('dotenv').config()
+const router = require('express').Router()
+const https = require('https')
+
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (r) => {
+      if (r.statusCode && r.statusCode >= 400) {
+        return reject(new Error('Status ' + r.statusCode))
+      }
+      let data = ''
+      r.on('data', (chunk) => (data += chunk))
+      r.on('end', () => {
+        try {
+          const json = JSON.parse(data)
+          resolve(json)
+        } catch (e) {
+          reject(e)
+        }
+      })
+    }).on('error', reject)
+  })
+}
+
+// Fetch USDC/CAD from Coinbase using native fetch (Node 18+)
+async function fetchUsdcCadFromCoinbase() {
+  const url = 'https://api.coinbase.com/v2/prices/USDC-CAD/spot';
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    return Number(data.data.amount); // Returns CAD per USDC (e.g., 1.41 means 1 USDC = 1.41 CAD)
+  } catch (err) {
+    return null;
+  }
+}
+
+// Fetch USDC/USD peg from Coinbase to account for market fluctuation
+async function fetchUsdcUsdFromCoinbase() {
+  const url = 'https://api.coinbase.com/v2/prices/USDC-USD/spot';
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    return Number(data.data.amount); // Returns USD per USDC (usually ~1.0, but can fluctuate slightly)
+  } catch (err) {
+    return null;
+  }
+}
+
+// Fetch USD/VND from exchange rate APIs
+async function fetchUsdVnd() {
+  const apiKey = process.env.EXCHANGE_API_KEY;
+  const candidates = [];
+  
+  if (apiKey) {
+    candidates.push({ 
+      url: `https://v6.exchangerate-api.com/v6/${apiKey}/latest/USD`, 
+      source: 'exchangerate-api.com', 
+      type: 'conversion_rates' 
+    });
+  }
+  candidates.push({ 
+    url: 'https://open.er-api.com/v6/latest/USD', 
+    source: 'open.er-api.com', 
+    type: 'rates' 
+  });
+
+  for (const candidate of candidates) {
+    try {
+      const j = await fetchJson(candidate.url);
+      
+      if (candidate.type === 'conversion_rates' && j?.conversion_rates?.VND) {
+        return { rate: Number(j.conversion_rates.VND), source: candidate.source, fetchedAt: j.time_last_update_utc };
+      } else if (candidate.type === 'rates' && j?.rates?.VND) {
+        return { rate: Number(j.rates.VND), source: candidate.source, fetchedAt: j.time_last_update_utc };
+      }
+    } catch (err) {
+      continue;
+    }
+  }
+  
+  return null;
+}
+
+// GET /api/fx/cad-vnd
+router.get('/cad-vnd', async (_req, res) => {
+  try {
+    // Step 1: Fetch USDC/CAD from Coinbase (returns CAD per USDC, e.g., 1.41)
+    const cadPerUsdc = await fetchUsdcCadFromCoinbase();
+    if (!cadPerUsdc) {
+      return res.status(502).json({ 
+        ok: false, 
+        message: 'Unable to fetch USDC/CAD rate from Coinbase.' 
+      });
+    }
+
+    // Step 2: Fetch real-time USDC/USD peg from Coinbase (usually ~1.0, but can fluctuate)
+    const usdcUsdPeg = await fetchUsdcUsdFromCoinbase();
+    if (!usdcUsdPeg) {
+      return res.status(502).json({ 
+        ok: false, 
+        message: 'Unable to fetch USDC/USD peg from Coinbase.' 
+      });
+    }
+    // Calculate CAD per USD using the actual peg
+    const cadPerUsd = cadPerUsdc * usdcUsdPeg;
+    
+    // Step 3: Fetch USD/VND rate (VND per USD)
+    const usdVndData = await fetchUsdVnd();
+    if (!usdVndData) {
+      return res.status(502).json({ 
+        ok: false, 
+        message: 'Unable to fetch USD/VND exchange rate.' 
+      });
+    }
+
+    // Step 4: Calculate VND per CAD = (VND/USD) ÷ (CAD/USD)
+    const cadToVnd = usdVndData.rate / cadPerUsd;
+
+    // Apply configurable business margin (in VND). Read from env `ADD_MARGIN_RATE`.
+    // Default margin is 50 VND if not configured.
+    const addMargin = Number(process.env.ADD_MARGIN_RATE || 50);
+    const withMargin = cadToVnd + addMargin;
+
+
+    return res.json({ 
+      ok: true, 
+      pair: 'CAD_VND', 
+      rate: Math.round(withMargin), // Round to nearest VND
+      calculation: {
+        cadPerUsdc: cadPerUsdc,
+        usdcUsdPeg: usdcUsdPeg,
+        cadPerUsd: cadPerUsd,
+        usdVnd: usdVndData.rate,
+        baseRate: Math.round(cadToVnd),
+        margin: addMargin
+      },
+      sources: {
+        usdcCad: 'coinbase.com',
+        usdVnd: usdVndData.source
+      },
+      fetchedAt: usdVndData.fetchedAt || new Date().toISOString()
+    });
+
+  } catch (err) {
+    return res.status(500).json({ 
+      ok: false, 
+      message: 'Error calculating exchange rate: ' + err.message 
+    });
+  }
+})
+
+module.exports = router

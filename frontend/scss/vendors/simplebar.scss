@@ -3,3 +3,293 @@
   flex-direction: column;
   min-height: 100%;
 }
+
+/* ---- Component Styles (AppSidebar, AppHeader, AppFooter, AppSidebarNav) ---- */
+
+.wrapper {
+  width: 100%;
+  padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
+  will-change: auto;
+  transition: padding .15s;
+}
+
+.header > .container-fluid,
+.sidebar-header {
+  min-height: calc(5rem + 1px);
+}
+
+.sidebar-brand-full {
+  margin-left: 3px;
+}
+
+// Responsive logo sizing for the sidebar brand
+.sidebar-brand-full img {
+  height: 40px;
+  width: auto;
+  padding: 5px;
+}
+
+// md breakpoint ~ 768px
+@media (min-width: 768px) {
+  .sidebar-brand-full img { height: 44px; }
+}
+
+// xl breakpoint ~ 1200px
+@media (min-width: 1200px) {
+  .sidebar-brand-full img { height: 46px; }
+}
+
+.sidebar-header {
+  .nav-underline-border {
+    --cui-nav-underline-border-link-padding-x: 1rem;
+    --cui-nav-underline-border-gap: 0;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    min-height: calc(4rem + 1px);
+  }
+}
+
+.sidebar-toggler {
+  margin-inline-start: auto;
+}
+
+.sidebar-narrow,
+.sidebar-narrow-unfoldable:not(:hover) {
+  .sidebar-toggler {
+    margin-inline-end: auto;
+  }
+}
+
+.header > .container-fluid + .container-fluid {
+  min-height: 3rem;
+}
+
+/* ---- Header Guest Buttons (Login/Signup) ---- */
+.header .ms-auto {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Mobile-specific button sizing for header guest buttons */
+@media (max-width: 767px) {
+  .header .btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .header .ms-auto {
+    margin-left: 0 !important;
+  }
+}
+
+/* Desktop: restore right alignment */
+@media (min-width: 768px) {
+  .header .ms-auto {
+    width: auto;
+    justify-content: flex-end;
+  }
+}
+
+.footer {
+  min-height: calc(3rem + 1px);
+}
+
+/* ---- Light Mode Sidebar Override ---- */
+[data-coreui-theme="light"] {
+  .sidebar.sidebar-dark {
+    --cui-sidebar-bg: #ffffff;
+    --cui-sidebar-border-color: #d8dbe0;
+    --cui-sidebar-color: #2c3e50;
+    --cui-sidebar-nav-link-color: #2c3e50;
+    --cui-sidebar-nav-link-hover-color: #000000;
+    --cui-sidebar-nav-link-hover-bg: #f1f5f9;
+    --cui-sidebar-nav-link-active-color: #00B3A4;
+    --cui-sidebar-nav-link-active-bg: rgba(0, 179, 164, 0.1);
+    --cui-sidebar-nav-link-active-icon-color: #00B3A4;
+    --cui-sidebar-nav-group-toggle-color: #2c3e50;
+    --cui-sidebar-nav-group-toggle-hover-color: #000000;
+    --cui-sidebar-nav-icon-color: #64748b;
+    --cui-sidebar-nav-link-icon-color: #64748b;
+    --cui-sidebar-nav-link-hover-icon-color: #475569;
+    background-color: #ffffff;
+    border-right-color: #d8dbe0;
+  }
+
+  .sidebar.sidebar-dark .sidebar-brand {
+    color: #2c3e50;
+    background-color: #ffffff;
+    border-bottom-color: #d8dbe0;
+  }
+
+  .sidebar.sidebar-dark .sidebar-nav .nav-link,
+  .sidebar.sidebar-dark .sidebar-nav .nav-group-toggle {
+    color: #2c3e50;
+  }
+
+  .sidebar.sidebar-dark .sidebar-nav .nav-icon {
+    color: #64748b;
+  }
+
+  .sidebar.sidebar-dark .sidebar-nav .nav-link:hover,
+  .sidebar.sidebar-dark .sidebar-nav .nav-group-toggle:hover {
+    color: #000000;
+    background-color: #f1f5f9;
+  }
+
+  .sidebar.sidebar-dark .sidebar-nav .nav-link:hover .nav-icon {
+    color: #475569;
+  }
+
+  .sidebar.sidebar-dark .sidebar-nav .nav-link.active {
+    color: #00B3A4;
+    background-color: rgba(0, 179, 164, 0.1);
+  }
+
+  .sidebar.sidebar-dark .sidebar-nav .nav-link.active .nav-icon {
+    color: #00B3A4;
+  }
+
+  .sidebar.sidebar-dark .sidebar-nav .nav-group-items {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  .sidebar.sidebar-dark .nav-title {
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  .sidebar.sidebar-dark .sidebar-toggler {
+    color: #00B3A4;
+    background-color: #00B3A4;
+    border: 1px solid #cbd5e1;
+    opacity: 1;
+  }
+
+  .sidebar.sidebar-dark .sidebar-toggler:hover {
+    color: #000000;
+    background-color: #002623;
+    border-color: #94a3b8;
+  }
+}
+
+/* ============================================
+   Browser Compatibility Warning Banner
+   ============================================ */
+.browser-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #78350f;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+  animation: slideDown 0.4s ease-out;
+}
+
+.browser-warning-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 20px;
+}
+
+.browser-warning-icon {
+  flex-shrink: 0;
+  color: #92400e;
+}
+
+.browser-warning-text {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.browser-warning-dismiss {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: #92400e;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.browser-warning-dismiss:hover {
+  background: rgba(146, 64, 14, 0.1);
+  transform: scale(1.1);
+}
+
+.browser-warning-dismiss:active {
+  transform: scale(0.95);
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Dark mode support */
+[data-coreui-theme="dark"] {
+  .header {
+    --cui-header-bg: #1e293b;
+    background-color: #1e293b;
+  }
+  
+  .footer {
+    --cui-footer-bg: #1e293b;
+    background-color: #1e293b;
+  }
+  
+  .browser-warning {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    color: #fef3c7;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+  }
+
+  .browser-warning-icon,
+  .browser-warning-dismiss {
+    color: #fef3c7;
+  }
+
+  .browser-warning-dismiss:hover {
+    background: rgba(254, 243, 199, 0.15);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .browser-warning-content {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .browser-warning-text {
+    font-size: 13px;
+  }
+
+  .browser-warning-icon {
+    width: 20px;
+    height: 20px;
+  }
+}

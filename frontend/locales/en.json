@@ -1,0 +1,870 @@
+{
+  "common": {
+    "email": "Email",
+    "password": "Password",
+    "phone": "Phone",
+    "login": "Sign in",
+    "register": "Register",
+    "logout": "Logout",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "sending": "Sending…",
+    "error": "Error",
+    "success": "Success",
+    "backToLogin": "Back to Login",
+    "gotIt": "Got it",
+    "form-note":"By using our services, you agree to our",
+    "form-note-href":"Terms & Conditions"
+  },
+  "auth": {
+    "welcome": "Welcome! Please sign in to continue",
+    "emailAddress": "Email address",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "reviews": {
+      "summary": "4.8 out of 5 based on 1,200+ reviews"
+    },
+    "exchangeFallback": "Exchange Rate",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "welcomeBack": "Welcome back!",
+    "redirectingDashboard": "Redirecting to your dashboard...",
+    "orContinueWith": "or continue with",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "createAccount": "Create your account",
+    "startTransferring": "Start transferring in minutes",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "confirmPassword": "Confirm password",
+    "referralCode": "Referral Code (Optional)",
+    "createNewAccount": "Create New Account",
+    "creating": "Creating…",
+    "accountCreated": "Account created!",
+    "redirecting": "Redirecting to verify your email…",
+    "alreadyHaveAccount": "Already have an account?",
+    "verifyEmail": "Verify your email",
+    "verifyEmailSubtitle": "We will send a 6‑digit code to your inbox",
+    "sendCode": "Send code",
+    "mainText": "Secure transfers and verified partners",
+    "receiving": {
+      "title": "Flexible Receiving Options in Vietnam",
+      "subtitle": "Your recipient can receive money through multiple convenient methods",
+      "bankTransfer": "Bank Transfer",
+      "bankList": "Vietcombank, BIDV, Techcombank, VPBank...",
+      "momo": "Momo Wallet",
+      "momoDesc": "Instant to e-wallet",
+      "zalopay": "ZaloPay",
+      "zalopayDesc": "Fast e-wallet transfer",
+      "cashPickup": "Cash Pickup",
+      "cashPickupDesc": "At partner locations"
+    },
+    "why": {
+      "title": "Why choose us?",
+      "bestRate": "Best rate",
+      "bestRateDesc": "Enjoy one of the most competitive exchange rates on the market.",
+      "lowestFee": "Lowest fee",
+      "lowestFeeDesc": "Save more with transparent & low transfer fees.",
+      "guaranteed": "Guaranteed Delivered",
+      "guaranteedDesc": "Your money arrives safely and reliably every single time.",
+      "track": "Track Transfer",
+      "trackDesc": "Monitor your transfers and resend easily"
+    },
+    "referralSection": {
+      "specialOfferTag": "SPECIAL OFFER",
+      "badgeText": "Earn Together",
+      "title": "Refer Friends & Earn Rewards",
+      "description": "Share the love and get rewarded! Invite your friends to use CanViet Exchange. When they complete their first transfer, you both earn exclusive bonuses.",
+      "instantBonus": "Instant Bonus",
+      "instantBonusDesc": "Get rewards when your friend signs up",
+      "unlimitedReferrals": "Unlimited Referrals",
+      "unlimitedReferralsDesc": "No limit on how many friends you can refer",
+      "cta": "Start Referring Now"
+    },
+    "rateModal": {
+      "title": "How we calculate your rate",
+      "p1": "We offer competitive exchange rates with a transparent margin applied to the market rate.",
+      "currentRate": "Your current exchange rate:",
+      "noFeePromo": "Send $1,000+ CAD to enjoy no transfer fee!",
+      "note": "*Note: Currency exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.",
+      "gotIt": "Got it"
+    },
+    "howItWorksFull": {
+      "title": "How Money Transfer Works",
+      "subtitle": "Send money to Vietnam in 4 simple steps",
+      "step1Title": "Create Account",
+      "step1Desc": "Sign up for free in under 2 minutes. No hidden fees or commitments.",
+      "step2Title": "Enter Details",
+      "step2Desc": "Add recipient information and choose payment method. We keep your data secure.",
+      "step3Title": "Confirm & Pay",
+      "step3Desc": "Review the rate and total, then complete your secure payment instantly.",
+      "step4Title": "Money Delivered",
+      "step4Desc": "Track your transfer in real-time. Money typically arrives within hours!",
+      "ctaSignUp": "Sign Up Now",
+      "ctaLogin": "Log In",
+      "ctaSubtitle": "Join thousands of satisfied customers sending money home"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Everything you need to know about sending money to Vietnam",
+      "q1": {
+        "q": "How long does it take for money to arrive in Vietnam?",
+        "a": "Most transfers arrive within 1-4 hours during business hours in Vietnam. Bank transfers may take up to 24 hours depending on the receiving bank's processing time. E-wallet transfers (Momo, ZaloPay) are typically instant."
+      },
+      "q2": {
+        "q": "What are the fees for sending money?",
+        "a": "Our standard transfer fee is $1.50 CAD. However, if you send $1,000 CAD or more, we waive the transfer fee completely! There are no hidden charges - what you see is what you pay."
+      },
+      "q3": {
+        "q": "Is my money safe and secure?",
+        "a": "Absolutely! We use bank-level encryption and comply with Canadian financial regulations. Your personal and financial information is protected with industry-leading security measures. All transfers are tracked and guaranteed."
+      },
+      "q4": {
+        "q": "What payment methods can I use?",
+        "a": "You can send money using Interac e-Transfer, Credit/Debit Card, or Bank Transfer. Each method is secure and processed quickly. Interac e-Transfer is typically the fastest option for Canadian customers."
+      },
+      "q5": {
+        "q": "How do I track my transfer?",
+        "a": "After completing your transfer, you'll receive a tracking number via email. You can log into your account anytime to check the status in real-time. We'll also notify you when the money has been successfully delivered."
+      },
+      "q6": {
+        "q": "What information do I need about the recipient?",
+        "a": "For bank transfers, you'll need the recipient's full name, bank account number, and bank name. For e-wallets (Momo/ZaloPay), you just need their registered phone number. We guide you through each step to make it easy."
+      },
+      "q7": {
+        "q": "Can I cancel or modify a transfer?",
+        "a": "You can cancel a transfer within 30 minutes of initiating it, as long as the money hasn't been sent yet. Contact our support team immediately if you need to make changes. Once the transfer is processed, modifications are not possible, but our support team is here to help with any issues."
+      },
+      "contactSupport": "Contact our support team"
+    }
+    ,"sending": "Sending…",
+    "resetYourPassword": "Reset Your Password",
+    "resetPasswordIntro": "Enter your email address and we'll send you a reset link",
+    "checkYourEmail": "Check Your Email",
+    "resetEmailSent": "If an account with that email exists, we've sent a password reset link. Please check your inbox.",
+    "sendReset": "Send Reset Email",
+    "sixDigitCode": "6-digit code",
+    "verify": "Verify",
+    "verifying": "Verifying…",
+    "codeSent": "Code sent to your email",
+    "verificationFailed": "Verification failed",
+    "failedToRequestCode": "Failed to request code",
+    "redirectingVerify": "Redirecting to verify your email..."
+  },
+  "validation": {
+    "required": "This field is required",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Enter a valid email",
+    "phoneInvalid": "Enter a valid phone number",
+    "passwordRequired": "Password is required",
+    "passwordLength": "Password must be at least 10 characters",
+    "passwordRequirements": "Password must contain at least one uppercase letter and one number",
+    "passwordMismatch": "Passwords do not match"
+  },
+  "button": {
+    "addNew": "Add New",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "BackToLogin": "Back to Login"
+  },
+  "footer": {
+    "brand": "CanViet Exchange",
+    "copyright": "Money Transfer Platform.",
+    "support": "Support",
+    "helpCenter": "Help Center",
+    "termsConditions": "Terms & Conditions",
+    "company": "Company",
+    "aboutUs": "About Us",
+    "license": "License",
+    "connect": "Connect"
+  },
+  "navbar": {
+    "home": "Home",
+    "transfer": "Transfer"
+  },
+  "sidebar": {
+    "brand": "CanViet Exchange"
+  },
+  "home": {
+    "reviews": {
+      "summary": "4.8 out of 5 based on 1,200+ reviews"
+    },
+    "hero": {
+      "title": "Fast, Secure Money Transfers to Vietnam",
+      "subtitle": "Send money with confidence. Best rates, guaranteed.",
+      "getStarted": "Get Started",
+      "sendMoney": "Send Money Now"
+    },
+    "flagsLine": "Send money from Canada to Vietnam with transparent rates and fast delivery.",
+    "sendFromCanada": "Send money from Canada",
+    "toVietnam": "to Vietnam",
+    "withRatesAndDelivery": "with transparent rates and fast delivery.",
+    "exchangeFallback": "Exchange Rate",
+    "calculator": {
+      "title": "Calculate Your Transfer",
+      "youSend": "You send",
+      "recipientGets": "Recipient gets",
+      "exchangeRate": "Exchange Rate",
+      "fee": "Fee",
+      "rateUpdated": "Rate updated",
+      "refreshRate": "Refresh rate",
+      "startTransfer": "Start Transfer"
+    },
+    "placeholders": {
+      "youSend": "You Send CAD",
+      "theyReceive": "They Receive VND"
+    },
+    "features": {
+      "title": "Why Choose CanViet Exchange?",
+      "bestRates": "Best Exchange Rates",
+      "bestRatesDesc": "Competitive rates with transparent pricing",
+      "fastTransfers": "Fast Transfers",
+      "fastTransfersDesc": "Money delivered in minutes",
+      "secure": "Secure & Reliable",
+      "secureDesc": "Bank-level security for your transfers",
+      "support": "24/7 Support",
+      "supportDesc": "Always here to help you"
+    },
+    "paymentMethodsLabel": "Payment Methods:",
+    "howItWorks": {
+      "title": "How It Works",
+      "step1": "Create Account",
+      "step1Desc": "Sign up in minutes",
+      "step2": "Enter Amount",
+      "step2Desc": "See the rate upfront",
+      "step3": "Send Money",
+      "step3Desc": "Funds arrive quickly"
+    },
+    "paymentMethods": {
+      "title": "Flexible Payment Methods",
+      "subtitle": "Choose how you want to send"
+    },
+    "cta": {
+      "title": "Ready to Send Money?",
+      "subtitle": "Join thousands of satisfied customers",
+      "signUp": "Sign Up Now"
+    }
+    ,
+    "mainText": "Secure transfers and verified partners",
+    "feeLabel": "Transfer fee:",
+    "payment": {
+      "card": "Card",
+      "bank": "Bank"
+    }
+    ,
+    "rateModal": {
+      "title": "How we calculate your rate",
+      "p1": "We offer competitive exchange rates with a transparent margin applied to the market rate.",
+      "currentRate": "Your current exchange rate:",
+      "perCAD": "per CAD",
+      "noFeePromo": "Send $1,000+ CAD to enjoy no transfer fee!",
+      "note": "*Note: Currency exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.",
+      "gotIt": "Got it"
+    },
+    "receiving": {
+      "title": "Flexible Receiving Options in Vietnam",
+      "subtitle": "Your recipient can receive money through multiple convenient methods",
+      "bankTransfer": "Bank Transfer",
+      "bankList": "Vietcombank, BIDV, Techcombank, VPBank...",
+      "momo": "Momo Wallet",
+      "momoDesc": "Instant to e-wallet",
+      "zalopay": "ZaloPay",
+      "zalopayDesc": "Fast e-wallet transfer",
+      "cashPickup": "Cash Pickup",
+      "cashPickupDesc": "At partner locations"
+    },
+    "why": {
+      "title": "Why choose us?",
+      "bestRate": "Best rate",
+      "bestRateDesc": "Enjoy one of the most competitive exchange rates on the market.",
+      "lowestFee": "Lowest fee",
+      "lowestFeeDesc": "Save more with transparent & low transfer fees.",
+      "guaranteed": "Guaranteed Delivered",
+      "guaranteedDesc": "Your money arrives safely and reliably every single time.",
+      "track": "Track Transfer",
+      "trackDesc": "Monitor your transfers and resend easily"
+    },
+    "referralSection": {
+      "specialOfferTag": "SPECIAL OFFER",
+      "badgeText": "Earn Together",
+      "title": "Refer Friends & Earn Rewards",
+      "description": "Share the love and get rewarded! Invite your friends to use CanViet Exchange. When they complete their first transfer, you both earn exclusive bonuses.",
+      "instantBonus": "Instant Bonus",
+      "instantBonusDesc": "Get rewards when your friend signs up",
+      "unlimitedReferrals": "Unlimited Referrals",
+      "unlimitedReferralsDesc": "No limit on how many friends you can refer",
+      "cta": "Start Referring Now"
+    },
+    "bestRateLabel": "Best Rate",
+    "howItWorksFull": {
+      "title": "How Money Transfer Works",
+      "subtitle": "Send money to Vietnam in 4 simple steps",
+      "step1Title": "Create Account",
+      "step1Desc": "Sign up for free in under 2 minutes. No hidden fees or commitments.",
+      "step2Title": "Enter Details",
+      "step2Desc": "Add recipient information and choose payment method. We keep your data secure.",
+      "step3Title": "Confirm & Pay",
+      "step3Desc": "Review the rate and total, then complete your secure payment instantly.",
+      "step4Title": "Money Delivered",
+      "step4Desc": "Track your transfer in real-time. Money typically arrives within hours!",
+      "ctaTitle": "Ready to send money?",
+      "ctaSignUp": "Sign Up Now",
+      "ctaLogin": "Log In",
+      "ctaSubtitle": "Join thousands of satisfied customers sending money home"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Everything you need to know about sending money to Vietnam",
+      "q1": {
+        "q": "How long does it take for money to arrive in Vietnam?",
+        "a": "Most transfers arrive within 1-4 hours during business hours in Vietnam. Bank transfers may take up to 24 hours depending on the receiving bank's processing time. E-wallet transfers (Momo, ZaloPay) are typically instant."
+      },
+      "q2": {
+        "q": "What are the fees for sending money?",
+        "a": "Our standard transfer fee is $1.50 CAD. However, if you send $1,000 CAD or more, we waive the transfer fee completely! There are no hidden charges - what you see is what you pay."
+      },
+      "q3": {
+        "q": "Is my money safe and secure?",
+        "a": "Absolutely! We use bank-level encryption and comply with Canadian financial regulations. Your personal and financial information is protected with industry-leading security measures. All transfers are tracked and guaranteed."
+      },
+      "q4": {
+        "q": "What payment methods can I use?",
+        "a": "You can send money using Interac e-Transfer, Credit/Debit Card, or Bank Transfer. Each method is secure and processed quickly. Interac e-Transfer is typically the fastest option for Canadian customers."
+      },
+      "q5": {
+        "q": "How do I track my transfer?",
+        "a": "After completing your transfer, you'll receive a tracking number via email. You can log into your account anytime to check the status in real-time. We'll also notify you when the money has been successfully delivered."
+      },
+      "q6": {
+        "q": "What information do I need about the recipient?",
+        "a": "For bank transfers, you'll need the recipient's full name, bank account number, and bank name. For e-wallets (Momo/ZaloPay), you just need their registered phone number. We guide you through each step to make it easy."
+      },
+      "q7": {
+        "q": "Can I cancel or modify a transfer?",
+        "a": "You can cancel a transfer within 30 minutes of initiating it, as long as the money hasn't been sent yet. Contact our support team immediately if you need to make changes. Once the transfer is processed, modifications are not possible, but our support team is here to help with any issues."
+      },
+      "stillHaveQuestions": "Still have questions?",
+      "contactSupport": "Contact our support team"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "allUserRequests": "All User Requests",
+    "yourRequests": "Your Requests",
+    "filterByDate": "Filter by Date:",
+    "clearFilter": "Clear Filter",
+    "showing": "Showing",
+    "of": "of",
+    "requests": "requests",
+    "loading": "Loading your requests...",
+    "noRequests": "No requests found.",
+    "startFirstTransfer": "Start your first transfer",
+    "referenceId": "Reference ID",
+    "date": "Date",
+    "from": "From",
+    "to": "To",
+    "amountSent": "Amount Sent",
+    "amountReceived": "Amount Received",
+    "rate": "Rate",
+    "status": "Status",
+    "recipient": "Recipient",
+    "actions": "Actions",
+    "viewReceipt": "View Receipt",
+    "noReceipt": "No receipt yet",
+    "updateStatus": "Update Status",
+    "pending": "Pending",
+    "approved": "Approved",
+    "completed": "Completed",
+    "rejected": "Rejected",
+    "updating": "Updating...",
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page"
+    }
+  },
+  "termsAndConditions": {
+    "title": "Terms and Conditions",
+    "lastUpdated": "Last Updated:",
+    "date": "November 6, 2025",
+    "section1": {
+      "title": "1. Acceptance of Terms",
+      "content": "By accessing and using CanViet Exchange (\"the Service\"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these Terms and Conditions, please do not use our Service."
+    },
+    "section2": {
+      "title": "2. Service Description",
+      "content": "CanViet Exchange provides money transfer services from Canada (CAD) to Vietnam (VND). We facilitate the transfer of funds through various payment methods including debit cards, credit cards, e-transfers, and bank wire transfers."
+    },
+    "section3": {
+      "title": "3. User Eligibility",
+      "intro": "To use our Service, you must:",
+      "requirements": [
+        "Be at least 18 years of age",
+        "Be a legal resident of Canada",
+        "Provide accurate and complete registration information",
+        "Maintain the security of your account credentials",
+        "Be legally authorized to send funds from the accounts you use"
+      ]
+    },
+    "section6": {
+      "title": "6. User Responsibilities",
+      "intro": "You agree to:",
+      "responsibilities": [
+        "Provide accurate recipient information (bank details, account numbers)",
+        "Ensure you have authorization to send funds from your payment source",
+        "Not use the Service for illegal activities, money laundering, or fraud",
+        "Verify all transfer details before confirming submission",
+        "KYC process: You may be required to provide additional information for identity verification and AML due to regulations in your region",
+        "Fluctuating exchange rates: Be aware that exchange rates may vary between the time you initiate a transfer and when it is completed",
+        "Keep your account information secure and confidential"
+      ]
+    },
+    "section7": {
+      "title": "7. Privacy and Data Protection",
+      "intro": "We collect and process personal information in accordance with our Privacy Policy. By using our Service, you consent to our collection, use, and disclosure of your personal information as described in our Privacy Policy.",
+      "kyc": {
+        "title": "Know Your Customer (KYC) Requirements",
+        "intro": "As a financial service provider operating in Canada, we are required by law to implement Know Your Customer (KYC) procedures to comply with:",
+        "requirements": [
+          "<strong>Proceeds of Crime (Money Laundering) and Terrorist Financing Act (PCMLTFA)</strong>",
+          "<strong>Financial Transactions and Reports Analysis Centre of Canada (FINTRAC)</strong> regulations",
+          "<strong>Anti-Money Laundering (AML)</strong> and Counter-Terrorist Financing (CTF) requirements"
+        ]
+      },
+      "whyCollect": {
+        "title": "Why We Collect Your Information",
+        "intro": "We collect your personal information and identity documents for the following purposes:",
+        "purposes": [
+          "<strong>Identity Verification:</strong> To confirm you are who you claim to be and prevent identity theft or fraud",
+          "<strong>Legal Compliance:</strong> To meet regulatory requirements under Canadian federal and provincial laws",
+          "<strong>Risk Assessment:</strong> To evaluate and manage potential risks associated with money laundering, terrorist financing, or other illegal activities",
+          "<strong>Transaction Monitoring:</strong> To detect and report suspicious transactions as required by law",
+          "<strong>Service Provision:</strong> To process your transfer requests accurately and securely"
+        ]
+      },
+      "howSecure": {
+        "title": "How We Secure Your Information",
+        "intro": "We take the security and confidentiality of your personal information seriously and implement multiple layers of protection:",
+        "measures": [
+          "<strong>Encryption:</strong> All data transmitted between your device and our servers is encrypted using industry-standard SSL/TLS protocols",
+          "<strong>Secure Storage:</strong> Personal information and documents are stored in encrypted databases with restricted access",
+          "<strong>Data Minimization:</strong> We only collect information that is necessary for regulatory compliance and service provision"
+        ]
+      },
+      "retention": {
+        "title": "Data Retention and Your Rights",
+        "content": "We retain your personal information for as long as required by Canadian law (typically 5-7 years after your last transaction) to comply with record-keeping obligations under FINTRAC regulations."
+      },
+      "disclaimer": "Data Security Disclaimer"
+    },
+    "section8": {
+      "title": "8. Prohibited Activities",
+      "intro": "You may not use our Service to:",
+      "activities": [
+        "Send funds for illegal goods or services",
+        "Engage in money laundering or terrorist financing",
+        "Violate any laws or regulations in Canada or Vietnam",
+        "Impersonate another person or entity",
+        "Use fraudulent payment methods",
+        "Attempt to manipulate exchange rates or fees"
+      ]
+    },
+    "section9": {
+      "title": "9. Cancellations and Refunds",
+      "beforeProcessing": "<strong>Before Processing:</strong> You may cancel a transfer before it has been processed. Contact us immediately for assistance.",
+      "afterProcessing": "<strong>After Processing:</strong> Once a transfer has been processed and sent to the recipient's bank, it cannot be cancelled or reversed.",
+      "refunds": "<strong>Refunds:</strong> Refunds are issued in the original currency (CAD) and may be subject to exchange rate differences. Processing fees are non-refundable except in cases of service error."
+    },
+    "section10": {
+      "title": "10. Liability and Disclaimers",
+      "serviceAvailability": "<strong>Service Availability:</strong> While we strive to provide uninterrupted service, we do not guarantee that the Service will be available at all times. We are not liable for any loss resulting from service downtime.",
+      "exchangeRate": "<strong>Exchange Rate Fluctuations:</strong> We are not responsible for losses due to exchange rate changes between the time you initiate and complete a transfer.",
+      "thirdParty": "<strong>Third-Party Services:</strong> We rely on third-party payment processors and banks. We are not liable for delays or failures caused by these third parties.",
+      "maxLiability": "<strong>Maximum Liability:</strong> Our total liability for any claim related to our Service is limited to the amount of the specific transaction in question."
+    },
+    "section11": {
+      "title": "11. Dispute Resolution",
+      "p1": "If you have a complaint or dispute regarding our Service, please contact us at services@canvietexchange.com. We will work to resolve issues within 30 business days.",
+      "p2": "Any disputes that cannot be resolved through negotiation shall be subject to the laws of the Province of British Columbia, Canada, and the federal laws of Canada applicable therein."
+    },
+    "section12": {
+      "title": "12. Changes to Terms",
+      "content": "We reserve the right to modify these Terms and Conditions at any time. We will notify users of significant changes via email or through a notice on our website. Your continued use of the Service after changes constitute acceptance of the modified terms."
+    },
+    "section13": {
+      "title": "13. Termination",
+      "content": "We reserve the right to suspend or terminate your account and access to our Service at any time, without notice, for conduct that we believe violates these Terms and Conditions or is harmful to other users, us, or third parties, or for any other reason."
+    },
+    "section14": {
+      "title": "14. Contact Information",
+      "intro": "If you have any questions about these Terms and Conditions, please contact us via:",
+      "email": "<strong>Email:</strong> services@canvietexchange.com",
+      "website": "<strong>Website:</strong> www.canvietexchange.com"
+    },
+    "section15": {
+      "title": "15. Acknowledgment",
+      "content": "By using CanViet Exchange, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.",
+      "thanks": "Thank you for choosing us!"
+    },
+    "backToTransfers": "Back to Transfers"
+  },
+  "help": {
+    "title": "How Can We Help?",
+    "subtitle": "Fill out the form below and we'll get back to you soon",
+    "name": "Your Name",
+    "email": "Your Email",
+    "topic": "Topic",
+    "selectTopic": "Select a topic",
+    "topics": {
+      "general": "General Inquiry",
+      "transfer": "Transfer Issue",
+      "account": "Account Problem",
+      "kyc": "KYC Verification",
+      "payment": "Payment Method",
+      "fees": "Fees & Rates",
+      "technical": "Technical Support",
+      "other": "Other"
+    },
+    "message": "Your Message",
+    "messagePlaceholder": "Please describe your issue in detail...",
+    "submit": "Submit Request",
+    "submitting": "Submitting...",
+    "success": "Thank you! We've received your message and will respond soon.",
+    "error": "Failed to submit. Please try again.",
+    "helpCenter": {
+      "title": "Help Center",
+      "gettingStarted": {
+        "title": "Getting Started",
+        "q1": {
+          "q": "Do I need to verify my identity?",
+          "a": "Email verification is required for all accounts. Additional identity verification may be required for larger transfers to comply with Canadian financial regulations."
+        }
+      },
+      "sendingMoney": {
+        "title": "Sending Money",
+        "q1": {
+          "q": "Why does my transfer take longer than expected?",
+          "cardPayments": "<strong>Card payments:</strong> within 24 business hours",
+          "eTransfer": "<strong>E-Transfer:</strong> Within 24 business hours",
+          "eft": "<strong>Electronic Funds Transfers (EFT):</strong> 5-7 business days",
+          "note": "<em>Note: Processing time may vary based on payment method, recipient bank, and other factors.</em>"
+        }
+      },
+      "feesRates": {
+        "q1": {
+          "q": "How is your exchange rate calculated?",
+          "a": "In order to have <strong>an appealing rate</strong>, we utilize stablecoin-backed dollar sending encrypted currency across the world. Our exchange rate is calculated accuracy in timing and better pricing."
+        },
+        "q2": {
+          "q": "Will the exchange rate change after I submit?",
+          "a": "The exchange rate shown at the time of confirmation is locked in for your transfer. Rates are updated constantly to reflect current market conditions."
+        }
+      },
+      "tracking": {
+        "title": "Tracking & Status",
+        "q1": {
+          "q": "How do I track my transfer?",
+          "a": "Log in to your account and navigate to \"Transfer History\" in the dashboard. You'll see the status of all your transfers with details including transaction ID, amount, and delivery status. You can also share the tracking link with your recipient."
+        },
+        "q2": {
+          "q": "What do the different statuses mean?",
+          "pending": "<strong>Pending:</strong> We've received your request and are processing it",
+          "approved": "<strong>Approved:</strong> Transfer approved and funds are being sent to recipient",
+          "completed": "<strong>Completed:</strong> Recipient has received the money",
+          "rejected": "<strong>Rejected:</strong> Transfer could not be processed (contact support)"
+        }
+      },
+      "troubleshooting": {
+        "title": "Troubleshooting",
+        "q1": {
+          "q": "My transfer is taking longer than expected. What should I do?",
+          "a": "Processing times can vary based on payment method, recipient bank policies, weekends, and holidays. If your transfer is significantly delayed beyond the estimated delivery time, please contact our support team with your transaction ID."
+        },
+        "q2": {
+          "q": "I entered the wrong recipient information. What can I do?",
+          "a": "Contact support immediately if the transfer is still in \"Pending\" status. We may be able to correct the information or cancel the transfer. Once approved or completed, we cannot modify recipient details."
+        },
+        "q3": {
+          "q": "Why was my transfer rejected?",
+          "a": "Transfers may be rejected due to incorrect recipient information, compliance issues, insufficient verification, or payment processing failures. Check your email for specific details or contact support for assistance."
+        }
+      },
+      "submitQuestion": {
+        "title": "Submit Your Question",
+        "suspendedAlert": {
+          "title": "Account Suspended",
+          "message": "Your account has been suspended due to multiple duplicate identity attempts. Please use the form below to contact our support team for assistance with your account."
+        },
+        "form": {
+          "firstName": "First Name",
+          "firstNamePlaceholder": "Enter your first name",
+          "lastName": "Last Name",
+          "lastNamePlaceholder": "Enter your last name",
+          "email": "Email",
+          "emailPlaceholder": "Enter your email",
+          "topic": "Topic",
+          "topicPlaceholder": "Select a topic...",
+          "topicOptions": [
+            "Why my transfer is delayed more than expected time?",
+            "Why my transfer is completed but recipient has not received the money?",
+            "How can I track my transfer?",
+            "How do I change recipient information?",
+            "Questions about fees and exchange rate",
+            "Why I cannot perform KYC with my documents?",
+            "Why my account is suspended?",
+            "Report or Found a bug?",
+            "Other (specify below)"
+          ],
+          "titlePlaceholder": "Please describe your topic...",
+          "titleNote": "Selected topic will be used as the title.",
+          "content": "Your Question/Feedback",
+          "contentPlaceholder": "Please describe your question or provide feedback in detail...",
+          "charactersLimit": "characters",
+          "submitButton": "Submit Feedback",
+          "submitting": "Submitting...",
+          "submitted": "✓ Submitted",
+          "loginButton": "Log In to Submit",
+          "successMessage": "<strong>Thank you!</strong> Your feedback has been submitted successfully. Our team will review it shortly."
+        }
+      },
+      "stillNeedHelp": {
+        "title": "Still Need Help?",
+        "contactTeam": "Contact Our Support Team",
+        "intro": "If you couldn't find the answer to your question, contact our support team directly!",
+        "email": "<strong>Email:</strong> services@canvietexchange.com",
+          "details": [
+          "📧 <strong>Email:</strong> services@canvietexchange.com",
+          "⏰ <strong>Support Hours:</strong> Monday - Friday, 9:00 AM - 5:00 PM PST",
+          "⏱️ <strong>Response Time:</strong> We strive to respond within 24 hours."
+        ],      
+        "actions": {
+          "startTransfer": "Start a Transfer",
+          "goToDashboard": "Go to Dashboard"
+      }
+      }
+
+    }
+  },
+  "settings": {
+    "title": "Account Settings",
+    "personalInfo": "Personal Information",
+    "security": "Security",
+    "notifications": "Notifications",
+    "language": "Language",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "saved": "Changes saved successfully",
+    "receiveTransferEmails": "Receive transfer emails",
+    "receiveTransferEmailsDesc": "Emails about your transfer status, receipts and confirmations.",
+    "receiveNewEmails": "Receive new feature emails",
+    "receiveNewEmailsDesc": "Occasional updates about new features and promotions."
+  },
+  "personalInfo": {
+    "title": "Personal Information",
+    "updateYourInfo": "Update your personal details",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "address": "Address",
+    "city": "City",
+    "province": "Province/State",
+    "postalCode": "Postal Code",
+    "country": "Country",
+    "dateOfBirth": "Date of Birth",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "success": "Profile updated successfully",
+    "error": "Failed to update profile"
+  },
+  "transfers": {
+    "cashPickup": "Cash Pickup",
+    "title": "Fast, Secure, Friendly Transfers",
+    "sendMoney": "Send money from Canada",
+    "toVietnam": "to Vietnam",
+    "withTransparentRates": "with transparent rates and fast delivery.",
+    "newTransfer": "New Transfer",
+    "newRecipient": "New Recipient in Vietnam",
+    "recentTransfers": "Recent Transfers",
+    "noTransfersYet": "You have not sent any money back to Vietnam yet. Make your first transfer now!",
+    "startFirstTransfer": "Start First Transfer",
+    "viewAllTransfers": "View All Transfers",
+    "recipient": "Recipient",
+    "amountSent": "Amount Sent",
+    "amountReceived": "Amount Received",
+    "selectPaymentMethod": "Select payment method",
+    "proceedViaCard": "Proceed via Card",
+    "fastestDelivery": "Fastest Delivery",
+    "debitCard": "Debit card",
+    "creditCard": "Credit card",
+    "expectedDelivery": "Expected delivery",
+    "within24Hours": "Within 24 hours",
+    "businessDays": "5-7 business days",
+    "processingNote": "Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. Consider that your transfer might take longer than expected—this is normal!",
+    "bestValue": "BEST VALUE",
+    "proceedViaBank": "Proceed via bank",
+    "eTransfer":"E-Transfer",
+    "eft":"EFT",
+    "recommended": "RECOMMENDED",
+    "userEmail": "User Email",
+    "accountNumber": "Account #",
+    "transitNumber": "Transit Number",
+    "institutionNumber": "Institution Number",
+    "continueToAmount": "Continue to Amount",
+    "step1": "Recipient",
+    "step2": "Amount",
+    "step3": "Details",
+    "step4": "Review",
+    "recipientName": "Recipient Full Name",
+    "recipientFullName": "Recipient Full Name",
+    "recipientPhone": "Recipient Phone Number",
+    "recipientPhoneNumber": "Recipient phone number",
+    "phoneExample": "090 123 4567",
+    "momoPhoneNumber": "Momo Phone Number",
+    "zalopayPhoneNumber": "ZaloPay Phone Number",
+    "enterCorrectPhone": "Please enter the correct recipient's phone number!",
+    "youSend": "YOU SEND",
+    "bestRate": "Best Rate",
+    "yourRate": "Your rate",
+    "enterAmount": "Enter amount",
+    "theyReceive": "THEY RECEIVE",
+    "enterVNDAmount": "Enter VND amount",
+    "transferFee": "Transfer fee",
+    "continueToReceiverDetails": "Continue to Receiver Details",
+    "receiverBankDetails": "Receiver Bank Details",
+    "amountExceedsLimit": "Amount exceeds",
+    "limitOf": "limit of",
+    "pleaseReduce": "Please reduce the amount or choose Bank Transfer.",
+    "limit": "Limit",
+    "limitedAmount": "The limited amount for",
+    "is": "is",
+    "receivingMethod": "Receiving Method",
+    "selectReceivingMethod": "Select receiving method",
+    "bankTransfer": "Bank Transfer",
+    "momoWallet": "Momo Wallet",
+    "zalopayWallet": "ZaloPay Wallet",
+
+    "selectBank": "Select a Bank",
+    "bankName": "Bank Name",
+    "enterBankName": "Enter bank name",
+    "bankAccountNumber": "Bank Account #",
+    "maxDigits": "15 digits maximum",
+    "content": "Content",
+    "messageToRecipient": "Message to recipient",
+    "continueToReview": "Continue to Review",
+    "reviewSubmit": "Review & Submit",
+    "email": "Email",
+    "amount": "Amount",
+    "fee": "Fee",
+    "charged": "Charged",
+    "feeNote": "$1.50 CAD fee applies to all transfers",
+    "method": "Method",
+    "bank": "Bank",
+    "payment": "Payment",
+    "initializingPayment": "Initializing secure payment...",
+    "loadingPaymentForm": "Loading payment form...",
+    "readAgreed": "Read & Agreed!",
+    "back": "Back",
+    "submitting": "Submitting…",
+    "submitTransfer": "Submit Transfer",
+    "submitTransferVerified": "Submit Transfer (Verified)",
+    "whyChooseUs": "Why choose us",
+    "lowFees": "Low Fees",
+    "lowFeesDesc": "Competitive rates and transparent fees. No hidden charges.",
+    "fastDelivery": "Fast Delivery",
+    "secure": "Secure",
+    "secureDesc": "Encrypted transfers and verified partners.",
+    "testimonials": "What customers say",
+    "recipientGets": "Recipient Gets",
+    "exchangeRate": "Exchange Rate",
+    "total": "Total",
+    "transferContent": "Message to recipient",
+    "continue": "Continue",
+    "confirmTransfer": "Confirm Transfer",
+    "processing": "Processing...",
+    "success": "Transfer submitted successfully!",
+    "error": "Transfer failed. Please try again.",
+    "walletLimitExceeded": "Amount exceeds wallet limit",
+    "reduceAmount": "Please reduce the amount or choose Bank Transfer",
+    "rateCalculation": "How we calculate your exchange rate",
+    "competitiveRates": "We offer competitive exchange rates with a transparent margin applied to the market rate.",
+    "currentRate": "Your current exchange rate",
+    "perCAD": "per CAD",
+    "noFeePromo": "Send $1,000+ CAD to enjoy no transfer fee!",
+    "rateFluctuation": "Note: Exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.",
+    "welcomeBack": "Welcome back!",
+    "continueWhereLeft": "Continue where you are left off!",
+    "processingPayment": "Processing payment — please do not close this window.",
+    "yourPoint":"Your point"
+  },
+  "transfersHistory": {
+    "title": "Transfer History",
+    "allTransfers": "All Transfers",
+    "filterByDate": "Filter by Date",
+    "filterByStatus": "Filter by Status",
+    "allStatuses": "All Statuses",
+    "search": "Search by reference ID",
+    "noTransfers": "No transfers found",
+    "loadMore": "Load More"
+  },
+  "kyc": {
+    "verificationRequired": "Identity Verification Required",
+    "verificationInProgress": "Verification in Progress",
+    "verificationComplete": "Verification Complete",
+    "identityVerified": "Identity verified!",
+    "canSendMoney": "You can now send money.",
+    "startVerification": "Start Verification",
+    "startVerifying": "Start Verifying",
+    "verifyIdentity": "Verify your identity",
+    "toSubmitTransfers": "to submit transfers. It only takes a few minutes.",
+    "remindLater": "Remind Me Later",
+    "verificationDescription": "To transfer money abroad, you need to complete a one-time identity verification (KYC) that takes 2–5 minutes.",
+    "whyNeeded": "Why do we need this?",
+    "securityReason": "This process helps keep your transfers secure and comply with regulations.",
+    "uploadDocuments": "Upload Documents"
+  },
+  "referral": {
+    "title": "Referral Program",
+    "yourCode": "Your Referral Code",
+    "shareCode": "Share your code and earn rewards",
+    "copyCode": "Copy Code",
+    "copied": "Copied!",
+    "earnings": "Total Earnings",
+    "referrals": "Total Referrals",
+    "pending": "Pending"
+  },
+  "suspended": {
+    "title": "Account Suspended",
+    "message": "Your account has been temporarily suspended. Please contact support for assistance.",
+    "contactSupport": "Contact Support"
+  },
+  "browserCompatibility": {
+    "warning": "Your browser may not be fully supported",
+    "recommendation": "For the best experience, please use the latest version of Chrome, Firefox, Safari, or Edge."
+  },
+  "stripe": {
+    "cardNumber": "Card Number",
+    "expiry": "Expiry Date",
+    "cvc": "CVC",
+    "processing": "Processing payment...",
+    "success": "Payment successful!",
+    "eTransfer": "E-Transfer",
+    "eft": "EFT",
+    "error": "Payment failed. Please try again."
+  },
+  "error404": {
+    "title": "Page Not Found",
+    "message": "The page you are looking for does not exist or has been moved.",
+    "goBack": "Go Back",
+    "goToTransfers": "Go to Transfers",
+    "goHome": "Go Home"
+  }
+}

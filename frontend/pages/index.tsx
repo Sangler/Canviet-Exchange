@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/router";
 
-export default function Home() {
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-3xl font-bold">NexTransfer User Frontend</h1>
-    </main>
-  );
+export default function Index() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/home');
+  }, [router]);
+
+  return null;
 }
