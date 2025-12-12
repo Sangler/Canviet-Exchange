@@ -50,6 +50,7 @@ export default function Transfer() {
     { value: 'bank', label: t('transfers.bankTransfer'), icon: '/bank-icons/bank-svgrepo-com.svg' },
     { value: 'momo', label: t('transfers.momoWallet'), icon: '/bank-icons/momo.png' },
     { value: 'zalopay', label: t('transfers.zalopayWallet'), icon: '/bank-icons/zalopay.jpeg' },
+    { value: 'cash', label: t('transfers.cashPickup'), icon: '/bank-icons/cash.png' },
   ];
   
   const vietnameseBanks = [
@@ -228,6 +229,29 @@ export default function Transfer() {
   // Flag to prevent saving during initial restoration
   const [isRestoringFromDraft, setIsRestoringFromDraft] = useState(true);
 
+  // Coming soon modal for unsupported receiving methods (e.g., Cash pick-up)
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const prevReceivingMethodRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    // track previous non-cash selection
+    if (recipientReceivingMethod && recipientReceivingMethod !== 'cash') {
+      prevReceivingMethodRef.current = recipientReceivingMethod;
+    }
+    if (recipientReceivingMethod === 'cash') {
+      // show coming soon and revert selection so user must choose again
+      setShowComingSoon(true);
+      // revert to previous selection or default to 'bank'
+      const prev = prevReceivingMethodRef.current || 'bank';
+      // Small timeout to allow UI selection event to complete before reverting
+      setTimeout(() => {
+        setRecipientReceivingMethod(prev);
+      }, 50);
+      // auto-dismiss modal after 2.5s
+      setTimeout(() => setShowComingSoon(false), 2500);
+    }
+  }, [recipientReceivingMethod]);
+  
   // Check for KYC success URL parameter
   useEffect(() => {
     if (router.query.kycSuccess === 'true') {
