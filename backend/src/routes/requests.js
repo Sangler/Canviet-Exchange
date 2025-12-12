@@ -454,25 +454,7 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
         } else if (userEmailAddr) {
           const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
           const ref = updatedRequest.referenceID ? `${updatedRequest.referenceID}` : '';
-          const subject = ref ? `Transfer ${ref} — Funds received` : 'We have received your funds';
-
-          // Deduct points for selected perks (if any)
-          const perksCost = (updatedRequest.removeFee ? 1 : 0) + (updatedRequest.buffExchangeRate ? 1 : 0);
-          let pointsAfter = null;
-          if (perksCost > 0) {
-            try {
-              const User = require('../models/User');
-              const u2 = await User.findById(updatedRequest.userId).select('points');
-              if (u2) {
-                const currentPoints = (typeof u2.points === 'number') ? u2.points : 0;
-                const toDeduct = Math.min(currentPoints, perksCost);
-                u2.points = Math.max(0, currentPoints - toDeduct);
-                await u2.save();
-                pointsAfter = u2.points;
-              }
-            } catch (deductErr) {
-            }
-          }
+          const subject = ref ? `[Canviet Exchange] Transfer ${ref} — Funds received` : 'We have received your funds';
 
           // Build a receipt URL when possible (use receipt hash derived from referenceID)
           let receiptHash = '';
@@ -484,8 +466,31 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
           }
           const receiptUrl = receiptHash ? `${frontendUrl}/transfers/receipt/${receiptHash}` : `${frontendUrl}/transfers`;
 
-          const text = `Hello ${userFull}\n\nWe have received your funds and will proceed to send them to the recipient. You can view your transfer here: ${receiptUrl}\n\nThank you for choosing CanViet Exchange!`;
-          const html = `<div style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.4;"><p>Hi ${escapeHtml(userFull || '')}</p><p>We have received your funds and will proceed to send them to the recipient. <a href="${receiptUrl}">View transfer</a></p></div>`;
+          const text = `Hello ${userFull}\n\nWe have received your funds and will proceed to send them to the recipient. View transfer: ${receiptUrl}\n\n---\nVietnamese:\nXin chào ${userFull},\nChúng tôi đã nhận được tiền và sẽ tiến hành gửi đến người nhận. Xem giao dịch: ${receiptUrl}\n\nTo opt out of transfer completion emails, go to ${frontendUrl}/settings and turn off \"Receive transfer emails\" then save changes.`;
+
+          const html = `
+          <div style="font-family: Arial, sans-serif; color: #1f2937; line-height:1.5;">
+            <div style="text-align:center; padding: 20px 0;">
+              <img src="${emailSvc.LOGO_DATA_URI}" alt="CanViet Exchange" style="height: 60px;" />
+            </div>
+            <h2 style="font-size:18px; margin:0 0 12px;">Hi ${escapeHtml(userFull || '')},</h2>
+            <p style="font-size:16px; margin:8px 0;">We have received your funds and will proceed to send them to the recipient.</p>
+            <div style="text-align:center; margin:18px 0;">
+              <a href="${receiptUrl}" style="background:#1e3a8a;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block;">View transfer</a>
+            </div>
+            <p style="font-size:14px; color:#6b7280; margin:8px 0;">Reference: <strong>${escapeHtml(ref)}</strong></p>
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;" />
+
+            <!-- Vietnamese translation -->
+            <h3 style="font-size:16px;margin:8px 0;">Xin chào ${escapeHtml(userFull || '')},</h3>
+            <p style="font-size:14px; color:#1f2937;">Chúng tôi đã nhận được tiền và đang tiến hành gửi đến người nhận. Bạn có thể xem giao dịch tại <a href="${receiptUrl}">Xem giao dịch</a>.</p>
+
+            <p style="margin:12px 0;font-size:12px;color:#6b7280;">Để không nhận email hoàn tất chuyển khoản, hãy vào <a href="${frontendUrl}/settings">${frontendUrl}/settings</a>, tắt "Nhận email chuyển khoản", sau đó lưu thay đổi.</p>
+            <div style="margin-top:18px; font-size:12px; color:#6b7280;">
+              <p>CanViet Exchange<br/>618 Edward Street N, Thunder Bay, ON, Canada<br/>Phone: +1 416-555-0100<br/><a href="${frontendUrl}">${frontendUrl}</a></p>
+            </div>
+            </div>
+          `;
 
           try {
             await emailSvc.sendMail({
@@ -594,8 +599,14 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
               <tr><td style="padding:4px 8px;"><strong>Trạng thái:</strong></td><td style="padding:4px 8px;">Hoàn thành</td></tr>
             </table>
 
+            <div style="text-align:center; margin:16px 0;">
+              <p style="margin:8px 0;">Hãy để lại đánh giá trên Trustpilot nếu bạn hài lòng với dịch vụ.</p>
+              <p style="margin:8px 0;"><a href="https://www.trustpilot.com/review/canvietexchange.com" target="_blank" rel="noopener noreferrer" style="background:#00b67a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;">Leave a review on Trustpilot</a></p>
+              <p style="margin:12px 0;font-size:12px;color:#6b7280;">Để không nhận thêm Email thông báo về giao dịch, hãy vào <a href="${frontendUrl}/settings">${frontendUrl}/settings</a>, tắt "Nhận email thông báo giao dịch", sau đó lưu thay đổi.</p>
+            </div>
+
             <div style="margin-top:18px; font-size:12px; color:#6b7280;">
-              <p>CanViet Exchange<br/>1234 Demo Street, Toronto, ON, Canada<br/>Phone: +1 416-555-0100<br/><a href="${frontendUrl}">${frontendUrl}</a></p>
+              <p>CanViet Exchange<br/>618 Edward Street N, Thunder Bay, ON, Canada<br/>Phone: +1 416-555-0100<br/><a href="${frontendUrl}">${frontendUrl}</a></p>
             </div>
           </div>
         `;
