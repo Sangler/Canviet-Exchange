@@ -213,6 +213,10 @@ export default function Transfer() {
   const [bankAccountNumber, setBankAccountNumber] = useState<string>('');
   const [bankTransitNumber, setBankTransitNumber] = useState<string>('');
   const [bankInstitutionNumber, setBankInstitutionNumber] = useState<string>('');
+  // EFT field error messages (friendly inline errors)
+  const [bankAccountError, setBankAccountError] = useState<string>('');
+  const [bankTransitError, setBankTransitError] = useState<string>('');
+  const [bankInstitutionError, setBankInstitutionError] = useState<string>('');
   // Billing address
   const [useHomeAddress, setUseHomeAddress] = useState(false);
   const [billingStreet, setBillingStreet] = useState<string>('');
@@ -467,6 +471,27 @@ export default function Transfer() {
     } catch (error) {
     }
   };
+
+  // Ensure EFT-related inputs contain only digits (sanitize user input)
+  useEffect(() => {
+    // allow only digits and cap to 12 chars (max)
+    const cleanedAcct = (bankAccountNumber || '').replace(/\D/g, '').slice(0, 12);
+    if (cleanedAcct !== bankAccountNumber) setBankAccountNumber(cleanedAcct);
+    // clear error once user types valid length
+    if (cleanedAcct.length >= 7 && cleanedAcct.length <= 12) setBankAccountError('');
+  }, [bankAccountNumber]);
+  useEffect(() => {
+    // allow only digits and cap to 5 chars
+    const cleanedTransit = (bankTransitNumber || '').replace(/\D/g, '').slice(0, 5);
+    if (cleanedTransit !== bankTransitNumber) setBankTransitNumber(cleanedTransit);
+    if (cleanedTransit.length === 5) setBankTransitError('');
+  }, [bankTransitNumber]);
+  useEffect(() => {
+    // allow only digits and cap to 3 chars
+    const cleanedInst = (bankInstitutionNumber || '').replace(/\D/g, '').slice(0, 3);
+    if (cleanedInst !== bankInstitutionNumber) setBankInstitutionNumber(cleanedInst);
+    if (cleanedInst.length === 3) setBankInstitutionError('');
+  }, [bankInstitutionNumber]);
   // Unified KYC start flow (same-tab redirect; preserves draft)
   const startKycVerification = async () => {
     if (!token) {
@@ -593,6 +618,46 @@ export default function Transfer() {
 
   async function onDetailsSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    // If EFT transfer is selected, validate institution/transit/account numbers
+    // Clear previous errors
+    setBankInstitutionError('');
+    setBankTransitError('');
+    setBankAccountError('');
+
+    if (transferMethod === 'EFT') {
+      try {
+        const inst = (bankInstitutionNumber || '').replace(/\s+/g, '');
+        const transit = (bankTransitNumber || '').replace(/\s+/g, '');
+        const acct = (bankAccountNumber || '').replace(/\s+/g, '');
+
+        const instOk = /^\d{3}$/.test(inst);
+        const transitOk = /^\d{5}$/.test(transit);
+        const acctOk = /^\d{7,12}$/.test(acct);
+
+        let hasError = false;
+        if (!instOk) {
+          setBankInstitutionError('Institution number must be 3 digits');
+          hasError = true;
+        }
+        if (!transitOk) {
+          setBankTransitError('Transit number must be 5 digits');
+          hasError = true;
+        }
+        if (!acctOk) {
+          setBankAccountError('Account number must be 7–12 digits');
+          hasError = true;
+        }
+
+        if (hasError) {
+          // keep user on same sub-step so they can correct inline
+          return;
+        }
+      } catch (err) {
+        setBankAccountError('Please enter valid bank details');
+        return;
+      }
+    }
+
     setSubStep(1);
   }
 
@@ -861,12 +926,41 @@ export default function Transfer() {
             }
           })
         },
-        recipientBank: {
-          bankName: selectedBank === 'Others' ? customBankName : selectedBank,
-          accountNumber: recipientAccountNumber,
-          accountHolderName: recipientName,
-          transferContent: transferContent
-        },
+        recipientBank: (function() {
+          // For wallet receiving methods (momo/zalopay) store wallet name as bankName,
+          // and include recipient phone and accountNumber fields.
+          if (recipientReceivingMethod === 'momo') {
+            return {
+              bankName: 'Momo Wallet',
+              accountNumber: recipientAccountNumber || recipientPhone,
+              accountHolderName: recipientName,
+              recipientPhone: {
+                countryCode: recipientPhoneCode,
+                phoneNumber: recipientPhone
+              },
+              transferContent: transferContent
+            };
+          }
+          if (recipientReceivingMethod === 'zalopay') {
+            return {
+              bankName: 'ZaloPay',
+              accountNumber: recipientAccountNumber || recipientPhone,
+              accountHolderName: recipientName,
+              recipientPhone: {
+                countryCode: recipientPhoneCode,
+                phoneNumber: recipientPhone
+              },
+              transferContent: transferContent
+            };
+          }
+          // Default: traditional bank transfer
+          return {
+            bankName: selectedBank === 'Others' ? customBankName : selectedBank,
+            accountNumber: recipientAccountNumber,
+            accountHolderName: recipientName,
+            transferContent: transferContent
+          };
+        })(),
         termAndServiceAccepted: agreedToTerms,
         // User-selected perks paid by points
         removeFee: removeFeeChecked,
@@ -1383,34 +1477,47 @@ export default function Transfer() {
                                   <label>{t('transfers.accountNumber')}</label>
                                   <input 
                                     type="text" 
+                                    id="eft-account"
                                     name="senderBankAccount" 
                                     placeholder="e.g., 0123498765" 
                                     value={bankAccountNumber}
                                     onChange={(e) => setBankAccountNumber(e.target.value)}
                                     required 
+                                    minLength={7}
+                                    maxLength={12}
+                                    aria-describedby="eft-account-error"
                                   />
+                                  {bankAccountError && <div id="eft-account-error" className="field-error" role="alert">{bankAccountError}</div>}
                                 </div>
                                 <div>
                                   <label>{t('transfers.transitNumber')}</label>
                                   <input 
                                     type="text" 
+                                    id="eft-transit"
                                     name="senderTransitNumber" 
                                     placeholder="e.g., 012" 
                                     value={bankTransitNumber}
                                     onChange={(e) => setBankTransitNumber(e.target.value)}
                                     required 
+                                    maxLength={5}
+                                    aria-describedby="eft-transit-error"
                                   />
+                                  {bankTransitError && <div id="eft-transit-error" className="field-error" role="alert">{bankTransitError}</div>}
                                 </div>
                                 <div>
                                   <label>{t('transfers.institutionNumber')}</label>
                                   <input 
                                     type="text" 
+                                    id="eft-institution"
                                     name="senderInstitutionNumber" 
                                     placeholder="e.g., 01234" 
                                     value={bankInstitutionNumber}
                                     onChange={(e) => setBankInstitutionNumber(e.target.value)}
                                     required 
+                                    maxLength={3}
+                                    aria-describedby="eft-institution-error"
                                   />
+                                  {bankInstitutionError && <div id="eft-institution-error" className="field-error" role="alert">{bankInstitutionError}</div>}
                                 </div>
                               </div>
                             )}
@@ -1438,7 +1545,33 @@ export default function Transfer() {
                     <button 
                       type="button" 
                       className="btn primary w-full" 
-                      onClick={() => setSubStep(1)}
+                      onClick={async () => {
+                        // Validate EFT fields before proceeding to Amount step
+                        // Clear previous errors
+                        setBankInstitutionError('');
+                        setBankTransitError('');
+                        setBankAccountError('');
+
+                        if (transferMethod === 'EFT') {
+                          try {
+                            const inst = (bankInstitutionNumber || '').replace(/\s+/g, '');
+                            const transit = (bankTransitNumber || '').replace(/\s+/g, '');
+                            const acct = (bankAccountNumber || '').replace(/\s+/g, '');
+                            const instOk = /^\d{3}$/.test(inst);
+                            const transitOk = /^\d{5}$/.test(transit);
+                            const acctOk = /^\d{7,12}$/.test(acct);
+                            let hasError = false;
+                            if (!instOk) { setBankInstitutionError('Institution number must be 3 digits'); hasError = true; }
+                            if (!transitOk) { setBankTransitError('Transit number must be 5 digits'); hasError = true; }
+                            if (!acctOk) { setBankAccountError('Account number must be 7–12 digits'); hasError = true; }
+                            if (hasError) return;
+                          } catch (err) {
+                            setBankAccountError('Please correct the bank details before continuing.');
+                            return;
+                          }
+                        }
+                        setSubStep(1);
+                      }}
                     >
                       {t('transfers.continueToAmount')}
                     </button>
@@ -2050,7 +2183,7 @@ export default function Transfer() {
                   </div>
                   <div className="feature card">
                     <h4>{t('transfers.fastDelivery')}</h4>
-
+                    <p>{t('transfers.fastDeliveryDesc')}</p>
                   </div>
                   <div className="feature card">
                     <h4>{t('transfers.secure')}</h4>

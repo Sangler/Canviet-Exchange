@@ -1268,6 +1268,7 @@ select.themed { padding-right: 36px; }
 
 .payment-radio input[type="radio"]:checked ~ .radio-content {
   color: #00B3A4;
+  
 }
 
 .payment-radio:has(input:checked) {
@@ -1306,7 +1307,7 @@ select.themed { padding-right: 36px; }
 .payment-label {
   font-size: 16px;
   font-weight: 600;
-  color: #011326;
+  color: #2563eb;
   flex: 1;
 }
 

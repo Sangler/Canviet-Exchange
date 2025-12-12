@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-12-12T22:12:16.591Z",
+  "userId": "693117ca4b45c3405c264f0a",
+  "exchange": {
+    "rateAtTime": 19062,
+    "cadPerUsdc": 1.3773766666666667,
+    "usdcUsdPeg": 1,
+    "cadPerUsd": 1.3773766666666667,
+    "usdVnd": 26256.233512,
+    "baseRate": 19062.493323298153,
+    "margin": 0,
+    "fetchedAt": "Fri, 12 Dec 2025 00:02:31 +0000"
+  },
+  "amountSentCAD": 101,
+  "amountToVND": 1925262,
+  "paymentMethod": {
+    "type": "EFT"
+  },
+  "requestId": "693c933f95aeba2628366289",
+  "referenceID": "CVE20251212221215ED156722"
+}

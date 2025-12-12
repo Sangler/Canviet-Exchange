@@ -5,6 +5,100 @@ const { transferLimiter } = require('../middleware/rateLimit');
 const crypto = require('crypto');
 const Stripe = require('stripe');
 const emailSvc = require('../services/email');
+const fs = require('fs');
+const path = require('path');
+
+// --- FX helper (copied logic from routes/fx.js to keep local calculation) ---
+const https = require('https');
+
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (r) => {
+      if (r.statusCode && r.statusCode >= 400) {
+        return reject(new Error('Status ' + r.statusCode));
+      }
+      let data = '';
+      r.on('data', (chunk) => (data += chunk));
+      r.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          resolve(json);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
+// Fetch USDC/CAD from Coinbase using native fetch (Node 18+)
+async function fetchUsdcCadFromCoinbase() {
+  const url = 'https://api.coinbase.com/v2/prices/USDC-CAD/spot';
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    return Number(data.data.amount);
+  } catch (err) {
+    return null;
+  }
+}
+
+// Fetch USDC/USD peg from Coinbase to account for market fluctuation
+async function fetchUsdcUsdFromCoinbase() {
+  const url = 'https://api.coinbase.com/v2/prices/USDC-USD/spot';
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    return Number(data.data.amount);
+  } catch (err) {
+    return null;
+  }
+}
+
+// Fetch USD/VND from exchange rate APIs
+async function fetchUsdVnd() {
+  const apiKey = process.env.EXCHANGE_API_KEY;
+  const candidates = [];
+  if (apiKey) {
+    candidates.push({ url: `https://v6.exchangerate-api.com/v6/${apiKey}/latest/USD`, source: 'exchangerate-api.com', type: 'conversion_rates' });
+  }
+  candidates.push({ url: 'https://open.er-api.com/v6/latest/USD', source: 'open.er-api.com', type: 'rates' });
+
+  for (const c of candidates) {
+    try {
+      const j = await fetchJson(c.url);
+      if (c.type === 'conversion_rates' && j?.conversion_rates?.VND) return { rate: Number(j.conversion_rates.VND), fetchedAt: j.time_last_update_utc, source: c.url };
+      if (c.type === 'rates' && j?.rates?.VND) return { rate: Number(j.rates.VND), fetchedAt: j.time_last_update_utc, source: c.url };
+    } catch (e) {
+      continue;
+    }
+  }
+  return null;
+}
+
+async function computeCadVndRates() {
+  const cadPerUsdc = await fetchUsdcCadFromCoinbase();
+  const usdcUsdPeg = await fetchUsdcUsdFromCoinbase();
+  const usdVndData = await fetchUsdVnd();
+  if (!cadPerUsdc || !usdcUsdPeg || !usdVndData) return null;
+  const cadPerUsd = cadPerUsdc * usdcUsdPeg;
+  const cadToVnd = usdVndData.rate / cadPerUsd;
+  const addMargin = Number(process.env.ADD_MARGIN_RATE || 50);
+  const withMargin = cadToVnd + addMargin;
+  return {
+    cadPerUsdc,
+    usdcUsdPeg,
+    cadPerUsd,
+    usdVnd: usdVndData.rate,
+    baseRate: cadToVnd,
+    margin: addMargin,
+    rateWithMargin: Math.round(withMargin),
+    fetchedAt: usdVndData.fetchedAt || new Date().toISOString()
+  };
+}
+// --- end fx helper ---
 
 // Small helper to escape HTML when injecting user-provided strings into templates
 function escapeHtml(str) {
@@ -342,6 +436,42 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
     });
 
     await newRequest.save();
+
+    // Build bookkeeper entry (best-effort, do not block request on failure)
+    (async () => {
+      try {
+        const fx = await computeCadVndRates();
+        const bookDir = path.join(__dirname, '..', '..', 'bookkeepers');
+        await fs.promises.mkdir(bookDir, { recursive: true });
+        const now = new Date();
+        const filename = `${now.toISOString().replace(/[:.]/g, '-')}_bookkeeper.json`;
+        const filePath = path.join(bookDir, filename);
+
+        const entry = {
+          timestamp: now.toISOString(),
+          userId: userId || null,
+          exchange: fx ? {
+            rateAtTime: fx.rateWithMargin,
+            cadPerUsdc: fx.cadPerUsdc,
+            usdcUsdPeg: fx.usdcUsdPeg,
+            cadPerUsd: fx.cadPerUsd,
+            usdVnd: fx.usdVnd,
+            baseRate: fx.baseRate,
+            margin: fx.margin,
+            fetchedAt: fx.fetchedAt
+          } : null,
+          amountSentCAD: amountSent,
+          amountToVND: amountReceived,
+          paymentMethod: normalizedSendingMethod || sendingMethod || null,
+          requestId: newRequest._id ? String(newRequest._id) : undefined,
+          referenceID: referenceNumber
+        };
+
+        await fs.promises.writeFile(filePath, JSON.stringify(entry, null, 2), 'utf8');
+      } catch (bkErr) {
+        // swallow errors - bookkeeper is best-effort
+      }
+    })();
 
     return res.status(201).json({
       ok: true,

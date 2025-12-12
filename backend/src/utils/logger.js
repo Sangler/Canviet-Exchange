@@ -21,7 +21,6 @@ module.exports = {
         console.error(JSON.stringify(err))
       } catch {
         // eslint-disable-next-line no-console
-        console.error('[logger] error payload not serializable')
       }
     }
   },
@@ -46,7 +45,6 @@ module.exports = {
         console.error(JSON.stringify(err))
       } catch {
         // eslint-disable-next-line no-console
-        console.error('[logger] error payload not serializable')
       }
     }
   },

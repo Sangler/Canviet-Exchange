@@ -19,7 +19,7 @@ A Node.js/Express API with MongoDB (Mongoose) for authentication and basic user 
    - From this folder:
      - cp .env.example .env
    - Update .env:
-     - MONGO_URI=mongodb://localhost:27017/canvietexchange (or your URI)
+     - MONGODB_URI=mongodb://localhost:27017/canvietexchange (or your URI)
      - JWT_SECRET, PASSWORD_PEPPER to strong secrets
      - FRONTEND_URL=http://localhost:3000 (for CORS during local dev)
      - Optional DB_* vars (see below)
@@ -39,7 +39,7 @@ See `.env.example` for a complete list. Key variables:
 - JWT_SECRET: Secret used to sign JWT access tokens
 - ACCESS_EXPIRES: Access token TTL (e.g., 15m, 1h)
 - PASSWORD_PEPPER: Secret concatenated to the plaintext password before hashing
-- MONGO_URI: MongoDB connection string
+- MONGODB_URI: MongoDB connection string
 - FRONTEND_URL: Allowed CORS origin (e.g., your Next.js dev server)
 - DB_REQUIRED: true|false — when true, exit process on DB connection failure (default false)
 - DB_MAX_RETRIES: Max retry attempts when connecting to Mongo (default 3)

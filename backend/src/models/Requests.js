@@ -104,7 +104,11 @@ const requestSchema = new mongoose.Schema({
       required: true
     },
     accountHolderName: String,
-    
+    recipientPhone: {
+      countryCode: { type: String },
+      phoneNumber: { type: String, required: false, maxlength: 10 }
+    },  
+  
     // Transfer content/message
     transferContent: {
       type: String,

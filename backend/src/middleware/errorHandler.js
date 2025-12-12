@@ -1,4 +1,3 @@
-const logger = require('../utils/logger')
 
 function getIp(req) {
   return (
@@ -24,12 +23,6 @@ module.exports = function errorHandler(err, req, res, _next) {
     status,
   }
 
-  // Prefer structured error logging with meta and stack trace
-  if (typeof logger.errorMeta === 'function') {
-    logger.errorMeta('Unhandled error', err, meta)
-  } else if (typeof logger.error === 'function') {
-    logger.error('Unhandled error', err)
-  }
 
   // Avoid sending stack traces in production
   const payload = {
