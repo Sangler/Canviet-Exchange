@@ -686,6 +686,7 @@
     "error": "Failed to update profile"
   },
   "transfers": {
+    "cashPickup": "Cash Pickup",
     "title": "Fast, Secure, Friendly Transfers",
     "sendMoney": "Send money from Canada",
     "toVietnam": "to Vietnam",
@@ -750,6 +751,7 @@
     "bankTransfer": "Bank Transfer",
     "momoWallet": "Momo Wallet",
     "zalopayWallet": "ZaloPay Wallet",
+
     "selectBank": "Select a Bank",
     "bankName": "Bank Name",
     "enterBankName": "Enter bank name",
