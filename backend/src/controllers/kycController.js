@@ -63,7 +63,6 @@ function validateShuftiSignature(responseBody, signatureHeader) {
     
     return calculatedSignature === signatureHeader;
   } catch (error) {
-    console.error('[Shufti] Signature validation error:', error);
     return false;
   }
 }
@@ -192,7 +191,6 @@ function computeIdentityKey(verificationResult, backgroundChecksInput) {
     const identityKey = crypto.createHmac('sha256', KYC_IDENTITY_HMAC_SECRET).update(base).digest('hex');
     return identityKey;
   } catch (e) {
-    console.error('[KYC] computeIdentityKey error:', e);
     return null;
   }
 }
@@ -277,10 +275,9 @@ exports.createVerification = async (req, res) => {
         body: JSON.stringify(payload)
       });
     } catch (fetchError) {
-      console.error('[Shufti] Network error during API call:', fetchError?.message || fetchError);
-      return res.status(502).json({ 
-        ok: false, 
-        message: 'Unable to reach verification service. Please try again.' 
+      return res.status(502).json({
+        ok: false,
+        message: 'Unable to reach verification service. Please try again.'
       });
     }
 
@@ -291,18 +288,16 @@ exports.createVerification = async (req, res) => {
       rawText = await response.text();
       data = JSON.parse(rawText);
     } catch (parseError) {
-      console.error('[Shufti] Failed to parse response:', parseError?.message || parseError);
-      return res.status(502).json({ 
-        ok: false, 
-        message: 'Invalid response from verification service' 
+      return res.status(502).json({
+        ok: false,
+        message: 'Invalid response from verification service'
       });
     }
 
     if (!response.ok) {
-      console.error('[Shufti] API error:', data);
-      return res.status(response.status).json({ 
-        ok: false, 
-        message: data.message || 'Failed to create verification request' 
+      return res.status(response.status).json({
+        ok: false,
+        message: data.message || 'Failed to create verification request'
       });
     }
 
@@ -314,18 +309,12 @@ exports.createVerification = async (req, res) => {
       if (!signature || calculated !== signature) {
         const msg = '[Shufti] Response signature validation failed';
         if (SHUFTI_VALIDATE_RESPONSE_SIGNATURE) {
-          console.error(msg);
           return res.status(502).json({ ok: false, message: 'Upstream signature validation failed' });
-        } else {
-          console.warn(msg + ' (continuing; validation disabled)');
         }
       }
     } catch (sigErr) {
       if (SHUFTI_VALIDATE_RESPONSE_SIGNATURE) {
-        console.error('[Shufti] Signature validation error:', sigErr);
         return res.status(502).json({ ok: false, message: 'Signature validation error' });
-      } else {
-        console.warn('[Shufti] Signature validation error (continuing; disabled):', sigErr?.message || sigErr);
       }
     }
 
@@ -344,7 +333,6 @@ exports.createVerification = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[Shufti] createVerification error:', error);
     return res.status(500).json({ ok: false, message: 'Failed to create verification request' });
   }
 };
@@ -388,11 +376,10 @@ exports.checkKycStatus = async (req, res) => {
             body: JSON.stringify({ reference: user.KYCReference })
           });
         } catch (fetchError) {
-          console.error('[Shufti Status] Network error:', fetchError?.message || fetchError);
-          return res.status(502).json({ 
-            ok: false, 
+          return res.status(502).json({
+            ok: false,
             kycStatus: user.KYCStatus,
-            message: 'Unable to reach verification service. Please try again.' 
+            message: 'Unable to reach verification service. Please try again.'
           });
         }
 
@@ -552,7 +539,6 @@ exports.checkKycStatus = async (req, res) => {
                 }
               }
             } catch (dupErr) {
-              console.error('[KYC Poll] Duplicate pre-check error:', dupErr);
             }
               
             // Normalize DOB
@@ -612,7 +598,6 @@ exports.checkKycStatus = async (req, res) => {
                     { $inc: { points: 2 } }
                   );
                 } catch (pointsErr) {
-                  console.warn('Failed to award referral points:', pointsErr?.message);
                 }
               }
             } catch (saveErr) {
@@ -664,7 +649,6 @@ exports.checkKycStatus = async (req, res) => {
           }
         }
       } catch (statusError) {
-        console.error('[Shufti] Status check error:', statusError);
         // Continue to return current status if status check fails
       }
     }
@@ -677,7 +661,6 @@ exports.checkKycStatus = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[Shufti] checkKycStatus error:', error);
     return res.status(500).json({ ok: false, message: 'Failed to check KYC status' });
   }
 };
@@ -713,7 +696,6 @@ exports.updateKycStatus = async (req, res) => {
       message: `KYC status updated to ${status}`
     });
   } catch (error) {
-    console.error('[Shufti] updateKycStatus error:', error);
     return res.status(500).json({ ok: false, message: 'Failed to update KYC status' });
   }
 };
@@ -729,7 +711,6 @@ exports.shuftiWebhook = async (req, res) => {
 
     // Validate webhook signature
     if (!validateShuftiSignature(rawBody, signature)) {
-      console.error('[Shufti Webhook] Invalid signature');
       return res.status(401).json({ ok: false, message: 'Invalid signature' });
     }
 
@@ -745,7 +726,6 @@ exports.shuftiWebhook = async (req, res) => {
     // Extract userId from reference (format: cvx-{userId}-{timestamp})
     const parts = reference.split('-');
     if (parts.length < 2 || parts[0] !== 'cvx') {
-      console.error('[Shufti Webhook] Invalid reference format:', reference);
       return res.status(400).json({ ok: false, message: 'Invalid reference format' });
     }
 
@@ -753,14 +733,12 @@ exports.shuftiWebhook = async (req, res) => {
     const user = await User.findById(userId);
     
     if (!user) {
-      console.error('[Shufti Webhook] User not found:', userId);
       return res.status(404).json({ ok: false, message: 'User not found' });
     }
 
   
     // Prevent duplicate webhook processing: if this reference was already processed, skip
     if (user.KYCReference === reference && (user.KYCStatus === 'verified' || user.KYCStatus === 'rejected')) {
-      console.log('[Shufti Webhook] Duplicate webhook detected for reference:', reference, '- already processed');
       return res.json({ ok: true, message: 'Webhook already processed' });
     }
 
@@ -784,7 +762,6 @@ exports.shuftiWebhook = async (req, res) => {
             body: JSON.stringify({ reference })
           });
         } catch (fetchError) {
-          console.error('[Shufti Webhook Poll] Network error:', fetchError?.message || fetchError);
           // Continue with webhook data if poll fails
           throw fetchError;
         }
@@ -801,7 +778,6 @@ exports.shuftiWebhook = async (req, res) => {
           country = statusData.country || country;
         }
       } catch (pollErr) {
-        console.error('[Shufti Webhook] Failed to poll full data:', pollErr);
         // Continue with webhook data if poll fails
       }
 
@@ -877,19 +853,7 @@ exports.shuftiWebhook = async (req, res) => {
           }
         };
         identityKey = computeIdentityKey(syntheticVr, fallback);
-        if (!identityKey) {
-          console.warn('[Shufti Webhook] computeIdentityKey returned null. Data:', {
-            country,
-            dob: docData.dob,
-            firstName: nameData.first_name,
-            lastName: nameData.last_name,
-            documentNumber: docData.document_number
-          });
-        } else {
-          console.log('[Shufti Webhook] Generated identityKey for user:', userId);
-        }
       } catch (e) {
-        console.error('[Shufti Webhook] Identity key generation error:', e?.message || e);
         // Identity key generation failed - continue without it
       }
       
@@ -955,7 +919,6 @@ exports.shuftiWebhook = async (req, res) => {
           }
         }
       } catch (dupErr) {
-        console.error('[Shufti Webhook] Duplicate pre-check error:', dupErr);
       }
       
       // Normalize DOB
@@ -1018,7 +981,6 @@ exports.shuftiWebhook = async (req, res) => {
               { $inc: { points: 2 } }
             );
           } catch (pointsErr) {
-            console.warn('Failed to award referral points:', pointsErr?.message);
           }
         }
       } catch (saveErr) {
@@ -1048,7 +1010,6 @@ exports.shuftiWebhook = async (req, res) => {
               remainingAttempts: Math.max(0, 5 - user.KYCRejectionCount)
             });
         }
-        console.error('[Shufti Webhook] Save error after verification.accepted:', saveErr);
         return res.status(500).json({ ok: false, message: 'Failed to finalize KYC verification' });
       }
     } else if (event === 'verification.declined') {
@@ -1063,7 +1024,6 @@ exports.shuftiWebhook = async (req, res) => {
 
     return res.json({ ok: true, message: 'Webhook processed successfully' });
   } catch (error) {
-    console.error('[Shufti Webhook] Error:', error);
     return res.status(500).json({ ok: false, message: 'Webhook processing failed' });
   }
 };

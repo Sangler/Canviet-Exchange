@@ -1,16 +1,13 @@
 const User = require('../models/User');
 const { sendOtpEmail } = require('../services/email');
 const { issueOtp, verifyOtp } = require('../services/otp');
-const logger = require('../utils/logger');
 
 // Twilio SMS sender (simple wrapper)
 let twilioClient = null;
 try {
   const twilio = require('twilio');
   twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  logger.info('[OTP] Twilio client initialized');
 } catch (e) {
-  logger.warn('[OTP] Twilio SDK not available:', e.message);
 }
 
 async function sendSms(phone, code) {
@@ -101,13 +98,11 @@ exports.requestPhoneOtp2 = async (req, res) => {
     // integrate SMS provider; for now log in dev
     const devSkip = (process.env.SMS_DEV_MODE || 'true').toLowerCase() === 'true';
     if (devSkip) {
-      logger.infoMeta('[OTP][PHONE][DEV] Code for', { phone: maskDestination(user.phone), code });
       return res.json({ ok:true, message:'OTP generated (SMS skipped in dev mode)', destination: maskDestination(user.phone), expiresIn: ttl, devMode: true });
     }
     // send via SMS provider here
     return res.json({ ok:true, message:'OTP sent', destination: maskDestination(user.phone), expiresIn: ttl });
   } catch (e) {
-    logger.error('requestPhoneOtp2 error', e);
     return res.status(500).json({ ok:false, message:'Unable to send verification code. Please try again later.' });
   }
 };
@@ -159,23 +154,18 @@ exports.requestPhoneOtp = async (req, res) => {
     // Send SMS via Twilio
     const devSkip = (process.env.SMS_DEV_MODE || 'false').toLowerCase() === 'true';
     if (devSkip) {
-      logger.infoMeta('[OTP][PHONE][DEV] Code for', { phone: maskDestination(phone), code });
       return res.json({ ok:true, message:'OTP generated (SMS skipped in dev mode)', destination: maskDestination(phone), expiresIn: ttl, devMode: true, code });
     }
     
     // Send via Twilio SMS
     try {
       await sendSms(phone, code);
-      logger.info('[OTP][PHONE] SMS sent successfully to ' + maskDestination(phone));
       return res.json({ ok:true, message:'OTP sent via SMS', destination: maskDestination(phone), expiresIn: ttl });
     } catch (smsErr) {
-      logger.error('[OTP][PHONE] SMS sending failed', smsErr);
-      logger.errorMeta('[OTP][PHONE] Error details', null, { code: smsErr.code, status: smsErr.status, moreInfo: smsErr.moreInfo });
       // Return generic error to user, but OTP is still stored in Redis
       return res.status(500).json({ ok:false, message:'Failed to send SMS. Please check Twilio credentials or enable SMS_DEV_MODE.' });
     }
   } catch (e) {
-    logger.error('requestPhoneOtp error', e);
     // Check for Redis rate limit error
     if (e.message && e.message.includes('already issued')) {
       return res.status(429).json({ ok:false, message:'Code already sent. Please wait before requesting another.' });
@@ -200,7 +190,6 @@ exports.verifyPhoneOtp = async (req, res) => {
 
     const result = await verifyOtp(user.id, 'phone-verify', String(code));
     if (!result.ok) {
-      logger.warn('[OTP] verifyPhoneOtp failed', result);
       const map = {
         'expired-or-missing': 410,
         'too-many-attempts': 429,
@@ -234,7 +223,6 @@ exports.verifyPhoneOtp = async (req, res) => {
     await user.save();
     return res.json({ ok:true, message:'Phone verified and saved' });
   } catch (e) {
-    logger.error('verifyPhoneOtp error', e);
     return res.status(500).json({ ok:false, message:'Unable to verify your code. Please try again.' });
   }
 };

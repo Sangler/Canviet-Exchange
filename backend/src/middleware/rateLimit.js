@@ -1,5 +1,4 @@
 const rateLimit = require('express-rate-limit')
-const logger = require('../utils/logger')
 
 function getClientIp(req) {
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown'
@@ -17,14 +16,6 @@ function buildLimiter(name, { windowMs, max }) {
     keyGenerator: (req) => getClientIp(req),
     handler: (req, res) => {
       const ip = getClientIp(req)
-      logger.warnMeta('Rate limit reached', {
-        name,
-        path: req.originalUrl || req.url,
-        method: req.method,
-        ip,
-        windowMs,
-        max,
-      })
       res.status(429).json({ message: 'Too many requests, please try again later.' })
     },
   })

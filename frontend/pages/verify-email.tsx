@@ -61,7 +61,6 @@ export default function VerifyEmailPage() {
           return;
         }
       } catch (e) {
-        console.error('Error checking email verification status:', e);
         // On error, fall back to query param if present
         const qEmail = (router.query.email as string) || '';
         if (qEmail) {

@@ -27,7 +27,6 @@ function AppContent({ Component, pageProps }: AppProps) {
           router.replace('/general/help')
         }
       } catch (e) {
-        console.error('Failed to parse token:', e)
       }
     }
   }, [router.pathname, token])

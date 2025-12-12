@@ -74,7 +74,6 @@ export default function ReceiptPage() {
 
         setRequest(data.request);
       } catch (err: any) {
-        console.error('Error fetching receipt:', err);
         setError(err.message || String(err));
       } finally {
         setLoading(false);

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const logger = require('../utils/logger')
 
 function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -27,11 +26,7 @@ async function connectMongo(uri, opts = {}) {
 
   // Connection event logging
   const conn = mongoose.connection
-  conn.on('connected', () => console.log('[MongoDB] connected'))
-  conn.on('disconnected', () => logger.error('[MongoDB] disconnected'))
-  conn.on('error', (err) => {
-    logger.error('[MongoDB] error', err)
-  })
+  conn.on('disconnected', () => {})
 
   let delay = retryDelayMs
   const totalAttempts = maxRetries + 1 // initial try + retries
@@ -43,8 +38,6 @@ async function connectMongo(uri, opts = {}) {
       return conn
     } catch (err) {
       const canRetry = attempt < totalAttempts
-      const msg = `[MongoDB] connect attempt ${attempt}/${totalAttempts} failed: ${err.message}${canRetry ? ` — retrying in ${delay}ms` : ''}`
-      logger.error(msg, err)
       if (!canRetry) throw err
       await wait(delay)
       // simple backoff

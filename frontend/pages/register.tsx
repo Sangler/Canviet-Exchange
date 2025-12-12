@@ -60,7 +60,6 @@ export default function RegisterPage() {
         setReferrerName('');
       }
     } catch (error) {
-      console.error('Referral validation error:', error);
       setReferralValid(false);
       setReferrerName('');
     } finally {

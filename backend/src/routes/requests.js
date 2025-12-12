@@ -2,7 +2,6 @@ const router = require('express').Router();
 const Request = require('../models/Requests');
 const authMiddleware = require('../middleware/auth');
 const { transferLimiter } = require('../middleware/rateLimit');
-const logger = require('../utils/logger');
 const crypto = require('crypto');
 const Stripe = require('stripe');
 const emailSvc = require('../services/email');
@@ -41,7 +40,6 @@ const optionalAuth = (req, res, next) => {
     }
   } catch (err) {
     // Token invalid or expired, log-out!
-    logger.warn('[Auth] Invalid or expired token, user should be log-out!');
   }
   return next();
 };
@@ -98,7 +96,6 @@ router.get('/', optionalAuth, async (req, res) => {
       }
       return r;
     });
-    logger.info(`[Requests] Retrieved ${requests.length} requests for ${userRole === 'admin' ? 'admin (all users)' : `user ${authenticatedUserId || 'guest'}`}`);
 
     return res.json({
       ok: true,
@@ -112,7 +109,6 @@ router.get('/', optionalAuth, async (req, res) => {
     });
 
   } catch (err) {
-    logger.error('[Requests] Error fetching requests:', err.message);
     return res.status(500).json({
       ok: false,
       message: 'Failed to retrieve transfer history',
@@ -127,17 +123,12 @@ router.get('/receipt/:hash', optionalAuth, async (req, res) => {
   try {
     const { hash } = req.params;
 
-    logger.info(`[Requests] Looking for receipt with hash: ${hash}`);
-
     // Find all requests and check which one matches the hash
     const requests = await Request.find().select('-sendingMethod.cardNumber -sendingMethod.cardName').lean();
-    
-    logger.info(`[Requests] Found ${requests.length} total requests in database`);
     
     let matchedRequest = null;
     for (const request of requests) {
       if (!request.referenceID) {
-        logger.warn(`[Requests] Request ${request._id} has no referenceID, skipping...`);
         continue;
       }
       
@@ -149,20 +140,16 @@ router.get('/receipt/:hash', optionalAuth, async (req, res) => {
       
       if (computedHash === hash) {
         matchedRequest = request;
-        logger.info(`[Requests] Found matching request!`);
         break;
       }
     }
 
     if (!matchedRequest) {
-      logger.warn(`[Requests] Receipt not found for hash: ${hash}`);
       return res.status(404).json({
         ok: false,
         message: 'Receipt not found'
       });
     }
-
-    logger.info(`[Requests] Retrieved receipt for reference ${matchedRequest.referenceID}`);
 
     return res.json({
       ok: true,
@@ -170,8 +157,6 @@ router.get('/receipt/:hash', optionalAuth, async (req, res) => {
     });
 
   } catch (err) {
-    logger.error('[Requests] Error fetching receipt:', err);
-    logger.error('[Requests] Error stack:', err.stack);
     return res.status(500).json({
       ok: false,
       message: 'Failed to retrieve receipt',
@@ -196,8 +181,6 @@ router.get('/:id', optionalAuth, async (req, res) => {
       });
     }
 
-    logger.info(`[Requests] Retrieved request ${id}`);
-
     // Add receiptHash if possible
     if (request && request.referenceID) {
       try {
@@ -213,7 +196,6 @@ router.get('/:id', optionalAuth, async (req, res) => {
     });
 
   } catch (err) {
-    logger.error('[Requests] Error fetching request:', err.message);
     return res.status(500).json({
       ok: false,
       message: 'Failed to retrieve transfer request',
@@ -261,7 +243,6 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
     if (paymentIntentId) {
       try {
         if (!process.env.STRIPE_SECRET_KEY) {
-          logger.error('[Requests] STRIPE_SECRET_KEY is not configured on server');
           return res.status(500).json({ ok: false, message: 'Payment configuration error' });
         }
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -288,21 +269,17 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
             const expectedCents = principalCents + feeCents + taxCents;
 
             if (Number.isFinite(expectedCents) && intent.amount !== expectedCents) {
-              logger.warn('[Requests] PaymentIntent amount mismatch', { intentAmount: intent.amount, expectedCents });
               return res.status(400).json({ ok: false, message: 'Payment amount mismatch' });
             }
             if (intent.currency && String(intent.currency).toLowerCase() !== String(currencyFrom).toLowerCase()) {
-              logger.warn('[Requests] PaymentIntent currency mismatch', { intentCurrency: intent.currency, currencyFrom });
               return res.status(400).json({ ok: false, message: 'Payment currency mismatch' });
             }
           }
         } catch (vErr) {
-          logger.warn('[Requests] Error validating PaymentIntent amounts', vErr.message);
         }
 
         verifiedPaymentIntent = intent;
       } catch (stripeErr) {
-        logger.error('[Requests] Error retrieving PaymentIntent:', stripeErr.message || stripeErr);
         return res.status(400).json({ ok: false, message: 'Failed to verify payment' });
       }
     }
@@ -322,7 +299,6 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
         }
       }
     } catch (ptErr) {
-      logger.warn('[Requests] Could not validate user points before creating request', ptErr && ptErr.message);
     }
 
     // Create new request
@@ -367,8 +343,6 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
 
     await newRequest.save();
 
-    logger.info(`[Requests] Created new transfer request ${newRequest._id} with reference ${referenceNumber}`);
-
     return res.status(201).json({
       ok: true,
       message: 'Transfer request submitted successfully',
@@ -377,7 +351,6 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
     });
 
   } catch (err) {
-    logger.error('[Requests] Error creating request:', err.message);
     return res.status(500).json({
       ok: false,
       message: 'Failed to create transfer request',
@@ -417,7 +390,6 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
       });
     }
 
-    logger.info(`[Requests] Updated request ${id} status to ${status}`);
       // Apply perks to the request when approved: remove fee and/or buff exchange rate
       if (status === 'approved') {
         try {
@@ -442,7 +414,6 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
             }
           }
         } catch (perkErr) {
-          logger.warn('[Requests] Failed to apply perks to request on approval', perkErr && perkErr.message);
         }
       }
     // If status changed to approved, notify the admin/services inbox for follow-up
@@ -457,9 +428,8 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
           userEmail: updatedRequest.userEmail || '',
           summary,
           payload: updatedRequest
-        }).catch(err => logger.warn('[email] notifyNewPendingRequest (approved) failed', err && err.message));
+        }).catch(err => {});
       } catch (notifyErr) {
-        logger.warn('[Requests] Failed to send admin notification for approved request', notifyErr && notifyErr.message);
       }
     }
 
@@ -478,11 +448,9 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
             userFull = `${u.firstName || ''} ${u.lastName || ''}`.trim();
           }
         } catch (uErr) {
-          logger.warn('[Requests] Could not load user for approved-email notification', uErr && uErr.message);
         }
 
         if (!userReceiveEmails) {
-          logger.info('[Requests] User opted out of transfer emails; skipping approved email', { requestId: updatedRequest._id, userId: updatedRequest.userId });
         } else if (userEmailAddr) {
           const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
           const ref = updatedRequest.referenceID ? `${updatedRequest.referenceID}` : '';
@@ -503,7 +471,6 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
                 pointsAfter = u2.points;
               }
             } catch (deductErr) {
-              logger.warn('[Requests] Failed to deduct points for perks on approved request', deductErr && deductErr.message);
             }
           }
 
@@ -514,7 +481,6 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
               receiptHash = crypto.createHash('sha256').update(String(updatedRequest.referenceID)).digest('hex').substring(0, 24);
             }
           } catch (rhErr) {
-            logger.warn('[Requests] Could not compute receipt hash for approved email', rhErr && rhErr.message);
           }
           const receiptUrl = receiptHash ? `${frontendUrl}/transfers/receipt/${receiptHash}` : `${frontendUrl}/transfers`;
 
@@ -531,11 +497,9 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
               html
             });
           } catch (mailErr) {
-            logger.error('[Requests] Failed to send approved email to user:', mailErr && mailErr.message);
           }
         }
       } catch (err) {
-        logger.error('[Requests] Error preparing approved notification:', err && err.message);
       }
     }
     // If status changed to completed, notify the user by email
@@ -556,7 +520,6 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
             if (u.email) userEmailAddr = u.email;
           }
         } catch (uErr) {
-          logger.warn('[Requests] Could not load user for email notification', uErr.message);
         }
 
         const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
@@ -579,7 +542,6 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
             receiptHash = crypto.createHash('sha256').update(String(updatedRequest.referenceID)).digest('hex').substring(0, 24);
           }
         } catch (rhErr) {
-          logger.warn('[Requests] Could not compute receipt hash', rhErr && rhErr.message);
         }
         const receiptUrl = receiptHash && frontendUrl ? `${frontendUrl}/transfers/receipt/${receiptHash}` : '';
         const subject = ref ? `Transfer ${ref} — ${niceAmount} CAD — Completed` : `Your transfer is completed`;
@@ -642,7 +604,6 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
 
         // Respect user's preference: if they opted out of transfer emails, skip sending
         if (!userReceiveEmails) {
-          logger.info('[Requests] User opted out of transfer emails; skipping completion email for request', { requestId: updatedRequest._id, userId: updatedRequest.userId });
         } else {
           // Send email from services inbox to the user and BCC Trustpilot invite address (best-effort)
           try {
@@ -655,11 +616,9 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
               html
             });
           } catch (mailErr) {
-            logger.error('[Requests] Failed to send completion email:', mailErr && mailErr.message);
           }
         }
       } catch (notifyErr) {
-        logger.error('[Requests] Error preparing completion notification:', notifyErr && notifyErr.message);
       }
     }
 
@@ -670,7 +629,6 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
     });
 
   } catch (err) {
-    logger.error('[Requests] Error updating request status:', err.message);
     return res.status(500).json({
       ok: false,
       message: 'Failed to update request status',

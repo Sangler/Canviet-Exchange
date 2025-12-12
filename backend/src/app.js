@@ -11,14 +11,11 @@ const REQUIRED_ENV_VARS = [
 
 const missing = REQUIRED_ENV_VARS.filter(v => !process.env[v]);
 if (missing.length > 0) {
-  console.error('❌ Missing required environment variables:', missing.join(', '));
-  console.error('Please set these in your .env file before starting the server.');
   process.exit(1);
 }
 
 // Validate JWT_SECRET strength
 if (process.env.JWT_SECRET.length < 32) {
-  console.error('❌ JWT_SECRET must be at least 32 characters long for security.');
   process.exit(1);
 }
 
@@ -40,8 +37,7 @@ const paymentsRoutes = require('./routes/payments')
 const contributionsRoutes = require('./routes/contributions')
 const User = require('./models/User')
 const { connectMongo } = require('./db/mongoose')
-const logger = require('./utils/logger')
-const requestLogger = require('./middleware/requestLogger')
+
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -77,7 +73,6 @@ app.use(passport.initialize())
 // If behind a reverse proxy (e.g., Vercel, Nginx), this allows req.ip and x-forwarded-for to be trusted
 app.set('trust proxy', true)
 // Request logging with IPs
-app.use(requestLogger)
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
   credentials: true,
@@ -139,22 +134,17 @@ if ((process.env.NODE_ENV || 'development') !== 'production') {
       // Ensure indexes are in sync (creates if missing; drops extras)
       try {
         const idxRes = await User.syncIndexes()
-        console.log('[MongoDB] User indexes synced:', idxRes)
       } catch (e) {
-        logger.error('[MongoDB] User index sync failed', e)
       }
     } else {
       const msg = 'MONGODB_URI not set.'
       if (requireDb) throw new Error(`${msg} DB_REQUIRED=true`)
-      logger.error(`${msg} Running without database.`)
     }
   } catch (err) {
-    logger.error('Failed to connect to MongoDB', err)
     const requireDb = (process.env.DB_REQUIRED || 'false').toLowerCase() === 'true'
     if (requireDb) process.exit(1)
   }
   app.listen(PORT, () => {
-    console.log(`Backend running on http://localhost:${PORT}`)
   })
 })()
 

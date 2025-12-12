@@ -50,6 +50,7 @@ export default function Transfer() {
     { value: 'bank', label: t('transfers.bankTransfer'), icon: '/bank-icons/bank-svgrepo-com.svg' },
     { value: 'momo', label: t('transfers.momoWallet'), icon: '/bank-icons/momo.png' },
     { value: 'zalopay', label: t('transfers.zalopayWallet'), icon: '/bank-icons/zalopay.jpeg' },
+    { value: 'cash', label: t('transfers.cashPickup'), icon: '/bank-icons/cash.png' },
   ];
   
   const vietnameseBanks = [
@@ -109,7 +110,6 @@ export default function Transfer() {
       }
     } catch (e) {
       const msg = (e as Error).message || 'Unknown error';
-      console.warn('Rate fetch error', msg);
       setRateError(msg);
     } finally {
       setRateLoading(false);
@@ -141,7 +141,6 @@ export default function Transfer() {
         setTransactions(filtered.slice(0, 5));
       }
     } catch (error) {
-      console.error('Failed to fetch transaction history:', error);
     } finally {
       setTransactionsLoading(false);
     }
@@ -163,7 +162,6 @@ export default function Transfer() {
           }
         }
       } catch (e) {
-        console.warn('Failed to fetch user profile for points:', e);
       }
     })();
 
@@ -228,6 +226,29 @@ export default function Transfer() {
   // Flag to prevent saving during initial restoration
   const [isRestoringFromDraft, setIsRestoringFromDraft] = useState(true);
 
+  // Coming soon modal for unsupported receiving methods (e.g., Cash pick-up)
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const prevReceivingMethodRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    // track previous non-cash selection
+    if (recipientReceivingMethod && recipientReceivingMethod !== 'cash') {
+      prevReceivingMethodRef.current = recipientReceivingMethod;
+    }
+    if (recipientReceivingMethod === 'cash') {
+      // show coming soon and revert selection so user must choose again
+      setShowComingSoon(true);
+      // revert to previous selection or default to 'bank'
+      const prev = prevReceivingMethodRef.current || 'bank';
+      // Small timeout to allow UI selection event to complete before reverting
+      setTimeout(() => {
+        setRecipientReceivingMethod(prev);
+      }, 50);
+      // auto-dismiss modal after 2.5s
+      setTimeout(() => setShowComingSoon(false), 2500);
+    }
+  }, [recipientReceivingMethod]);
+
   // Check for KYC success URL parameter
   useEffect(() => {
     if (router.query.kycSuccess === 'true') {
@@ -271,7 +292,6 @@ export default function Transfer() {
           }
         }
       } catch (error) {
-        console.error('Failed to fetch KYC status:', error);
       }
     };
     
@@ -335,7 +355,6 @@ export default function Transfer() {
       };
       localStorage.setItem('transfer.draft', JSON.stringify(transferDraft));
     } catch (error) {
-      console.warn('Failed to save transfer draft:', error);
     }
   }, [step, amountFrom, amountTo, transferMethod, recipientPhoneCode, recipientPhone, recipientName, recipientAccountNumber, recipientReceivingMethod, transferContent, selectedBank, customBankName, bankAccountNumber, bankTransitNumber, bankInstitutionNumber, isRestoringFromDraft]);
 
@@ -399,7 +418,6 @@ export default function Transfer() {
       setIsRestoringFromDraft(false);
       
     } catch (error) {
-      console.warn('Failed to restore transfer draft:', error);
       // On error, start fresh
       setStep(1);
       setIsRestoringFromDraft(false); // Done restoring
@@ -428,7 +446,6 @@ export default function Transfer() {
             setBillingCountry('Canada');
           }
         } catch (error) {
-          console.error('Failed to fetch user address:', error);
         }
       };
       fetchUserAddress();
@@ -448,7 +465,6 @@ export default function Transfer() {
     try {
       localStorage.removeItem('transfer.draft');
     } catch (error) {
-      console.warn('Failed to clear transfer draft:', error);
     }
   };
   // Unified KYC start flow (same-tab redirect; preserves draft)
@@ -489,7 +505,6 @@ export default function Transfer() {
       }
       window.location.href = data.verificationUrl; // same-tab navigation
     } catch (err) {
-      console.error('Start KYC error:', err);
       alert('Unable to start verification. Please try again.');
     }
   };
@@ -617,11 +632,9 @@ export default function Transfer() {
           setTransferTax(Number(data.breakdown.tax) || 0);
         }
       } catch (bErr) {
-        console.debug('Failed to parse breakdown from create-intent', bErr);
       }
       return { clientSecret: data.clientSecret, paymentIntentId: data.paymentIntentId };
     } catch (error) {
-      console.error('Payment intent creation error:', error);
       alert('Failed to initialize payment. Please try again.');
       // Reset back to e-transfer if payment init fails
       setTransferMethod('e-transfer');
@@ -659,8 +672,6 @@ export default function Transfer() {
     if (step === 4 && isCardLocal && kycStatus === 'verified' && !clientSecret && !paymentProcessing) {
       // initialize payment form in background so PaymentElement is visible
       createPaymentIntent().catch((err) => {
-        // createPaymentIntent already handles user-facing errors; log for debugging
-        console.debug('createPaymentIntent failed on step 4 mount', err);
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -731,7 +742,6 @@ export default function Transfer() {
             }
           }
         } catch (error) {
-          console.error('Failed to check 24-hour limit:', error);
           // Continue with submission if limit check fails (graceful degradation)
         }
       }
@@ -800,7 +810,6 @@ export default function Transfer() {
           // Done with the payment flow
           setPaymentFlowBusy(false);
         } catch (err) {
-          console.error('Payment confirmation error:', err);
           alert('Payment confirmation failed. Please try again.');
           setPaymentFlowBusy(false);
           setSubmitting(false);
@@ -819,7 +828,6 @@ export default function Transfer() {
           setTransferTax(Number((localFee * 0.13).toFixed(2)));
         }
       } catch (pfErr) {
-        console.debug('Failed to compute local fee/tax before submit', pfErr);
       }
 
       // Prepare request data
@@ -881,10 +889,7 @@ export default function Transfer() {
         body: JSON.stringify(requestData)
       });
 
-      console.log('Response status:', response.status);
-
       const data = await response.json();
-      console.log('Response data:', data);
 
       if (!response.ok || !data.ok) {
         throw new Error(data.message || 'Failed to submit transfer request');
@@ -917,7 +922,6 @@ export default function Transfer() {
       window.location.href = `/transfers/receipt/${data.receiptHash}`;
 
     } catch (error: any) {
-      console.error('Transfer submission error:', error);
       alert(`Failed to submit transfer: ${error.message}`);
     } finally {
       setSubmitting(false);

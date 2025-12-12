@@ -70,7 +70,6 @@ exports.register = async (req, res) => {
       try {
         await User.updateOne({ _id: referredById }, { $addToSet: { referrals: user._id } }).exec()
       } catch (e) {
-        console.warn('Failed to add referral linkage:', e?.message)
       }
     }
     
@@ -84,7 +83,6 @@ exports.register = async (req, res) => {
       if (key === 'phone') return res.status(409).json({ message: 'Phone already in use' })
       return res.status(409).json({ message: 'User already exists' })
     }
-    console.error('Register error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -124,7 +122,6 @@ exports.login = async (req, res) => {
           await user.save()
         } catch (e) {
           // Non-fatal if rehash fails; proceed with login
-          console.warn('Password rehash (pepper upgrade) failed:', e?.message)
         }
       }
     }
@@ -139,7 +136,6 @@ exports.login = async (req, res) => {
   })
     return res.json({ token, user: user.toJSON() })
   } catch (err) {
-    console.error('Login error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -160,7 +156,6 @@ exports.googleOAuth = async (req, res) => {
           }
         }
       } catch (e) {
-        console.warn('Google OAuth referral link failed:', e?.message)
       }
     }
     const token = jwt.sign(
@@ -182,7 +177,6 @@ exports.googleOAuth = async (req, res) => {
     const redirectUrl = `${frontend.replace(/\/$/, '')}/oauth-callback?token=${encodeURIComponent(token)}`
     return res.redirect(redirectUrl)
   } catch (error) {
-    console.error('OAuth callback error:', error)
     res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`)
   }
 }
@@ -220,7 +214,6 @@ exports.forgotPassword = async (req, res) => {
 
     return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' })
   } catch (err) {
-    console.error('Forgot password error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -252,7 +245,6 @@ exports.validateResetToken = async (req, res) => {
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
       return res.status(400).json({ valid: false, message: 'Token is invalid or expired' })
     }
-    console.error('Validate reset token error:', err)
     return res.status(500).json({ valid: false, message: 'Internal server error' })
   }
 }
@@ -299,7 +291,6 @@ exports.resetPassword = async (req, res) => {
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
       return res.status(400).json({ message: 'Token is invalid or expired' })
     }
-    console.error('Reset password error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -342,7 +333,6 @@ exports.validateReferralCode = async (req, res) => {
       message: `You'll be referred by ${referrer.firstName} ${referrer.lastName}`
     })
   } catch (error) {
-    console.error('Validate referral error:', error)
     return res.status(500).json({ 
       valid: false, 
       message: 'Error validating referral code' 

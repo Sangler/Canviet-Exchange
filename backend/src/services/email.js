@@ -35,7 +35,6 @@ try {
     LOGO_DATA_URI = `data:image/png;base64,${b.toString('base64')}`;
   }
 } catch (e) {
-  console.warn('[email] Could not load local logo:', e && e.message);
 }
 
 function createTransport(user, pass) {
@@ -47,10 +46,9 @@ function createTransport(user, pass) {
       secure: EMAIL_PORT === 465,
       auth: { user, pass }
     });
-    t.verify().then(() => console.log('[email] SMTP transporter ready for', user)).catch((err) => console.warn('[email] SMTP verify failed for', user, err && err.message));
+    t.verify().then(() => {}).catch((err) => {});
     return t;
   } catch (e) {
-    console.warn('[email] Failed to create transporter for', user, e && e.message);
     return null;
   }
 }
@@ -89,10 +87,8 @@ async function sendMail({ from, to, cc, bcc, subject, text, html }) {
 
   try {
     const info = await t.sendMail(msg);
-    console.log('[email] Sent:', info.messageId, 'from', sender, 'to', to);
     return info;
   } catch (err) {
-    console.error('[email] sendMail error', err && err.message);
     throw err;
   }
 }

@@ -78,16 +78,10 @@ router.post('/create-intent', authMiddleware, paymentLimiter, async (req, res) =
     });
 
   } catch (error) {
-    console.error('❌ Error creating payment intent:', error);
-    console.error('Error details:', {
-      message: error.message,
-      type: error.type,
-      code: error.code,
-      stack: error.stack
-    });
-    res.status(500).json({ 
+    // Server-side: details available for logs if needed
+    // const details = { message: error.message, type: error.type, code: error.code, stack: error.stack };
+    return res.status(500).json({
       error: 'Failed to create payment intent'
-      // Do not expose error details to client for security
     });
   }
 });
@@ -131,10 +125,8 @@ router.post('/confirm', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error confirming payment:', error);
-    res.status(500).json({ 
+    return res.status(500).json({
       error: 'Failed to confirm payment'
-      // Do not expose error details to client for security
     });
   }
 });

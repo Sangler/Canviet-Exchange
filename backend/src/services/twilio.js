@@ -5,20 +5,14 @@
 
 const crypto = require('crypto')
 const { getRedisClient } = require('./redis')
-const logger = require('../utils/logger')
 
 let twilioClient = null
 try {
   const twilio = require('twilio')
   twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  if (twilioClient) {
-    logger.info('[twilio.service] Twilio SDK initialized successfully')
-  }
 } catch (e) {
   // twilio SDK optional; service will still function (just won't send SMS)
   // callers may use the returned code to send via other means.
-  // eslint-disable-next-line no-console
-  logger.warn('[twilio.service] Twilio SDK not installed or failed to initialize:', e.message)
 }
 
 const PEPPER = process.env.OTP_PEPPER || ''
@@ -51,13 +45,11 @@ function isCanadianNumber(phone) {
  */
 async function validatePhoneWithLookup(phone) {
   if (!twilioClient) {
-    logger.warn('[twilio.service] Lookup skipped - Twilio client not initialized')
     return { valid: true, skipped: true } // Skip validation if Twilio not configured
   }
 
   const enableLookup = (process.env.TWILIO_ENABLE_LOOKUP || 'true').toLowerCase() === 'true'
   if (!enableLookup) {
-    logger.debug('[twilio.service] Lookup disabled via TWILIO_ENABLE_LOOKUP')
     return { valid: true, skipped: true }
   }
 
@@ -69,7 +61,6 @@ async function validatePhoneWithLookup(phone) {
 
     if (!lookup.valid) {
       const errors = lookup.validationErrors || []
-      logger.warnMeta('[twilio.service] Lookup validation failed', { phone: phone.slice(0,5)+'***', errors })
       return { 
         valid: false, 
         reason: 'invalid_number',
@@ -80,10 +71,6 @@ async function validatePhoneWithLookup(phone) {
     // Restrict to Canada (CA) and US (US) only
     const allowedCountries = ['CA', 'US']
     if (!allowedCountries.includes(lookup.countryCode)) {
-      logger.warnMeta('[twilio.service] Phone number from unsupported country', { 
-        phone: phone.slice(0,5)+'***',
-        countryCode: lookup.countryCode 
-      })
       return { 
         valid: false, 
         reason: 'unsupported_country',
@@ -92,12 +79,6 @@ async function validatePhoneWithLookup(phone) {
       }
     }
 
-    logger.infoMeta('[twilio.service] Lookup validation passed', { 
-      phone: phone.slice(0,5)+'***',
-      countryCode: lookup.countryCode,
-      nationalFormat: lookup.nationalFormat
-    })
-
     return { 
       valid: true, 
       phoneNumber: lookup.phoneNumber,
@@ -105,8 +86,7 @@ async function validatePhoneWithLookup(phone) {
       countryCode: lookup.countryCode
     }
   } catch (err) {
-    // If lookup fails (e.g., network error, rate limit), log but don't block OTP
-    logger.errorMeta('[twilio.service] Lookup API error', err, { phone: phone.slice(0,5)+'***' })
+    // If lookup fails (e.g., network error, rate limit), don't block OTP
     return { valid: true, skipped: true, error: err.message }
   }
 }
@@ -119,11 +99,6 @@ async function issuePhoneOtp(phone, opts = {}) {
   // Validate phone number using Twilio Lookup v2 API before sending SMS
   const lookupResult = await validatePhoneWithLookup(phone)
   if (!lookupResult.valid) {
-    logger.warnMeta('[twilio.service] Phone validation failed', { 
-      phone: phone.slice(0,5)+'***', 
-      reason: lookupResult.reason,
-      errors: lookupResult.errors 
-    })
     return { 
       ok: false, 
       reason: lookupResult.reason || 'invalid_phone',
@@ -171,21 +146,11 @@ async function issuePhoneOtp(phone, opts = {}) {
       // If SMS sending fails, delete the key so caller may retry
       await redis.del(key)
       await redis.del(attemptsKey)
-      logger.error('[twilio.service] SMS send failed', err)
       return { ok: false, reason: 'sms_failed', error: String(err && err.message ? err.message : err) }
     }
   }
 
-  // Conditional OTP logging: only when explicitly enabled or in dev SMS mode
-  const devMode = (process.env.SMS_DEV_MODE || 'false').toLowerCase() === 'true'
-  const logCodes = (process.env.LOG_OTP_CODES || 'false').toLowerCase() === 'true'
-  if (devMode || !sendSms || logCodes) {
-    const masked = phone && phone.length > 4 ? `${phone.slice(0,2)}***${phone.slice(-2)}` : phone
-    logger.infoMeta('[twilio.service] OTP issued', { phone: masked, ttl: ttlSeconds, code: code })
-  } else {
-    const masked = phone && phone.length > 4 ? `${phone.slice(0,2)}***${phone.slice(-2)}` : phone
-    logger.info(`[twilio.service] OTP issued for ${masked} (sms_sent=${Boolean(sendSms)})`)
-  }
+
 
   return { ok: true, ttl: ttlSeconds, phone, code: sendSms ? undefined : code }
 }

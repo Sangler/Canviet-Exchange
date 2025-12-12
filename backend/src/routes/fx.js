@@ -1,7 +1,6 @@
 require('dotenv').config()
 const router = require('express').Router()
 const https = require('https')
-const logger = require('../utils/logger')
 
 function fetchJson(url) {
   return new Promise((resolve, reject) => {
@@ -34,7 +33,6 @@ async function fetchUsdcCadFromCoinbase() {
     const data = await response.json();
     return Number(data.data.amount); // Returns CAD per USDC (e.g., 1.41 means 1 USDC = 1.41 CAD)
   } catch (err) {
-    logger.error(`[FX] Coinbase USDC-CAD fetch failed: ${err.message}`);
     return null;
   }
 }
@@ -50,7 +48,6 @@ async function fetchUsdcUsdFromCoinbase() {
     const data = await response.json();
     return Number(data.data.amount); // Returns USD per USDC (usually ~1.0, but can fluctuate slightly)
   } catch (err) {
-    logger.error(`[FX] Coinbase USDC-USD fetch failed: ${err.message}`);
     return null;
   }
 }
@@ -83,7 +80,6 @@ async function fetchUsdVnd() {
         return { rate: Number(j.rates.VND), source: candidate.source, fetchedAt: j.time_last_update_utc };
       }
     } catch (err) {
-      logger.error(`[FX] ${candidate.source} USD/VND fetch failed: ${err.message}`);
       continue;
     }
   }
@@ -152,7 +148,6 @@ router.get('/cad-vnd', async (_req, res) => {
     });
 
   } catch (err) {
-    logger.error(`[FX] CAD-VND calculation error: ${err.message}`);
     return res.status(500).json({ 
       ok: false, 
       message: 'Error calculating exchange rate: ' + err.message 

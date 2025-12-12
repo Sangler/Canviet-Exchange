@@ -1,5 +1,3 @@
-const logger = require('../utils/logger')
-
 function getIp(req) {
   // If behind proxy, ensure app.set('trust proxy', true)
   return (
@@ -18,15 +16,17 @@ module.exports = function requestLogger(req, res, next) {
   const metaBase = { ip, method: req.method, path: req.originalUrl || req.url }
 
   res.on('finish', () => {
+    // logging removed: suppress HTTP finish logs in production
     const end = process.hrtime.bigint()
     const durationMs = Number(end - start) / 1e6
-    logger.infoMeta('HTTP', { ...metaBase, status: res.statusCode, durationMs: Math.round(durationMs) })
+    void durationMs
   })
 
   res.on('close', () => {
+    // logging removed: suppress HTTP close logs in production
     const end = process.hrtime.bigint()
     const durationMs = Number(end - start) / 1e6
-    logger.warnMeta('HTTP closed', { ...metaBase, status: res.statusCode, durationMs: Math.round(durationMs) })
+    void durationMs
   })
 
   next()
