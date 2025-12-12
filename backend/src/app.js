@@ -1,4 +1,27 @@
 require('dotenv').config()
+
+// Validate required environment variables at startup
+const REQUIRED_ENV_VARS = [
+  'JWT_SECRET',
+  'MONGODB_URI',
+  'STRIPE_SECRET_KEY',
+  'CANVIETEXCHANGE_EMAIL_USER',
+  'CANVIETEXCHANGE_EMAIL_APP_PASSWORD'
+];
+
+const missing = REQUIRED_ENV_VARS.filter(v => !process.env[v]);
+if (missing.length > 0) {
+  console.error('❌ Missing required environment variables:', missing.join(', '));
+  console.error('Please set these in your .env file before starting the server.');
+  process.exit(1);
+}
+
+// Validate JWT_SECRET strength
+if (process.env.JWT_SECRET.length < 32) {
+  console.error('❌ JWT_SECRET must be at least 32 characters long for security.');
+  process.exit(1);
+}
+
 const express = require('express')
 const cookieParser = require('cookie-parser')
 const cors = require('cors')
@@ -24,8 +47,20 @@ const app = express()
 const PORT = process.env.PORT || 5000
 
 app.use(helmet())
+
+// Enforce HTTPS in production
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      return res.redirect(301, `https://${req.header('host')}${req.url}`);
+    }
+    next();
+  });
+}
 // Capture raw JSON body for providers that sign payloads (e.g., Shufti)
+// SECURITY: Limit request body size to 10mb to prevent DoS attacks
 app.use(express.json({
+  limit: '10mb',
   verify: (req, _res, buf) => {
     try {
       req.rawBody = buf.toString()
@@ -94,7 +129,7 @@ if ((process.env.NODE_ENV || 'development') !== 'production') {
 };(async () => {
   try {
     const requireDb = (process.env.DB_REQUIRED || 'false').toLowerCase() === 'true'
-    const mongoUri = process.env.MONGO_URI
+    const mongoUri = process.env.MONGODB_URI
     if (mongoUri) {
       await connectMongo(mongoUri, {
         maxRetries: Number(process.env.DB_MAX_RETRIES || 3),
@@ -109,7 +144,7 @@ if ((process.env.NODE_ENV || 'development') !== 'production') {
         logger.error('[MongoDB] User index sync failed', e)
       }
     } else {
-      const msg = 'MONGO_URI not set.'
+      const msg = 'MONGODB_URI not set.'
       if (requireDb) throw new Error(`${msg} DB_REQUIRED=true`)
       logger.error(`${msg} Running without database.`)
     }

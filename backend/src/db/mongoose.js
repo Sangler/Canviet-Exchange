@@ -15,7 +15,7 @@ function wait(ms) {
  * @returns {Promise<mongoose.Connection>}
  */
 async function connectMongo(uri, opts = {}) {
-  if (!uri) throw new Error('MONGO_URI is missing')
+  if (!uri) throw new Error('MONGODB_URI is missing')
 
   const {
     maxRetries = 3,

@@ -17,6 +17,7 @@ const {
   authRegisterValidator,
   validate,
 } = require("../middleware/validators");
+const { referralLimiter } = require('../middleware/rateLimit');
 
 router.post(
   "/register",
@@ -57,8 +58,8 @@ router.get(
   googleOAuth
 );
 
-// Referral validation route
-router.get("/referral/validate/:code", validateReferralCode);
+// Referral validation route (rate limited to prevent enumeration)
+router.get("/referral/validate/:code", referralLimiter, validateReferralCode);
 
 // Password reset routes
 router.post("/forgot-password", loginLimiter, forgotPassword);

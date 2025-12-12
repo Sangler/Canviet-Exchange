@@ -151,6 +151,22 @@ export default function Transfer() {
     fetchRate();
     fetchTransactionHistory();
     rateTimer.current = setInterval(() => fetchRate(false), 60_000);
+    // Fetch user profile to get points
+    (async () => {
+      if (!token) return;
+      try {
+        const resp = await fetch('/api/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.user && typeof data.user.points === 'number') {
+            setUserPoints(data.user.points);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to fetch user profile for points:', e);
+      }
+    })();
+
     return () => { if (rateTimer.current) clearInterval(rateTimer.current); };
   }, [user?.id]);
 
@@ -163,6 +179,9 @@ export default function Transfer() {
   const lastComputedFromRef = useRef<number>(NaN);
   const isUpdatingRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
+  const [userPoints, setUserPoints] = useState<number>(0);
+  const [removeFeeChecked, setRemoveFeeChecked] = useState<boolean>(false);
+  const [buffExchangeChecked, setBuffExchangeChecked] = useState<boolean>(false);
   const [transferMethod, setTransferMethod] = useState<string>('e-transfer');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   
@@ -216,7 +235,16 @@ export default function Transfer() {
       
       // Remove the URL parameter without page reload
       const { kycSuccess: _, ...rest } = router.query;
-      router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+      try {
+        const params = new URLSearchParams(rest as Record<string, string>);
+        const newPath = router.pathname + (params.toString() ? `?${params.toString()}` : '');
+        if (newPath !== router.asPath) {
+          router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+        }
+      } catch (e) {
+        // fallback: attempt replace but avoid crashing
+        try { router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true }); } catch (_) {}
+      }
       
       // Auto-dismiss after 10 seconds
       setTimeout(() => setKycSuccess(false), 10000);
@@ -708,8 +736,9 @@ export default function Transfer() {
         }
       }
 
-      // Ensure we have a valid exchange rate
-      const finalExchangeRate = effectiveRate || rate || 0;
+      // Ensure we have a valid exchange rate and include any buff selected by the user
+      const baseFinalRate = effectiveRate || rate || 0;
+      const finalExchangeRate = baseFinalRate + (buffExchangeChecked ? 100 : 0);
       
       if (!finalExchangeRate || finalExchangeRate <= 0) {
         alert('Exchange rate is not available. Please refresh the page and try again.');
@@ -783,8 +812,9 @@ export default function Transfer() {
       try {
         const numericAmount = parseFloat(amountFrom.replace(/,/g, '')) || 0;
         if (!isCard) {
-          // Compute fee client-side to show in UI and include in request
-          const localFee = (!isNaN(numericAmount) && numericAmount > 0) ? FEE_CAD : 0;
+          // Compute fee client-side to show in UI and include in request.
+          // Respect user perk: if they removed the fee, fee is 0.
+          const localFee = removeFeeChecked ? 0 : ((!isNaN(numericAmount) && numericAmount > 0) ? FEE_CAD : 0);
           setTransferFee(localFee);
           setTransferTax(Number((localFee * 0.13).toFixed(2)));
         }
@@ -793,6 +823,10 @@ export default function Transfer() {
       }
 
       // Prepare request data
+      // Compute canonical principal and VNĐ amountReceived using the finalExchangeRate
+      const principalAmount = parseFloat(amountFrom.replace(/,/g, '')) || 0;
+      const computedAmountReceived = Math.round(principalAmount * finalExchangeRate);
+
       const requestData = {
         userId: user?.id,
         userEmail: user?.email,
@@ -801,7 +835,8 @@ export default function Transfer() {
           phoneNumber: recipientPhone
         },
         amountSent: parseFloat(amountFrom.replace(/,/g, '')),
-        amountReceived: parseFloat(amountTo.replace(/,/g, '')),
+        // amountReceived stored as canonical integer VNĐ computed from principal × finalExchangeRate
+        amountReceived: computedAmountReceived,
         exchangeRate: finalExchangeRate,
         currencyFrom: 'CAD',
         currencyTo: 'VND',
@@ -825,6 +860,9 @@ export default function Transfer() {
           transferContent: transferContent
         },
         termAndServiceAccepted: agreedToTerms,
+        // User-selected perks paid by points
+        removeFee: removeFeeChecked,
+        buffExchangeRate: buffExchangeChecked,
         // Include Stripe payment information if card payment
         ...(isCard && paymentIntentId && {
           paymentIntentId: paymentIntentId,
@@ -910,7 +948,7 @@ export default function Transfer() {
                     <strong>{t('kyc.whyNeeded')}</strong><br/>
                     {t('kyc.securityReason')}
                   </p>
-                  <div className="rate-modal-actions" style={{ display: 'flex', gap: '10px' }}>
+                  <div className="rate-modal-actions rate-modal-actions--row">
                     <button
                       className="btn btn-primary"
                       type="button"
@@ -1518,6 +1556,18 @@ export default function Transfer() {
                         return;
                       }
 
+                      // If user selected bank as receiving method, ensure a bank is chosen
+                      if (recipientReceivingMethod === 'bank') {
+                        if (!selectedBank) {
+                          alert('Please select a bank before continuing.');
+                          return;
+                        }
+                        if (selectedBank === 'Others' && !customBankName) {
+                          alert('Please enter a correct bank name before continuing.');
+                          return;
+                        }
+                      }
+
                       // All validations passed, proceed to next step
                       setStep(4);
                     }}>
@@ -1644,9 +1694,9 @@ export default function Transfer() {
 
                         <div className="form-group">
                           <label>
-                            {recipientReceivingMethod === 'bank' ? t('transfers.phoneExample') : 
-                             recipientReceivingMethod === 'momo' ? t('transfers.momoPhoneNumber') : 
-                             t('transfers.zalopayPhoneNumber')}
+                            Tel: {recipientReceivingMethod === 'bank' ? t('transfers.phoneExample') : 
+                             recipientReceivingMethod === 'momo' ? t('transfers.phoneExample') : 
+                             t('transfers.phoneExample')}
                           </label>
                           <div className="phone-row">
                             <select 
@@ -1795,7 +1845,7 @@ export default function Transfer() {
                             pattern="[0-9\s]*"
                             required 
                           />
-                          <small style={{ color: '#6c757d', fontSize: '0.875rem' }}>{t('transfers.maxDigits')}</small>
+                          <small className="small-muted">{t('transfers.maxDigits')}</small>
                           </div>
                         )}
 
@@ -1829,23 +1879,25 @@ export default function Transfer() {
                     <h2>{t('transfers.reviewSubmit')}</h2>
                     <div className="review-grid">
                       <div><strong>{t('transfers.email')}:</strong> {user?.email || '-'}</div>
-                      <div><strong>{t('transfers.amount')}:</strong> {(parseFloat(amountFrom || '0') + FEE_CAD).toFixed(2)} CAD</div>
+                      <div><strong>{t('transfers.amount')}:</strong> {(((parseFloat(amountFrom || '0') || 0) + (removeFeeChecked ? 0 : FEE_CAD))).toFixed(2)} CAD</div>
                       <div className="fee-review">
                         <span className="fee-label">{t('transfers.fee')}</span>
-                        <span className="fee-amount value">${FEE_CAD.toFixed(2)} CAD</span>
+                        <span className={`fee-amount value ${removeFeeChecked ? 'zero' : ''}`}>${(removeFeeChecked ? 0 : FEE_CAD).toFixed(2)} CAD</span>
                         <span className="fee-badge charged">{t('transfers.charged')}</span>
                         <span className="fee-note">{t('transfers.feeNote')}</span>
                       </div>
                       {(() => {
                         const val = parseFloat(amountFrom);
                         if (!isNaN(val) && typeof effectiveRate === 'number') {
-                          const net = Math.max(val - FEE_CAD, 0);
-                          const vnd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(net * (effectiveRate || 0));
-                          const rateFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate || 0);
+                          const principal = Math.max(val, 0);
+                          const appliedRate = (effectiveRate || 0) + (buffExchangeChecked ? 100 : 0);
+                          // Actual VNĐ received is based on the principal (fee is charged on top)
+                          const vnd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(principal * appliedRate);
+                          const rateFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(appliedRate);
                           return (
                             <div>
                               <strong>{t('transfers.theyReceive')}:</strong> {vnd} VNĐ{' '}
-                              <span className="fee-note">(${net.toFixed(2)} CAD × {rateFormatted})</span>
+                              <span className="fee-note">(${principal.toFixed(2)} CAD × {rateFormatted})</span>
                             </div>
                           );
                         }
@@ -1902,6 +1954,49 @@ export default function Transfer() {
                     )}
                     
                     <div className="form-group checkbox-row">
+                      <div className="points-row">
+                        <div className="points-header">
+                          <strong>{t('transfers.yourPoint')}:</strong>
+                          <span className="points-count">{userPoints}</span>
+                        </div>
+                        <div className="perks-list">
+                          <label className={`perk-label ${!removeFeeChecked && ((removeFeeChecked ? 1 : 0) + (buffExchangeChecked ? 1 : 0) >= (userPoints || 0)) ? 'disabled' : ''}`}>
+                            <input
+                              type="checkbox"
+                              checked={removeFeeChecked}
+                              disabled={!removeFeeChecked && ((removeFeeChecked ? 1 : 0) + (buffExchangeChecked ? 1 : 0) >= (userPoints || 0))}
+                              onChange={(e) => {
+                                const willCheck = e.target.checked;
+                                const currentSelected = (removeFeeChecked ? 1 : 0) + (buffExchangeChecked ? 1 : 0);
+                                if (willCheck && currentSelected + 1 > (userPoints || 0)) {
+                                  alert('Insufficient points for promotion use');
+                                  return;
+                                }
+                                setRemoveFeeChecked(willCheck);
+                              }}
+                            />
+                            <span className="perk-desc">Remove transfer fee (1 point)</span>
+                          </label>
+
+                          <label className={`perk-label ${!buffExchangeChecked && ((removeFeeChecked ? 1 : 0) + (buffExchangeChecked ? 1 : 0) >= (userPoints || 0)) ? 'disabled' : ''}`}>
+                            <input
+                              type="checkbox"
+                              checked={buffExchangeChecked}
+                              disabled={!buffExchangeChecked && ((removeFeeChecked ? 1 : 0) + (buffExchangeChecked ? 1 : 0) >= (userPoints || 0))}
+                              onChange={(e) => {
+                                const willCheck = e.target.checked;
+                                const currentSelected = (removeFeeChecked ? 1 : 0) + (buffExchangeChecked ? 1 : 0);
+                                if (willCheck && currentSelected + 1 > (userPoints || 0)) {
+                                  alert('Insufficient points for promotion use');
+                                  return;
+                                }
+                                setBuffExchangeChecked(willCheck);
+                              }}
+                            />
+                            <span className="perk-desc">Add +100 VND to exchange rate (1 point)</span>
+                          </label>
+                        </div>
+                      </div>
                       <label className="checkbox">
                         <input 
                           type="checkbox" 
@@ -1925,12 +2020,11 @@ export default function Transfer() {
                         >
                           {kycStatus === 'verified' && (
                             <svg 
-                              className="me-2" 
+                              className="me-2 icon-inline" 
                               width="20" 
                               height="20" 
                               viewBox="0 0 24 24" 
                               fill="currentColor"
-                              style={{ display: 'inline-block', verticalAlign: 'middle' }}
                             >
                               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                             </svg>

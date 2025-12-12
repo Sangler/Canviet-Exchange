@@ -86,8 +86,9 @@
     "phoneRequired": "Số điện thoại là bắt buộc",
     "phoneInvalid": "Nhập số điện thoại hợp lệ",
     "passwordRequired": "Mật khẩu là bắt buộc",
-    "passwordLength": "Mật khẩu phải có ít nhất 8 ký tự",
-    "passwordMismatch": "Mật khẩu không khớp"
+    "passwordLength": "Mật khẩu phải có ít nhất 10 ký tự",
+    "passwordRequirements": "Mật khẩu phải chứa ít nhất một chữ in hoa và một chữ số",
+    "passwordMismatch": "Mật khẩu nhập lại không khớp"
   },
   "button": {
     "addNew": "Thêm",
@@ -641,7 +642,7 @@
     "bankTransfer": "Chuyển khoản ngân hàng",
     "momoWallet": "Ví Momo",
     "zalopayWallet": "Ví ZaloPay",
-    "selectBank": "Chọn ngân hàng",
+    "selectBank": "Chọn ngân hàng nhận",
     "bankName": "Tên ngân hàng",
     "enterBankName": "Nhập tên ngân hàng",
     "bankAccountNumber": "Số tài khoản ngân hàng",
@@ -653,7 +654,7 @@
     "email": "Email",
     "amount": "Số tiền",
     "fee": "Phí",
-    "charged": "Đã tính",
+    "charged": "Dự tính",
     "feeNote": "Phí 1.50 đô CAD áp dụng cho mọi giao dịch",
     "method": "Phương thức",
     "bank": "Ngân hàng",
@@ -691,7 +692,8 @@
     "rateFluctuation": "Lưu ý: Tỷ giá có thể biến động do thay đổi thị trường, sự kiện chính trị và các yếu tố khác trong ngắn hoặc dài hạn.",
     "welcomeBack": "Chào mừng trở lại!",
     "continueWhereLeft": "Tiếp tục từ nơi bạn đã dừng!",
-    "processingPayment": "Đang xử lý thanh toán — vui lòng không đóng cửa sổ này."
+    "processingPayment": "Đang xử lý thanh toán — vui lòng không đóng cửa sổ này.",
+    "yourPoint":"Điểm của bạn"
   },
   "transfersHistory": {
     "title": "Lịch sử chuyển tiền",

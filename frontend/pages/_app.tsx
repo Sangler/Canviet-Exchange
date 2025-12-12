@@ -9,6 +9,7 @@ import '../scss/style.scss'
 import { AuthProvider, useAuth } from '../context/AuthContext'
 import { LanguageProvider } from '../context/LanguageContext'
 import BrowserCompatibilityWarning from '../components/BrowserCompatibilityWarning'
+import ErrorBoundary from '../components/ErrorBoundary'
 
 function AppContent({ Component, pageProps }: AppProps) {
   const router = useRouter()
@@ -36,15 +37,17 @@ function AppContent({ Component, pageProps }: AppProps) {
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <Provider store={store}>
-      <LanguageProvider>
-        <AuthProvider>
-          <BrowserCompatibilityWarning />
-          <Script src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" strategy="afterInteractive" />
-          <AppContent Component={Component} pageProps={pageProps} />
-        </AuthProvider>
-      </LanguageProvider>
-    </Provider>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <LanguageProvider>
+          <AuthProvider>
+            <BrowserCompatibilityWarning />
+            <Script src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" strategy="afterInteractive" />
+            <AppContent Component={Component} pageProps={pageProps} />
+          </AuthProvider>
+        </LanguageProvider>
+      </Provider>
+    </ErrorBoundary>
   )
 }
 

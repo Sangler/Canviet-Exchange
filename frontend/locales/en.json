@@ -164,7 +164,8 @@
     "emailInvalid": "Enter a valid email",
     "phoneInvalid": "Enter a valid phone number",
     "passwordRequired": "Password is required",
-    "passwordLength": "Password must be at least 8 characters",
+    "passwordLength": "Password must be at least 10 characters",
+    "passwordRequirements": "Password must contain at least one uppercase letter and one number",
     "passwordMismatch": "Passwords do not match"
   },
   "button": {
@@ -709,6 +710,8 @@
     "processingNote": "Note: Processing speed may vary based on your payment method, delivery method, bank's policies and other factors such as third-party delays. Consider that your transfer might take longer than expected—this is normal!",
     "bestValue": "BEST VALUE",
     "proceedViaBank": "Proceed via bank",
+    "eTransfer":"E-Transfer",
+    "eft":"EFT",
     "recommended": "RECOMMENDED",
     "userEmail": "User Email",
     "accountNumber": "Account #",
@@ -797,7 +800,8 @@
     "rateFluctuation": "Note: Exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.",
     "welcomeBack": "Welcome back!",
     "continueWhereLeft": "Continue where you are left off!",
-    "processingPayment": "Processing payment — please do not close this window."
+    "processingPayment": "Processing payment — please do not close this window.",
+    "yourPoint":"Your point"
   },
   "transfersHistory": {
     "title": "Transfer History",

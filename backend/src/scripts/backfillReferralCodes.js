@@ -3,9 +3,9 @@ const { connectMongo } = require('../db/mongoose')
 const User = require('../models/User')
 
 async function run() {
-  const uri = process.env.MONGO_URI || process.env.MONGODB_URI
+  const uri = process.env.MONGODB_URI || process.env.MONGODB_URI
   if (!uri) {
-    console.error('Missing MONGO_URI env')
+    console.error('Missing MONGODB_URI env')
     process.exit(1)
   }
   await connectMongo(uri, { maxRetries: 2 })

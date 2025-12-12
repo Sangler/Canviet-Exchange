@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const Request = require('../models/Requests');
 const authMiddleware = require('../middleware/auth');
+const { transferLimiter } = require('../middleware/rateLimit');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
 const Stripe = require('stripe');
@@ -63,8 +64,12 @@ router.get('/', optionalAuth, async (req, res) => {
       filter.userId = authenticatedUserId;
     }
     
-    // If status is provided, filter by status
+    // If status is provided, validate and filter by status
+    const VALID_STATUSES = ['pending', 'approved', 'reject', 'completed'];
     if (status) {
+      if (!VALID_STATUSES.includes(status)) {
+        return res.status(400).json({ ok: false, message: 'Invalid status value' });
+      }
       filter.status = status;
     }
 
@@ -218,10 +223,10 @@ router.get('/:id', optionalAuth, async (req, res) => {
 });
 
 // POST /api/requests - Create new transfer request
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, transferLimiter, async (req, res) => {
   try {
     const {
-      userId,
+      userId: bodyUserId,
       userEmail,
       userPhone,
       amountSent,
@@ -232,8 +237,11 @@ router.post('/', authMiddleware, async (req, res) => {
       transferFee,
       sendingMethod,
       recipientBank,
-      termAndServiceAccepted
-      , paymentIntentId
+      termAndServiceAccepted,
+      paymentIntentId,
+      // New options: remove transfer fee or add +100 VND exchange rate
+      removeFee = false,
+      buffExchangeRate = false
     } = req.body;
 
 
@@ -299,6 +307,24 @@ router.post('/', authMiddleware, async (req, res) => {
       }
     }
 
+    // Use authenticated user id when available to prevent spoofing
+    const userId = req.user?.id || bodyUserId;
+
+    // Validate user points for requested perks (1 point each)
+    try {
+      const User = require('../models/User');
+      const u = await User.findById(userId).select('points');
+      const cost = (removeFee ? 1 : 0) + (buffExchangeRate ? 1 : 0);
+      if (cost > 0) {
+        const currentPoints = (u && typeof u.points === 'number') ? u.points : 0;
+        if (currentPoints < cost) {
+          return res.status(400).json({ ok: false, message: 'Insufficient points for selected options' });
+        }
+      }
+    } catch (ptErr) {
+      logger.warn('[Requests] Could not validate user points before creating request', ptErr && ptErr.message);
+    }
+
     // Create new request
     // Normalize sendingMethod.type to ensure consistent storage
     let normalizedSendingMethod = sendingMethod || {};
@@ -327,6 +353,9 @@ router.post('/', authMiddleware, async (req, res) => {
       currencyFrom: currencyFrom || 'CAD',
       currencyTo: currencyTo || 'VND',
       transferFee: transferFee || 0,
+      // User-selected perks paid by points
+      removeFee: !!removeFee,
+      buffExchangeRate: !!buffExchangeRate,
       sendingMethod: normalizedSendingMethod,
       recipientBank,
       termAndServiceAccepted,
@@ -372,7 +401,7 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
       });
     }
 
-    const updatedRequest = await Request.findByIdAndUpdate(
+    let updatedRequest = await Request.findByIdAndUpdate(
       id,
       { 
         status,
@@ -389,6 +418,33 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
     }
 
     logger.info(`[Requests] Updated request ${id} status to ${status}`);
+      // Apply perks to the request when approved: remove fee and/or buff exchange rate
+      if (status === 'approved') {
+        try {
+          const updates = {};
+          if (updatedRequest.removeFee) {
+            updates.transferFee = 0;
+          }
+          if (updatedRequest.buffExchangeRate) {
+            const currentRate = Number(updatedRequest.exchangeRate || 0);
+            const newRate = currentRate + 100; // add 100 VND per CAD
+            updates.exchangeRate = newRate;
+            // Recompute amountReceived if amountSent present
+            if (typeof updatedRequest.amountSent === 'number') {
+              updates.amountReceived = Math.round(Number(updatedRequest.amountSent) * newRate);
+            }
+          }
+          if (Object.keys(updates).length > 0) {
+            const updated = await Request.findByIdAndUpdate(id, updates, { new: true });
+            if (updated) {
+              // replace reference for downstream usage
+              updatedRequest = updated;
+            }
+          }
+        } catch (perkErr) {
+          logger.warn('[Requests] Failed to apply perks to request on approval', perkErr && perkErr.message);
+        }
+      }
     // If status changed to approved, notify the admin/services inbox for follow-up
     if (status === 'approved') {
       try {
@@ -410,19 +466,16 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
     // If status changed to approved, also send brief notification to the user (if they accept transfer emails)
     if (status === 'approved') {
       try {
-        // Load user preferences and email
         let userReceiveEmails = true;
         let userEmailAddr = updatedRequest.userEmail || '';
-        let userFirst = '';
-        let userLast = '';
+        let userFull = '';
         try {
           const User = require('../models/User');
           const u = await User.findById(updatedRequest.userId).select('firstName lastName email receiveTransferEmails');
           if (u) {
             if (typeof u.receiveTransferEmails === 'boolean') userReceiveEmails = u.receiveTransferEmails;
             if (u.email) userEmailAddr = u.email;
-            userFirst = u.firstName || '';
-            userLast = u.lastName || '';
+            userFull = `${u.firstName || ''} ${u.lastName || ''}`.trim();
           }
         } catch (uErr) {
           logger.warn('[Requests] Could not load user for approved-email notification', uErr && uErr.message);
@@ -432,15 +485,41 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
           logger.info('[Requests] User opted out of transfer emails; skipping approved email', { requestId: updatedRequest._id, userId: updatedRequest.userId });
         } else if (userEmailAddr) {
           const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
-          const userFull = `${(userFirst || '').trim()} ${(userLast || '').trim()}`.trim();
           const ref = updatedRequest.referenceID ? `${updatedRequest.referenceID}` : '';
           const subject = ref ? `Transfer ${ref} — Funds received` : 'We have received your funds';
-          const text = `Hello ${userFull || ''}\n\nWe have received your funds and will proceed to send them to the recipient. You can view your transfer in your account: ${frontendUrl}/transfers\n\nIf you'd like to leave feedback, please review us on Trustpilot: https://www.trustpilot.com/review/canvietexchange.com\n\nTo opt out of these emails, go to ${frontendUrl}/settings and turn off Receive transfer emails.`;
-          const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.4;">` +
-            `<div style="text-align:center;padding:20px 0;"><img src="${emailSvc.LOGO_DATA_URI}" alt="CanViet Exchange" style="height:50px;"/></div>` +
-            `<div style="padding:12px;"><h2>Hi ${escapeHtml(userFull || '')}</h2><p>We have received your funds and will now proceed to send them to the recipient. You can view the transfer in your account: <a href="${frontendUrl}/transfers">${frontendUrl}/transfers</a>.</p>` +
-            `<p style="text-align:center;margin:12px 0;"><a href="https://www.trustpilot.com/review/canvietexchange.com" target="_blank" rel="noopener noreferrer" style="background:#00b67a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;">Review us on Trustpilot</a></p>` +
-            `<p style="font-size:12px;color:#6b7280;">To stop receiving these emails, go to <a href="${frontendUrl}/settings">${frontendUrl}/settings</a> and turn off &quot;Receive transfer emails&quot;, then save changes.</p></div></body></html>`;
+
+          // Deduct points for selected perks (if any)
+          const perksCost = (updatedRequest.removeFee ? 1 : 0) + (updatedRequest.buffExchangeRate ? 1 : 0);
+          let pointsAfter = null;
+          if (perksCost > 0) {
+            try {
+              const User = require('../models/User');
+              const u2 = await User.findById(updatedRequest.userId).select('points');
+              if (u2) {
+                const currentPoints = (typeof u2.points === 'number') ? u2.points : 0;
+                const toDeduct = Math.min(currentPoints, perksCost);
+                u2.points = Math.max(0, currentPoints - toDeduct);
+                await u2.save();
+                pointsAfter = u2.points;
+              }
+            } catch (deductErr) {
+              logger.warn('[Requests] Failed to deduct points for perks on approved request', deductErr && deductErr.message);
+            }
+          }
+
+          // Build a receipt URL when possible (use receipt hash derived from referenceID)
+          let receiptHash = '';
+          try {
+            if (updatedRequest.referenceID) {
+              receiptHash = crypto.createHash('sha256').update(String(updatedRequest.referenceID)).digest('hex').substring(0, 24);
+            }
+          } catch (rhErr) {
+            logger.warn('[Requests] Could not compute receipt hash for approved email', rhErr && rhErr.message);
+          }
+          const receiptUrl = receiptHash ? `${frontendUrl}/transfers/receipt/${receiptHash}` : `${frontendUrl}/transfers`;
+
+          const text = `Hello ${userFull}\n\nWe have received your funds and will proceed to send them to the recipient. You can view your transfer here: ${receiptUrl}\n\nThank you for choosing CanViet Exchange!`;
+          const html = `<div style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.4;"><p>Hi ${escapeHtml(userFull || '')}</p><p>We have received your funds and will proceed to send them to the recipient. <a href="${receiptUrl}">View transfer</a></p></div>`;
 
           try {
             await emailSvc.sendMail({

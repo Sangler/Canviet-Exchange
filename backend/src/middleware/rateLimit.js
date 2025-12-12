@@ -42,4 +42,22 @@ const registerLimiter = buildLimiter('register', {
   max: Number(process.env.RATE_REGISTER_MAX || 20),
 })
 
-module.exports = { loginLimiter, registerLimiter }
+// Transfer request limiter - prevent spam
+const transferLimiter = buildLimiter('transfer', {
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: Number(process.env.RATE_TRANSFER_MAX || 10),
+})
+
+// Payment intent creation limiter
+const paymentLimiter = buildLimiter('payment', {
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: Number(process.env.RATE_PAYMENT_MAX || 20),
+})
+
+// Referral validation limiter - prevent enumeration attacks
+const referralLimiter = buildLimiter('referral', {
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: Number(process.env.RATE_REFERRAL_MAX || 100),
+})
+
+module.exports = { loginLimiter, registerLimiter, transferLimiter, paymentLimiter, referralLimiter }

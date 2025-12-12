@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Stripe = require('stripe');
 const authMiddleware = require('../middleware/auth');
+const { paymentLimiter } = require('../middleware/rateLimit');
 
 // Initialize Stripe with secret key
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -23,7 +24,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder'
  *   clientSecret: string (used by Stripe Payment Element on frontend)
  * }
  */
-router.post('/create-intent', authMiddleware, async (req, res) => {
+router.post('/create-intent', authMiddleware, paymentLimiter, async (req, res) => {
   try {
     const { amount } = req.body;
 
@@ -85,8 +86,8 @@ router.post('/create-intent', authMiddleware, async (req, res) => {
       stack: error.stack
     });
     res.status(500).json({ 
-      error: 'Failed to create payment intent',
-      details: error.message 
+      error: 'Failed to create payment intent'
+      // Do not expose error details to client for security
     });
   }
 });
@@ -132,8 +133,8 @@ router.post('/confirm', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error confirming payment:', error);
     res.status(500).json({ 
-      error: 'Failed to confirm payment',
-      details: error.message 
+      error: 'Failed to confirm payment'
+      // Do not expose error details to client for security
     });
   }
 });

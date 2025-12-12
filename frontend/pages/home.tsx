@@ -145,6 +145,86 @@ export default function Home() {
     }
   }, [user, loading, router]);
 
+  // Hero video: two-source playback with React-controlled controls
+  const heroVideoRef = useRef<HTMLVideoElement | null>(null);
+  
+  // Detect mobile devices for responsive video serving
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Serve compressed mobile versions when available
+  const heroSources = [
+    isMobile ? '/mainpage/CanViet_Exchange_Video_Banner_Extension_mobile.mp4' : '/mainpage/CanViet_Exchange_Video_Banner_Extension.mp4',
+    isMobile ? '/mainpage/Banner_Video_Remake_With_Better_Soundtrack_mobile.mp4' : '/mainpage/Banner_Video_Remake_With_Better_Soundtrack.mp4'
+  ];
+  const [heroSourceIndex, setHeroSourceIndex] = useState(0);
+  const [heroMuted, setHeroMuted] = useState(true);
+  const [heroPaused, setHeroPaused] = useState(false);
+
+  // Attach ended listener once to advance source index
+  useEffect(() => {
+    const v = heroVideoRef.current;
+    if (!v) return;
+    const onEnded = () => {
+      setHeroSourceIndex((idx) => (idx + 1) % heroSources.length);
+    };
+    v.addEventListener('ended', onEnded);
+    return () => v.removeEventListener('ended', onEnded);
+  }, []);
+
+  // Sync play/pause state with the video element
+  useEffect(() => {
+    const v = heroVideoRef.current;
+    if (!v) return;
+    const onPlay = () => setHeroPaused(false);
+    const onPause = () => setHeroPaused(true);
+    v.addEventListener('play', onPlay);
+    v.addEventListener('pause', onPause);
+    return () => {
+      v.removeEventListener('play', onPlay);
+      v.removeEventListener('pause', onPause);
+    };
+  }, []);
+
+  // When source index changes, load and autoplay the new source
+  useEffect(() => {
+    const v = heroVideoRef.current;
+    if (!v) return;
+    v.pause();
+    v.src = heroSources[heroSourceIndex];
+    try { v.load(); } catch (e) {}
+    v.play().catch(() => {});
+    setHeroPaused(false);
+  }, [heroSourceIndex]);
+
+  // Mirror muted state to the element
+  useEffect(() => {
+    const v = heroVideoRef.current;
+    if (!v) return;
+    v.muted = !!heroMuted;
+  }, [heroMuted]);
+
+  const togglePlay = () => {
+    const v = heroVideoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play().catch(() => {});
+      setHeroPaused(false);
+    } else {
+      v.pause();
+      setHeroPaused(true);
+    }
+  };
+
+  const toggleMute = () => setHeroMuted((m) => !m);
+
   // Show loading state while checking auth
   if (loading) {
     return null;
@@ -233,20 +313,47 @@ export default function Home() {
                     </div>
                 <div className="hero-fullwidth-wrapper">
                   <div className="main-body hero-section text-center">
-                    <div className="hero-media" aria-hidden="true">
+                    <div className="hero-media">
                       <div
                         className="hero-video-frame"
+                        style={{ position: 'relative' }}
                       >
+                        {/* Controlled video that plays two sources consecutively */}
+                        {/* Sources: 1) CanViet_Exchange_Video_Banner_Extension.mp4 2) Banner_Video_Remake_With_Better_Soundtrack.mp4 */}
                         <video
+                          ref={(el) => { heroVideoRef.current = el; }}
                           className="hero-video"
                           autoPlay
-                          muted
-                          loop
+                          muted={heroMuted}
                           playsInline
                           controls={false}
+                          style={{ width: '100%', maxHeight: 520, objectFit: 'cover', borderRadius: 8, zIndex: 1 }}
                         >
-                          <source src="/mainpage/CanViet_Exchange_Video_Banner.mp4" type="video/mp4" />
+                          <source src={heroSources[0]} type="video/mp4" />
                         </video>
+
+                        {/* Buttons: Pause/Play and Mute/Unmute */}
+                        <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8, zIndex: 9999, pointerEvents: 'auto' }}>
+                          <button
+                            aria-label="Pause or play video"
+                            title="Pause / Play"
+                            className="btn btn-sm"
+                            style={{ padding: '6px 8px', borderRadius: 6, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', pointerEvents: 'auto' }}
+                            onClick={togglePlay}
+                          >
+                            {heroPaused ? '▶️' : '⏸'}
+                          </button>
+
+                          <button
+                            aria-label="Mute or unmute video"
+                            title="Mute / Unmute"
+                            className="btn btn-sm"
+                            style={{ padding: '6px 8px', borderRadius: 6, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', pointerEvents: 'auto' }}
+                            onClick={toggleMute}
+                          >
+                            {heroMuted ? '🔇' : '🔊'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

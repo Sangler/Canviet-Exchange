@@ -1,7 +1,5 @@
 const User = require('../models/User');
 const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
 
 const SHUFTI_BASE_URL = 'https://api.shuftipro.com';
 const SHUFTI_CLIENT_ID = process.env.SHUFTI_CLIENT_ID || '';
@@ -263,19 +261,9 @@ exports.createVerification = async (req, res) => {
       }
     };
 
-    // Save request payload to logs
-    try {
-      const logsDir = path.join(__dirname, '../../logs');
-      if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `shufti-request-${reference}-${timestamp}.json`;
-      fs.writeFileSync(
-        path.join(logsDir, filename),
-        JSON.stringify({ ...payload, timestamp: new Date().toISOString() }, null, 2)
-      );
-    } catch (err) {
-      console.error('[Shufti] Failed to save request payload:', err);
-    }
+    // File logging disabled in production: request payload will not be written to disk
+    // Previously this code wrote payloads to ./logs for debugging; removed to avoid
+    // potential leakage of PII and to simplify deployments.
 
     // Call Shufti Pro API (with network error handling)
     let response;
@@ -410,19 +398,7 @@ exports.checkKycStatus = async (req, res) => {
 
         const statusData = await statusResponse.json();
         
-        // Save complete polling response to file for debugging
-        try {
-          const logsDir = path.join(__dirname, '../../logs');
-          if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
-          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-          const filename = `shufti-poll-${user.KYCReference}-${timestamp}.json`;
-          fs.writeFileSync(
-            path.join(logsDir, filename),
-            JSON.stringify({ ...statusData, timestamp: new Date().toISOString() }, null, 2)
-          );
-        } catch (err) {
-          console.error('[Shufti Poll] Failed to save response file:', err);
-        }
+        // File logging disabled in production: poll response will not be written to disk
         
         if (statusResponse.ok && statusData.event) {
           // Update user status based on Shufti response
@@ -760,18 +736,7 @@ exports.shuftiWebhook = async (req, res) => {
     const { reference, event, verification_result, declined_reason } = req.body;
 
     // Save complete response to file for debugging
-    try {
-      const logsDir = path.join(__dirname, '../../logs');
-      if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `shufti-webhook-${reference}-${timestamp}.json`;
-      fs.writeFileSync(
-        path.join(logsDir, filename),
-        JSON.stringify({ reference, event, verification_result, declined_reason, timestamp: new Date().toISOString() }, null, 2)
-      );
-    } catch (err) {
-      console.error('[Shufti Webhook] Failed to save response file:', err);
-    }
+    // File logging disabled in production: webhook payload will not be written to disk
 
     if (!reference) {
       return res.status(400).json({ ok: false, message: 'Missing reference' });
@@ -828,18 +793,7 @@ exports.shuftiWebhook = async (req, res) => {
           const statusData = await statusResponse.json();
           
           // Save webhook poll response to logs for debugging
-          try {
-            const logsDir = path.join(__dirname, '../../logs');
-            if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = `shufti-webhook-poll-${reference}-${timestamp}.json`;
-            fs.writeFileSync(
-              path.join(logsDir, filename),
-              JSON.stringify({ ...statusData, timestamp: new Date().toISOString() }, null, 2)
-            );
-          } catch (logErr) {
-            console.error('[Shufti Webhook Poll] Failed to save response file:', logErr);
-          }
+          // File logging disabled in production: webhook poll response will not be written to disk
           
           verificationData = statusData.verification_data || {};
           docData = verificationData.document || {};

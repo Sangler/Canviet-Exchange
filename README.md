@@ -75,7 +75,7 @@ CanViet Exchange is a secure, low-cost money transfer service for remittances fr
 3. Install dependencies: `npm install`
 4. Create `.env` file in backend/:
    ```
-   MONGO_URI=mongodb://localhost:27017/CanViet-Exchange
+   MONGODB_URI=mongodb://localhost:27017/CanViet-Exchange
    REDIS_URL=redis://localhost:6379
    JWT_SECRET=yourstrongsecret
    REFRESH_SECRET=anothersecret

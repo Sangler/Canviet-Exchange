@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 
-const JWT_SECRET = process.env.JWT_SECRET || ''
+// JWT_SECRET is validated at startup - no fallback needed
+const JWT_SECRET = process.env.JWT_SECRET
 
 // Extract Bearer token from Authorization header
 function getToken(req) {

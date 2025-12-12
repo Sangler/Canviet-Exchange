@@ -82,8 +82,15 @@ export default function RegisterPage() {
 
   const validateStep2 = () => {
     const next: typeof errors = {};
-    if (!password) next.password = t('validation.passwordRequired');
-    else if (password.length < 8) next.password = t('validation.passwordLength');
+    const pwd = password || '';
+    const pwdReq = /(?=.*[A-Z])(?=.*\d)/;
+    if (!pwd) {
+      next.password = t('validation.passwordRequired');
+    } else if (pwd.length < 10) {
+      next.password = t('validation.passwordLength') || 'Password must be at least 10 characters';
+    } else if (!pwdReq.test(pwd)) {
+      next.password = t('validation.passwordRequirements') || 'Password must contain at least one uppercase letter and one number';
+    }
     if (confirm !== password) next.confirm = t('validation.passwordMismatch');
     setErrors(next);
     return Object.keys(next).length === 0;

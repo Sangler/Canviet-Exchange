@@ -2,9 +2,9 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
 
-// Must match the default in middleware/auth.js to avoid invalid token verification
-const JWT_SECRET = process.env.JWT_SECRET || ''
-const ACCESS_EXPIRES = process.env.ACCESS_EXPIRES || '15m'
+// JWT_SECRET is validated at startup in app.js - no fallback needed for security
+const JWT_SECRET = process.env.JWT_SECRET
+const ACCESS_EXPIRES = process.env.ACCESS_EXPIRES || '20m'
 const PASSWORD_PEPPER = process.env.PASSWORD_PEPPER || ''
 
 function createToken(payload) {

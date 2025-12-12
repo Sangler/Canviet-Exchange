@@ -51,12 +51,18 @@ export default function ResetPasswordPage() {
   }, [token]);
 
   const validateForm = () => {
-    if (!password) {
+    const pwd = password || '';
+    const pwdReq = /(?=.*[A-Z])(?=.*\d)/;
+    if (!pwd) {
       setError(t('validation.passwordRequired'));
       return false;
     }
-    if (password.length < 8) {
-      setError(t('validation.passwordLength'));
+    if (pwd.length < 10) {
+      setError(t('validation.passwordLength') || 'Password must be at least 10 characters');
+      return false;
+    }
+    if (!pwdReq.test(pwd)) {
+      setError(t('validation.passwordRequirements') || 'Password must contain at least one uppercase letter and one number');
       return false;
     }
     if (confirm !== password) {
