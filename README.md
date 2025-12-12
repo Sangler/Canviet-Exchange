@@ -15,28 +15,19 @@
 | - APIs (Payments, Users)               |
 | - Security (Rate Limit, Validation)    |
 +-------------------+                    |
-       |                                 |
-       v                                 |
-+-------------------+ +-------------------+
-| Databases        | | Blockchain        |
-| - MongoDB (Users,| | - Ethereum/Solana |
-|   Transactions)  | | for USDC         |
-| - Redis (Cache)  | |                   |
-+-------------------+ +-------------------+
-```
+
 
 **Summary:**  
-CanViet Exchange is a secure, low-cost money transfer service for remittances from the US and Canada to Vietnam, leveraging fiat payments (via Stripe) and cryptocurrency (USDC via Coinbase Commerce). Built with the MERN stack (MongoDB, Express.js, React with Next.js, Node.js), Redis for session management and caching, and JWT for robust authentication, CanViet Exchange offers fast, compliant transfers targeting the Vietnamese diaspora ($18B annual remittance market). Key features include an admin dashboard for transaction management and analytics, a user-friendly transfer interface, and strong security measures compliant with fintech standards.
+CanViet Exchange is a secure, low-cost money transfer service for remittances from the US and Canada to Vietnam, leveraging fiat payments (via Stripe). Built with the MERN stack (MongoDB, Express.js, React with Next.js, Node.js), Redis for session management and caching, and JWT for robust authentication, CanViet Exchange offers fast, compliant transfers targeting the Vietnamese diaspora ($18B annual remittance market). Key features include an admin dashboard for transaction management and analytics, a user-friendly transfer interface, and strong security measures compliant with fintech standards.
 
 ## Features
 
 - **Fiat Payments:** Process USD/CAD via Stripe (2.9% + $0.30 fees per transaction).
-- **Crypto Payments:** USDC transfers on Ethereum/Solana via Coinbase Commerce (0.1–0.5% fees), reducing costs by 80–90% compared to traditional methods.
 - **Admin Dashboard:** View transaction lists, analytics (powered by Recharts), and initiate transfers.
-- **User Interface:** Transfer form for fiat and crypto payments, with wallet integration (Web3.js for MetaMask).
+- **User Interface:** Transfer form for fiat payments, with wallet integration (Web3.js for MetaMask).
 - **Authentication:** JWT with access tokens (15-minute expiry) and refresh tokens (7-day expiry, stored in Redis), using HttpOnly, Secure cookies.
 - **Security:** Argon2 for password hashing, Helmet for secure headers, rate-limiting (100 requests/15min), input validation, and PII encryption in MongoDB.
-- **Compliance:** Designed for Money Services Business (MSB) licensing with FinCEN (US), FINTRAC (Canada), and Vietnam's State Bank (SBV), supporting AML/KYC requirements and 2025 crypto regulations (e.g., GENIUS Act).
+- **Compliance:** Designed for Money Services Business (MSB) licensing with FinCEN (US), FINTRAC (Canada), and Vietnam's State Bank (SBV), supporting AML/KYC requirements and 2025 regulations (e.g., GENIUS Act).
 
 ## Project Status
 
@@ -45,7 +36,7 @@ CanViet Exchange is a secure, low-cost money transfer service for remittances fr
   - Infrastructure: MERN stack, MongoDB (users, transactions), Redis (tokens, cache), Git.
   - Backend: Express APIs for authentication, payments (Stripe, Coinbase), and transactions.
   - Frontend: Next.js admin dashboard (transactions, analytics) and user transfer UI.
-  - Crypto: USDC payment flow via Coinbase Commerce and Web3.js.
+
   - Partnerships: Mock integration with Vietnam bank APIs (e.g., Techcombank) for VND payouts.
 
 ## Tech Stack
@@ -53,7 +44,7 @@ CanViet Exchange is a secure, low-cost money transfer service for remittances fr
 - **Frontend:** Next.js 14, React, TypeScript, Tailwind CSS, Shadcn UI, Recharts.
 - **Backend:** Node.js, Express.js, MongoDB (Mongoose), Redis.
 - **Authentication:** JWT, bcrypt, HttpOnly cookies.
-- **Payments:** Stripe (fiat), Coinbase Commerce (crypto), Web3.js (wallet integration).
+- **Payments:** Stripe (fiat)I.
 - **Security:** Helmet, express-rate-limit, express-validator for OWASP compliance.
 - **Deployment:** Planned for AWS EC2 or Vercel, with Docker support (optional).
 
@@ -101,7 +92,7 @@ CanViet Exchange is a secure, low-cost money transfer service for remittances fr
 
 - Use Postman to test endpoints:
   - Authentication: `/api/auth/register`, `/login`, `/refresh`, `/logout`
-  - Payments: `/api/payments/create-intent` (Stripe), `/create-crypto-charge` (Coinbase)
+  - Payments: `/api/payments/create-intent` (Stripe)
   - Transactions: `/api/transactions` (GET)
 - Test card for Stripe: 4242424242424242, expiry 12/26, CVC 123 (test mode).
 
@@ -114,7 +105,7 @@ CanViet Exchange is a secure, low-cost money transfer service for remittances fr
 
 ## Roadmap
 
-- **Phase 2 (Ongoing, 8–12 weeks):** Complete MVP with admin dashboard, user transfer UI, crypto payments, and mock bank integrations.
+- **Phase 2 (Ongoing, 8–12 weeks):** Complete MVP with admin dashboard, user transfer UI, and mock bank integrations.
 - **Phase 3 (Next, 4–6 weeks):** Unit/integration testing (Jest, React Testing Library), security audits (Snyk), and MSB licensing applications.
 - **Phase 4 (Launch, 2 weeks):** Deploy to AWS/Vercel, onboard initial users, and launch marketing campaign targeting Vietnamese diaspora.
 - **Phase 5 (Ongoing):** Scale to 10K users, add mobile app (React Native), and integrate AI for fraud detection.
