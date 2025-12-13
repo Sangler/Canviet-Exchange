@@ -62,8 +62,8 @@
     "payment": {
       "card": "Thẻ",
       "bank": "Ngân hàng"
-    }
-    ,"sending": "Đang gửi…",
+    },
+    "sending": "Đang gửi…",
     "resetYourPassword": "Đặt lại mật khẩu",
     "resetPasswordIntro": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi liên kết đặt lại mật khẩu",
     "checkYourEmail": "Vui lòng kiểm tra địa chỉ email",
@@ -75,7 +75,103 @@
     "codeSent": "Mã đã được gửi đến email của bạn",
     "verificationFailed": "Xác minh thất bại",
     "failedToRequestCode": "Không thể yêu cầu mã",
-    "redirectingVerify": "Đang đi tới trang chính..."
+    "redirectingVerify": "Đang đi tới trang chính...",
+    "reviews": {
+      "summary": "4.8 trên 5 dựa trên hơn 1.200 đánh giá"
+    },
+    "receiving": {
+      "title": "Phương thức nhận tiền linh hoạt tại Việt Nam",
+      "subtitle": "Người nhận có thể nhận tiền qua nhiều phương thức tiện lợi",
+      "bankTransfer": "Chuyển khoản ngân hàng",
+      "bankList": "Vietcombank, BIDV, Techcombank, VPBank...",
+      "momo": "Ví Momo",
+      "momoDesc": "Gửi ngay vào ví điện tử",
+      "zalopay": "ZaloPay",
+      "zalopayDesc": "Chuyển ví nhanh chóng",
+      "cashPickup": "Nhận tiền mặt",
+      "cashPickupDesc": "Tại các điểm đối tác"
+    },
+    "why": {
+      "title": "Tại sao chọn chúng tôi?",
+      "bestRate": "Tỷ giá tốt nhất",
+      "bestRateDesc": "Tận hưởng một trong những tỷ giá cạnh tranh nhất trên thị trường.",
+      "lowestFee": "Phí thấp nhất",
+      "lowestFeeDesc": "Tiết kiệm hơn với phí chuyển minh bạch và thấp.",
+      "guaranteed": "Đảm bảo giao tiền",
+      "guaranteedDesc": "Tiền của bạn đến nơi an toàn và đáng tin cậy mỗi lần.",
+      "track": "Theo dõi giao dịch",
+      "trackDesc": "Giám sát giao dịch và gửi lại dễ dàng"
+    },
+    "referralSection": {
+      "specialOfferTag": "KHUYẾN MÃI",
+      "badgeText": "Kiếm thưởng cùng nhau",
+      "title": "Giới thiệu bạn bè & Nhận thưởng",
+      "description": "Chia sẻ và nhận thưởng! Mời bạn bè sử dụng CanViet Exchange. Khi họ hoàn thành giao dịch đầu tiên, cả hai bạn đều nhận thưởng độc quyền.",
+      "instantBonus": "Thưởng ngay",
+      "instantBonusDesc": "Nhận thưởng khi bạn của bạn đăng ký",
+      "unlimitedReferrals": "Giới thiệu không giới hạn",
+      "unlimitedReferralsDesc": "Không giới hạn số lượng bạn bè bạn có thể giới thiệu",
+      "cta": "Bắt đầu giới thiệu ngay"
+    },
+    "rateModal": {
+      "title": "Cách chúng tôi tính tỷ giá",
+      "p1": "Chúng tôi cung cấp tỷ giá cạnh tranh với biên độ minh bạch áp dụng trên tỷ giá thị trường.",
+      "currentRate": "Tỷ giá hiện tại của bạn:",
+      "perCAD": "mỗi CAD",
+      "noFeePromo": "Gửi từ $1,000 CAD trở lên để được miễn phí chuyển khoản!",
+      "note": "*Lưu ý: Tỷ giá có thể biến động do thay đổi thị trường, sự kiện chính trị và các yếu tố khác trong ngắn hoặc dài hạn.",
+      "gotIt": "Đã hiểu"
+    },
+    "howItWorksFull": {
+      "title": "Cách thức chuyển tiền",
+      "subtitle": "Gửi tiền về Việt Nam trong 4 bước đơn giản",
+      "step1Title": "Tạo tài khoản",
+      "step1Desc": "Đăng ký miễn phí trong chưa đầy 2 phút. Không phí ẩn.",
+      "step2Title": "Nhập thông tin",
+      "step2Desc": "Thêm thông tin người nhận và chọn phương thức thanh toán. Chúng tôi bảo mật dữ liệu của bạn.",
+      "step3Title": "Xác nhận & Thanh toán",
+      "step3Desc": "Xem lại tỷ giá và tổng số, sau đó hoàn thành thanh toán an toàn ngay lập tức.",
+      "step4Title": "Tiền được giao",
+      "step4Desc": "Theo dõi giao dịch theo thời gian thực. Tiền thường đến trong vài giờ!",
+      "ctaTitle": "Sẵn sàng gửi tiền?",
+      "ctaSignUp": "Đăng ký ngay",
+      "ctaLogin": "Đăng nhập",
+      "ctaSubtitle": "Tham gia cùng hàng ngàn khách hàng hài lòng"
+    },
+    "faq": {
+      "title": "Câu hỏi thường gặp",
+      "subtitle": "Mọi điều bạn cần biết về gửi tiền về Việt Nam",
+      "q1": {
+        "q": "Mất bao lâu để tiền đến Việt Nam?",
+        "a": "Hầu hết các giao dịch đến trong vòng 1-4 giờ trong giờ hành chính ở Việt Nam. Chuyển khoản ngân hàng có thể mất đến 24 giờ tùy thuộc vào thời gian xử lý của ngân hàng nhận. Giao dịch ví điện tử (Momo, ZaloPay) thường là tức thì."
+      },
+      "q2": {
+        "q": "Phí gửi tiền như thế nào?",
+        "a": "Phí chuyển tiêu chuẩn của chúng tôi là $1.50 CAD. Tuy nhiên, nếu bạn gửi $1,000 CAD hoặc hơn, chúng tôi sẽ miễn phí hoàn toàn! Không có phí ẩn - bạn thấy gì là thanh toán đó."
+      },
+      "q3": {
+        "q": "Tiền của tôi có an toàn không?",
+        "a": "Chắc chắn! Chúng tôi sử dụng mã hóa cấp ngân hàng và tuân thủ các quy định tài chính của Canada. Thông tin cá nhân và tài chính của bạn được bảo vệ bằng các biện pháp bảo mật hàng đầu. Mọi giao dịch đều được theo dõi và đảm bảo."
+      },
+      "q4": {
+        "q": "Tôi có thể dùng phương thức thanh toán nào?",
+        "a": "Bạn có thể gửi tiền qua Interac e-Transfer, Thẻ tín dụng/Ghi nợ hoặc Chuyển khoản ngân hàng. Mỗi phương thức đều an toàn và xử lý nhanh chóng. Interac e-Transfer thường là lựa chọn nhanh nhất cho khách hàng Canada."
+      },
+      "q5": {
+        "q": "Làm thế nào để theo dõi giao dịch?",
+        "a": "Sau khi hoàn tất giao dịch, bạn sẽ nhận được mã theo dõi qua email. Bạn có thể đăng nhập tài khoản để kiểm tra trạng thái theo thời gian thực. Chúng tôi cũng sẽ thông báo khi tiền đã được giao thành công."
+      },
+      "q6": {
+        "q": "Tôi cần thông tin gì về người nhận?",
+        "a": "Với chuyển khoản ngân hàng, bạn cần tên đầy đủ người nhận, số tài khoản và tên ngân hàng. Với ví điện tử (Momo/ZaloPay), bạn chỉ cần số điện thoại đã đăng ký. Chúng tôi sẽ hướng dẫn bạn từng bước để đơn giản hóa."
+      },
+      "q7": {
+        "q": "Tôi có thể hủy hoặc sửa giao dịch không?",
+        "a": "Bạn có thể hủy giao dịch trong vòng 30 phút kể từ khi bắt đầu, miễn là tiền chưa được gửi. Liên hệ ngay với hỗ trợ nếu cần thay đổi. Sau khi giao dịch đã xử lý, không thể chỉnh sửa, nhưng đội hỗ trợ sẽ giúp bạn xử lý sự cố."
+      },
+      "stillHaveQuestions": "Câu hỏi khác?",
+      "contactSupport": "Liên hệ trung tâm trợ giúp của chúng tôi"
+    }
   },
   "validation": {
     "required": "Trường này là bắt buộc",
@@ -87,7 +183,7 @@
     "phoneInvalid": "Nhập số điện thoại hợp lệ",
     "passwordRequired": "Mật khẩu là bắt buộc",
     "passwordLength": "Mật khẩu phải có ít nhất 10 ký tự",
-    "passwordRequirements": "Mật khẩu phải chứa ít nhất một chữ in hoa và một chữ số",
+    "passwordRequirements": "Mật khẩu phải chứa ít nhất một chữ cái hoa và một chữ số",
     "passwordMismatch": "Mật khẩu nhập lại không khớp"
   },
   "button": {
@@ -280,14 +376,45 @@
     "exchangeFallback": "Tỷ giá"
   },
   "dashboard": {
-    "date": "Ngày",
-    "status": "Trạng thái",
+    "title": "Bảng điều khiển",
+    "allUserRequests": "Tất cả yêu cầu người dùng",
     "yourRequests": "Giao dịch của bạn",
-    "startFirstTransfer": "Bắt đầu giao dịch đầu tiên"
+    "filterByDate": "Lọc theo ngày:",
+    "clearFilter": "Xóa bộ lọc",
+    "showing": "Hiển thị",
+    "of": "của",
+    "requests": "yêu cầu",
+    "loading": "Đang tải yêu cầu của bạn...",
+    "noRequests": "Không tìm thấy yêu cầu nào.",
+    "startFirstTransfer": "Bắt đầu giao dịch đầu tiên",
+    "referenceId": "Mã tham chiếu",
+    "date": "Ngày",
+    "from": "Từ",
+    "to": "Đến",
+    "amountSent": "Số tiền gửi",
+    "amountReceived": "Số tiền nhận",
+    "rate": "Tỷ giá",
+    "status": "Trạng thái",
+    "recipient": "Người nhận",
+    "actions": "Hành động",
+    "viewReceipt": "Xem biên lai",
+    "noReceipt": "Chưa có biên lai",
+    "updateStatus": "Cập nhật trạng thái",
+    "pending": "Đang chờ",
+    "approved": "Đã duyệt",
+    "completed": "Hoàn tất",
+    "rejected": "Bị từ chối",
+    "updating": "Đang cập nhật...",
+    "pagination": {
+      "previous": "Trước",
+      "next": "Tiếp",
+      "page": "Trang"
+    }
   },
   "termsAndConditions": {
     "title": "Điều Khoản và Điều Kiện",
     "lastUpdated": "Cập nhật lần cuối",
+    "date": "13 Tháng 12, 2025",
     "section1": {
       "title": "1. Chấp Nhận Các Điều Khoản",
       "content": "Bằng cách truy cập và sử dụng CanViet Exchange (\"Dịch Vụ\"), bạn đồng ý bị ràng buộc bởi các Điều Khoản và Điều Kiện này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, vui lòng không sử dụng Dịch Vụ của chúng tôi."
@@ -326,33 +453,46 @@
       "content": "Phí chuyển tiền và tỷ giá hối đoái sẽ được hiển thị rõ ràng trước khi bạn xác nhận bất kỳ giao dịch nào. Các tỷ giá này có thể thay đổi theo điều kiện thị trường nhưng sẽ được cố định sau khi bạn xác nhận giao dịch. Chúng tôi bảo lưu quyền điều chỉnh phí tùy theo phương thức thanh toán được chọn."
     },
     "section6": {
-      "title": "6. Thanh Toán và Xử Lý",
-      "content": "Bạn có thể thanh toán cho chuyển tiền qua Interac e-Transfer, thẻ tín dụng hoặc thẻ ghi nợ. Thời gian xử lý khác nhau:<ul><li>Interac e-Transfer: 1-2 giờ</li><li>Thẻ tín dụng/ghi nợ: 2-3 giờ</li></ul>Chúng tôi không chịu trách nhiệm về bất kỳ sự chậm trễ nào do các nhà cung cấp thanh toán hoặc ngân hàng bên thứ ba."
+      "title": "6. Trách nhiệm Người dùng",
+      "intro": "Bạn đồng ý:",
+      "responsibilities": [
+        "Cung cấp thông tin người nhận chính xác (chi tiết ngân hàng, số tài khoản)",
+        "Đảm bảo bạn có quyền gửi tiền từ nguồn thanh toán mà bạn sử dụng",
+        "Không sử dụng Dịch Vụ cho các hoạt động bất hợp pháp, rửa tiền hoặc gian lận",
+        "Xác minh tất cả thông tin chuyển tiền trước khi xác nhận gửi",
+        "Quá trình KYC: Bạn có thể được yêu cầu cung cấp thêm thông tin để xác minh danh tính và tuân thủ AML theo quy định khu vực",
+        "Tỷ giá có thể thay đổi: Lưu ý rằng tỷ giá có thể thay đổi giữa thời điểm bạn khởi tạo và hoàn tất giao dịch",
+        "Bảo mật thông tin tài khoản: Giữ thông tin tài khoản của bạn an toàn và bảo mật"
+      ]
     },
     "section7": {
       "title": "7. Quyền Riêng Tư và Bảo Vệ Dữ Liệu",
       "intro": "Quyền riêng tư của bạn quan trọng đối với chúng tôi. Phần này giải thích cách chúng tôi thu thập, sử dụng và bảo vệ thông tin cá nhân của bạn theo luật Canada.",
-      "kycRequirements": {
-        "title": "7.1 Yêu Cầu Biết Khách Hàng Của Bạn (KYC)",
-        "intro": "CanViet Exchange tuân thủ các quy định KYC nghiêm ngặt của Canada theo yêu cầu của:",
-        "regulations": "<ul><li><strong>FINTRAC (Trung Tâm Phân Tích Giao Dịch và Báo Cáo Tài Chính Canada):</strong> Chúng tôi là một doanh nghiệp dịch vụ tiền tệ (MSB) được đăng ký với FINTRAC và phải tuân thủ Đạo Luật Tiền Tệ và Chống Rửa Tiền (PCMLTFA).</li><li><strong>Quy Định Chống Rửa Tiền (AML) và Chống Tài Trợ Khủng Bố (CTF):</strong> Chúng tôi bắt buộc phải xác minh danh tính của tất cả người dùng để ngăn chặn rửa tiền và tài trợ khủng bố.</li></ul>",
-        "documentsRequired": "Để hoàn thành xác minh KYC, chúng tôi sẽ thu thập các thông tin sau từ bạn:",
-        "documents": "<ul><li>Tên đầy đủ, ngày sinh và địa chỉ</li><li>Tài liệu nhận dạng do chính phủ cấp (ví dụ: hộ chiếu, giấy phép lái xe, thẻ PR Canada)</li><li>Ảnh selfie để xác minh sự hiện diện (sinh trắc học mặt)</li><li>Số bảo hiểm xã hội (SIN) hoặc số nhận dạng khác tùy theo yêu cầu theo luật</li><li>Nguồn tiền (tùy thuộc vào số tiền giao dịch)</li></ul>",
-        "verification": "Chúng tôi sử dụng Shufti Pro, một nhà cung cấp xác minh bên thứ ba đáng tin cậy, để xử lý xác minh KYC của bạn một cách an toàn. Sau khi hoàn thành, dữ liệu của bạn được lưu trữ an toàn và tuân thủ các yêu cầu quy định của Canada."
-      },
-      "whyWeCollect": {
-        "title": "7.2 Tại Sao Chúng Tôi Thu Thập Thông Tin Này",
-        "intro": "Chúng tôi thu thập thông tin cá nhân của bạn cho các mục đích sau:",
-        "purposes": [
-          "Xác minh danh tính của bạn theo luật Canada",
-          "Xử lý các giao dịch chuyển tiền của bạn",
-          "Tuân thủ các quy định của FINTRAC, AML và CTF",
-          "Ngăn chặn gian lận và bảo vệ tài khoản của bạn",
-          "Cải thiện dịch vụ của chúng tôi và liên hệ với bạn về tài khoản của bạn"
+      "kyc": {
+        "title": "Yêu Cầu Biết Khách Hàng (KYC)",
+        "intro": "CanViet Exchange tuân thủ các quy định KYC nghiêm ngặt của Canada. Chúng tôi có thể yêu cầu các thông tin sau:",
+        "requirements": [
+          "Tuân thủ FINTRAC và các quy định AML/CTF theo luật Canada",
+          "Tên đầy đủ, ngày sinh và địa chỉ",
+          "Tài liệu nhận dạng do chính phủ cấp (hộ chiếu, bằng lái, thẻ PR)",
+          "Ảnh selfie để xác minh sự hiện diện",
+          "Số SIN hoặc số nhận dạng khác (nếu được yêu cầu)",
+          "Thông tin về nguồn tiền cho một số giao dịch lớn"
         ]
       },
-      "howWeSecure": {
-        "title": "7.3 Cách Chúng Tôi Bảo Mật Dữ Liệu Của Bạn",
+      "whyCollect": {
+        "title": "Tại Sao Chúng Tôi Thu Thập Thông Tin Này",
+        "intro": "Chúng tôi thu thập thông tin cá nhân của bạn cho các mục đích sau:",
+        "purposes": [
+          "Xác minh danh tính theo quy định của Canada",
+          "Xử lý và hoàn tất giao dịch chuyển tiền",
+          "Tuân thủ các yêu cầu của FINTRAC, AML và CTF",
+          "Ngăn chặn gian lận và bảo vệ tài khoản người dùng",
+          "Cải thiện dịch vụ và liên hệ với người dùng khi cần"
+        ]
+      },
+      "howSecure": {
+        "title": "Cách Chúng Tôi Bảo Mật Dữ Liệu Của Bạn",
         "intro": "Chúng tôi thực hiện các biện pháp bảo mật tiêu chuẩn ngành để bảo vệ thông tin cá nhân của bạn:",
         "measures": [
           "Mã hóa (TLS/SSL) cho tất cả dữ liệu truyền tải",
@@ -360,14 +500,15 @@
           "Kiểm toán bảo mật và đánh giá tuân thủ thường xuyên"
         ]
       },
-      "dataRetention": {
-        "title": "7.4 Lưu Trữ Dữ Liệu",
-        "content": "Theo luật Canada, chúng tôi bắt buộc phải lưu giữ hồ sơ KYC và giao dịch trong <strong>tối thiểu 5 năm</strong> sau giao dịch cuối cùng. Sau thời gian đó, dữ liệu có thể được ẩn danh hoặc xóa an toàn theo chính sách lưu giữ của chúng tôi và các yêu cầu pháp lý."
-      }
+      "retention": {
+        "title": "Lưu Trữ Dữ Liệu",
+        "content": "Theo luật Canada, chúng tôi lưu giữ hồ sơ KYC và giao dịch trong tối thiểu 5 năm sau giao dịch cuối cùng. Sau thời gian đó, dữ liệu có thể được ẩn danh hoặc xóa an toàn theo chính sách lưu giữ của chúng tôi và yêu cầu pháp lý."
+      },
+      "disclaimer": "Data Security Disclaimer"
     },
     "section8": {
       "title": "8. Hoạt Động Bị Cấm",
-      "content": "Bạn đồng ý KHÔNG sử dụng Dịch Vụ cho:",
+      "intro": "Bạn đồng ý KHÔNG sử dụng Dịch Vụ cho:",
       "activities": [
         "Bất kỳ hoạt động bất hợp pháp hoặc gian lận nào",
         "Rửa tiền hoặc tài trợ khủng bố",
@@ -375,31 +516,25 @@
         "Cung cấp thông tin sai lệch hoặc giả mạo trong quá trình xác minh",
         "Cố gắng truy cập trái phép vào hệ thống của chúng tôi",
         "Vi phạm bất kỳ luật hoặc quy định hiện hành nào"
-      ],
-      "consequences": "Vi phạm các điều này có thể dẫn đến đình chỉ hoặc chấm dứt tài khoản, và chúng tôi có thể báo cáo các hoạt động đáng ngờ cho FINTRAC và cơ quan thực thi pháp luật."
+      ]
     },
     "section9": {
       "title": "9. Hủy và Hoàn Tiền",
-      "intro": "Do tính chất của chuyển tiền quốc tế:",
-      "policies": [
-        "<strong>Trước khi Xử Lý:</strong> Bạn có thể hủy một giao dịch trước khi nó được xử lý để được hoàn tiền đầy đủ.",
-        "<strong>Sau khi Xử Lý:</strong> Khi giao dịch đã được xử lý, việc hủy có thể không khả thi. Chúng tôi sẽ cố gắng thu hồi tiền nhưng không thể đảm bảo.",
-        "<strong>Phí Hoàn Tiền:</strong> Phí hoàn tiền có thể áp dụng cho việc hủy sau khi xử lý."
-      ]
+      "beforeProcessing": "<strong>Trước khi Xử Lý:</strong> Bạn có thể hủy một giao dịch trước khi nó được xử lý để được hoàn tiền đầy đủ.",
+      "afterProcessing": "<strong>Sau khi Xử Lý:</strong> Khi giao dịch đã được xử lý, việc hủy có thể không khả thi. Chúng tôi sẽ cố gắng thu hồi tiền nhưng không thể đảm bảo.",
+      "refunds": "<strong>Phí Hoàn Tiền:</strong> Phí hoàn tiền có thể áp dụng cho việc hủy sau khi xử lý."
     },
     "section10": {
       "title": "10. Giới Hạn Trách Nhiệm",
-      "intro": "Trong phạm vi được pháp luật cho phép:",
-      "disclaimers": [
-        "CanViet Exchange không chịu trách nhiệm về bất kỳ thiệt hại gián tiếp, ngẫu nhiên hoặc hậu quả nào phát sinh từ việc sử dụng Dịch Vụ của chúng tôi.",
-        "Chúng tôi không đảm bảo dịch vụ không bị gián đoạn hoặc không có lỗi.",
-        "Chúng tôi không chịu trách nhiệm về sự chậm trễ hoặc thất bại do các sự kiện nằm ngoài tầm kiểm soát hợp lý của chúng tôi (ví dụ: thảm họa thiên nhiên, các sự kiện bất khả kháng, sự cố hệ thống của ngân hàng).",
-        "Trách nhiệm của chúng tôi đối với bạn bị giới hạn ở số tiền giao dịch liên quan đến khiếu nại của bạn."
-      ]
+      "serviceAvailability": "CanViet Exchange không chịu trách nhiệm về bất kỳ thiệt hại gián tiếp, ngẫu nhiên hoặc hậu quả nào phát sinh từ việc sử dụng Dịch Vụ của chúng tôi.",
+      "exchangeRate": "Chúng tôi không chịu trách nhiệm cho mất mát do biến động tỷ giá giữa thời điểm bạn khởi tạo và hoàn tất giao dịch.",
+      "thirdParty": "Chúng tôi không chịu trách nhiệm về sự chậm trễ hoặc thất bại do các bên thứ ba (ví dụ: ngân hàng hoặc cổng thanh toán).",
+      "maxLiability": "Trách nhiệm của chúng tôi đối với bạn bị giới hạn ở số tiền giao dịch liên quan đến khiếu nại của bạn."
     },
     "section11": {
       "title": "11. Giải Quyết Tranh Chấp và Luật Áp Dụng",
-      "content": "Các Điều Khoản và Điều Kiện này được điều chỉnh bởi luật của British Columbia, Canada. Bất kỳ tranh chấp nào phát sinh sẽ được giải quyết theo quy trình trọng tài hoặc trung gian tại British Columbia trước khi tiến hành tố tụng pháp lý."
+      "p1": "Nếu bạn có khiếu nại hoặc tranh chấp liên quan đến Dịch Vụ của chúng tôi, vui lòng liên hệ với chúng tôi tại services@canvietexchange.com. Chúng tôi sẽ cố gắng giải quyết vấn đề trong vòng 30 ngày làm việc.",
+      "p2": "Mọi tranh chấp không thể giải quyết thông qua thương lượng sẽ được áp dụng theo luật của tỉnh British Columbia, Canada và luật liên bang Canada."
     },
     "section12": {
       "title": "12. Thay Đổi Các Điều Khoản",
@@ -411,12 +546,17 @@
     },
     "section14": {
       "title": "14. Liên Hệ",
-      "content": "Nếu bạn có bất kỳ câu hỏi nào về các Điều Khoản và Điều Kiện này, vui lòng liên hệ với chúng tôi tại:<br/><strong>Email:</strong> services@canvietexchange.com<br/><strong>Địa chỉ:</strong> [Địa chỉ Email công ty của bạn, nếu có]"
+      "intro": "Nếu bạn có bất kỳ câu hỏi nào về các Điều Khoản và Điều Kiện này, vui lòng liên hệ với chúng tôi bằng cách sau:",
+      "email": "<strong>Email:</strong> services@canvietexchange.com",
+      "website": "<strong>Website:</strong> www.canvietexchange.com"
     },
     "section15": {
       "title": "15. Xác Nhận",
-      "content": "Khi đã sử dụng dịch vụ CanViet Exchange, bạn xác nhận rằng bạn đã đọc, hiểu và đồng ý với các Điều Khoản và Điều Kiện này. Cảm ơn bạn đã tin tưởng chúng tôi với nhu cầu chuyển tiền quốc tế của bạn!"
+      "content": "Khi đã sử dụng dịch vụ CanViet Exchange, bạn xác nhận rằng bạn đã đọc, hiểu và đồng ý với các Điều Khoản và Điều Kiện này.",
+      "thanks": "Cảm ơn bạn đã tin tưởng chúng tôi với nhu cầu chuyển tiền quốc tế của bạn!"
     }
+    ,
+    "backToTransfers": "Quay lại Chuyển tiền"
   },
   "help": {
     "title": "Chúng tôi có thể giúp gì cho bạn?",
@@ -454,7 +594,10 @@
         "title": "Gửi Tiền",
         "q1": {
           "q": "Mất bao lâu để chuyển tiền đến người nhận?",
-          "a": "Thời gian xử lý phụ thuộc vào phương thức thanh toán của bạn:<ul><li><strong>Interac e-Transfer:</strong> 1-2 giờ</li><li><strong>Thẻ tín dụng/ghi nợ:</strong> 2-3 giờ</li><li><strong>Chuyển khoản ngân hàng:</strong> 1-2 ngày làm việc</li></ul><em>Lưu ý: Thời gian có thể khác nhau tùy thuộc vào thời gian xử lý của ngân hàng.</em>"
+          "cardPayments": "<strong>Thẻ tín dụng/ghi nợ:</strong> 2-3 giờ",
+          "eTransfer": "<strong>Interac e-Transfer:</strong> 1-2 giờ",
+          "eft": "<strong>Chuyển khoản ngân hàng:</strong> 1-2 ngày làm việc",
+          "note": "<em>Lưu ý: Thời gian có thể khác nhau tùy thuộc vào phương thức thanh toán, ngân hàng người nhận và các yếu tố khác.</em>"
         }
       },
       "feesRates": {
@@ -476,7 +619,10 @@
         },
         "q2": {
           "q": "Các trạng thái giao dịch có nghĩa là gì?",
-          "a": "Dưới đây là ý nghĩa của từng trạng thái giao dịch:<ul><li><strong>Đang chờ:</strong> Giao dịch của bạn đã được gửi và đang chờ xử lý.</li><li><strong>Đã xử lý:</strong> Thanh toán đã được xử lý và đang được gửi đến người nhận.</li><li><strong>Hoàn thành:</strong> Người nhận đã nhận được tiền.</li><li><strong>Bị từ chối:</strong> Giao dịch đã bị từ chối (thường do xác minh thanh toán hoặc KYC thất bại).</li></ul>"
+          "pending": "<strong>Đang chờ:</strong> Giao dịch của bạn đã được gửi và đang chờ xử lý.",
+          "approved": "<strong>Đã xử lý:</strong> Thanh toán đã được xử lý và đang được gửi đến người nhận.",
+          "completed": "<strong>Hoàn thành:</strong> Người nhận đã nhận được tiền.",
+          "rejected": "<strong>Bị từ chối:</strong> Giao dịch đã bị từ chối (thường do xác minh thanh toán hoặc KYC thất bại)."
         }
       },
       "troubleshooting": {
@@ -502,8 +648,11 @@
         },
         "form": {
           "firstName": "Tên",
+          "firstNamePlaceholder": "Nhập tên của bạn",
           "lastName": "Họ",
+          "lastNamePlaceholder": "Nhập họ của bạn",
           "email": "Email",
+          "emailPlaceholder": "Nhập email của bạn",
           "title": "Tiêu đề",
           "titlePlaceholder": "Tóm tắt ngắn gọn về câu hỏi của bạn",
           "topic": "Chủ đề",
@@ -524,7 +673,9 @@
           "contentPlaceholder": "Vui lòng mô tả vấn đề hoặc câu hỏi của bạn chi tiết...",
           "charactersLimit": "ký tự",
           "submitButton": "Gửi",
+          "submitting": "Đang gửi...",
           "submittingButton": "Đang gửi...",
+          "submitted": "✓ Đã gửi",
           "loginButton": "Vui lòng Đăng Nhập để Gửi",
           "successMessage": "Cảm ơn bạn đã liên hệ! Chúng tôi đã nhận được câu hỏi của bạn và sẽ phản hồi qua email sớm."
         }
@@ -533,14 +684,15 @@
         "title": "Vẫn Cần Trợ Giúp?",
         "contactTeam": "Liên hệ với đội ngũ hỗ trợ của chúng tôi",
         "intro": "Nếu bạn không tìm thấy câu trả lời cho câu hỏi của mình ở trên, đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giúp đỡ:",
+        "email": "<strong>Email:</strong> services@canvietexchange.com",
         "details": [
           "📧 <strong>Email:</strong> services@canvietexchange.com",
           "⏰ <strong>Giờ hỗ trợ:</strong> Thứ Hai - Thứ Sáu, 9 giờ sáng - 5 giờ chiều PST",
           "⏱️ <strong>Thời gian phản hồi:</strong> Chúng tôi cố gắng phản hồi trong vòng 24 giờ."
         ],
         "actions": {
-          "submitQuestion": "Gửi Câu Hỏi",
-          "viewHistory": "Xem Lịch Sử Chuyển Tiền"
+          "startTransfer": "Bắt đầu giao dịch",
+          "goToDashboard": "Đi tới Bảng điều khiển"
         }
       }
     }
@@ -578,6 +730,7 @@
     "error": "Cập nhật hồ sơ thất bại"
   },
   "transfers": {
+    "cashPickup": "Nhận tiền mặt",
     "title": "Chuyển tiền nhanh, an toàn, thân thiện",
     "sendMoney": "Gửi tiền từ Canada",
     "toVietnam": "đến Việt Nam",
@@ -601,6 +754,7 @@
     "businessDays": "5-7 ngày làm việc",
     "processingNote": "Lưu ý: Tốc độ xử lý có thể thay đổi theo phương thức thanh toán, phương thức giao, chính sách ngân hàng và các yếu tố khác như chậm trễ từ bên thứ ba. Giao dịch có thể lâu hơn dự kiến — điều này là bình thường!",
     "bestValue": "TỈ GIÁ TỐT NHẤT",
+    "fastDeliveryDesc": "Giao nhanh và an toàn qua chuyển khoản tài khoản.",
     "proceedViaBank": "Thanh toán qua ngân hàng",
     "recommended": "NÊN DÙNG",
     "eTransfer": "Chuyển khoản Email (E-Transfer)",
@@ -642,7 +796,6 @@
     "bankTransfer": "Chuyển khoản ngân hàng",
     "momoWallet": "Ví Momo",
     "zalopayWallet": "Ví ZaloPay",
-    "cashPickup": "Nhận tiền mặt",
     "selectBank": "Chọn ngân hàng nhận",
     "bankName": "Tên ngân hàng",
     "enterBankName": "Nhập tên ngân hàng",
@@ -670,8 +823,7 @@
     "whyChooseUs": "Vì sao chọn chúng tôi",
     "lowFees": "Phí thấp",
     "lowFeesDesc": "Tỷ giá cạnh tranh và phí minh bạch. Không phí ẩn.",
-    "fastDelivery": "Tiền vào tài khoản nhanh",
-    "fastDeliveryDesc": "Tiền vào tài khoản nhanh chóng và an toàn.",
+    "fastDelivery": "Giao nhanh",
     "secure": "An toàn",
     "secureDesc": "Chuyển tiền mã hóa qua các đối tác uy tín xác minh.",
     "testimonials": "Khách hàng nói gì",
@@ -749,6 +901,8 @@
     "payNow": "Thanh toán ngay",
     "processing": "Đang xử lý thanh toán...",
     "success": "Thanh toán thành công!",
+    "eTransfer": "Chuyển khoản Email (E-Transfer)",
+    "eft": "Chuyển khoản EFT",
     "error": "Thanh toán thất bại. Vui lòng thử lại."
   },
   "error404": {

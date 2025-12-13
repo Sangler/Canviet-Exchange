@@ -11,7 +11,7 @@ import { LanguageProvider } from '../context/LanguageContext'
 import BrowserCompatibilityWarning from '../components/BrowserCompatibilityWarning'
 import ErrorBoundary from '../components/ErrorBoundary'
 
-function AppContent({ Component, pageProps }: AppProps) {
+function AppContentInner({ Component, pageProps }: { Component: AppProps['Component']; pageProps: AppProps['pageProps'] }) {
   const router = useRouter()
   const { token } = useAuth()
 
@@ -42,7 +42,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           <AuthProvider>
             <BrowserCompatibilityWarning />
             <Script src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" strategy="afterInteractive" />
-            <AppContent Component={Component} pageProps={pageProps} />
+            <AppContentInner Component={Component} pageProps={pageProps} />
           </AuthProvider>
         </LanguageProvider>
       </Provider>

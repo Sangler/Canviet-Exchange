@@ -85,7 +85,6 @@ export default function Transfer() {
       if (manual) setRateLoading(true);
       setRateError(null);
       // Prefer direct ExchangeRate-API fetch; fallback to backend endpoint if needed
-      const apiKey = process.env.EXCHANGE_API_KEY || '';
       let nextRate: number | null = null;
       let fetchedAt: string | null = null;
 
@@ -134,9 +133,9 @@ export default function Transfer() {
         const data = await response.json();
         const reqs = Array.isArray(data.requests) ? data.requests : [];
         // Only include requests that belong to this user (server also filters when auth is present)
-        const mine = reqs.filter(r => String(r.userId) === String(user.id) || !r.userId);
+        const mine = reqs.filter((r: any) => String(r.userId) === String(user.id) || !r.userId);
         // Keep only approved or completed statuses
-        const filtered = mine.filter(r => r.status === 'approved' || r.status === 'completed');
+        const filtered = mine.filter((r: any) => r.status === 'approved' || r.status === 'completed');
         // Take the 5 most recent (requests are returned sorted desc by createdAt)
         setTransactions(filtered.slice(0, 5));
       }
@@ -790,9 +789,9 @@ export default function Transfer() {
             const cutoffTime = new Date(Date.now() - (24 * 60 * 60 * 1000 + 60 * 1000));
             
             // Sum all amounts from requests within the last 24 hours + 1 minute
-            const recentTotal = allRequests
-              .filter((req: RequestItem) => new Date(req.createdAt) > cutoffTime)
-              .reduce((sum: number, req: RequestItem) => sum + (req.amountSent || 0), 0);
+              const recentTotal = allRequests
+              .filter((req: any) => new Date(req.createdAt) > cutoffTime)
+              .reduce((sum: number, req: any) => sum + (req.amountSent || 0), 0);
             
             const totalWithCurrent = recentTotal + currentAmount;
             
@@ -1390,7 +1389,7 @@ export default function Transfer() {
                           <div className="form-group delivery-notice">
                             <p className="notice-text">
                               <strong>{t('transfers.expectedDelivery')}:</strong>{' '}
-                              {transferMethod === 'e-transfer' || transferMethod === 'debit' || transferMethod === 'credit'
+                              {['e-transfer', 'debit', 'credit'].includes(transferMethod as string)
                                 ? t('transfers.within24Hours')
                                 : t('transfers.businessDays')}
                             </p>
@@ -1525,7 +1524,7 @@ export default function Transfer() {
                             {isBank && (
                               <div className="form-group delivery-notice">
                                 <p className="notice-text">
-                                  <strong>{t('transfers.expectedDelivery')}:</strong> {transferMethod === 'e-transfer' || transferMethod === 'debit' || transferMethod === 'credit' ? t('transfers.within24Hours') : t('transfers.businessDays')}
+                                  <strong>{t('transfers.expectedDelivery')}:</strong> {['e-transfer','debit','credit'].includes(transferMethod as string) ? t('transfers.within24Hours') : t('transfers.businessDays')}
                                 </p>
                                 <p className="notice-subtext">
                                   {t('transfers.processingNote')}

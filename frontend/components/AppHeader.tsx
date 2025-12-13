@@ -12,15 +12,11 @@ import {
   CHeader,
   CHeaderNav,
   CHeaderToggler,
-  CNavLink,
   CNavItem,
   useColorModes,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import {
-  cilBell,
-  cilContrast,
-  cilEnvelopeOpen,
   cilList,
   cilMenu,
   cilMoon,
@@ -35,6 +31,13 @@ const AppHeader: React.FC = () => {
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   const { user, logout } = useAuth();
   const { language, setLanguage } = useLanguage();
+
+  // Safe display name: some user objects may include `preferredName` not declared on the AuthUser type.
+  const displayName = ((user as any)?.preferredName) || user?.firstName || 'Nguyen';
+
+  // Workaround: some versions of the CoreUI types cause TS to treat `CHeader` as a type.
+  // Create an `any` alias and use it in JSX to avoid the "refers to a value, but is being used as a type" build error.
+  const CHeaderAny: any = CHeader;
 
   // Persist color mode in localStorage and restore on mount
   useEffect(() => {
@@ -52,7 +55,7 @@ const AppHeader: React.FC = () => {
   }, [colorMode]);
 
   return (
-    <CHeader position="sticky" className="p-0">
+    <CHeaderAny position="sticky" className="p-0">
       <CContainer className="border-bottom px-4 d-flex align-items-center" fluid>
         
         {user && (
@@ -114,7 +117,7 @@ const AppHeader: React.FC = () => {
         {user && (
           <CHeaderNav className="ms-auto ms-md-0 d-flex align-items-center">
             <div className="d-flex align-items-center">
-              <span className="me-3">Hi, {user?.preferredName || user?.firstName || 'Nguyen'}</span>
+              <span className="me-3">Hi, {displayName}</span>
               <CDropdown variant="nav-item">
                 <CDropdownToggle className="py-0 pe-0" caret={false}>
                   <div className="avatar avatar-md">👤</div>
@@ -186,7 +189,7 @@ const AppHeader: React.FC = () => {
           </CHeaderNav>
         )}
       </CContainer>
-    </CHeader>
+    </CHeaderAny>
   );
 };
 

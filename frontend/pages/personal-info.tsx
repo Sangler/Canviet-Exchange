@@ -396,32 +396,17 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         return;
       }
 
-      // Names: letters and spaces only, max 30 chars
-      const nameRegex = /^[\p{L}\s]{1,30}$/u;
-      try {
-        if (!nameRegex.test(trimmedFirst) || !nameRegex.test(trimmedLast)) {
-          surfaceError('Names may contain only letters and spaces (max 30 characters).');
-          setSaving(false);
-          return;
-        }
-        if (trimmedPreferred && !nameRegex.test(trimmedPreferred)) {
-          surfaceError('Preferred name may contain only letters and spaces (max 30 characters).');
-          setSaving(false);
-          return;
-        }
-      } catch (e) {
-        // Some browsers may not support Unicode property escapes; fallback to basic ASCII letters
-        const fallbackRegex = /^[A-Za-z\s]{1,30}$/;
-        if (!fallbackRegex.test(trimmedFirst) || !fallbackRegex.test(trimmedLast)) {
-          surfaceError('Names may contain only letters and spaces (max 30 characters).');
-          setSaving(false);
-          return;
-        }
-        if (trimmedPreferred && !fallbackRegex.test(trimmedPreferred)) {
-          surfaceError('Preferred name may contain only letters and spaces (max 30 characters).');
-          setSaving(false);
-          return;
-        }
+      // Names: letters (including common Latin accents) and spaces only, max 30 chars
+      const nameRegex = /^[A-Za-z\u00C0-\u024F\u1E00-\u1EFF\s]{1,30}$/;
+      if (!nameRegex.test(trimmedFirst) || !nameRegex.test(trimmedLast)) {
+        surfaceError('Names may contain only letters and spaces (max 30 characters).');
+        setSaving(false);
+        return;
+      }
+      if (trimmedPreferred && !nameRegex.test(trimmedPreferred)) {
+        surfaceError('Preferred name may contain only letters and spaces (max 30 characters).');
+        setSaving(false);
+        return;
       }
 
       // Build payload
@@ -676,7 +661,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                         onChange={(e)=> {
                           // Allow only letters and spaces (Unicode letters), enforce maxlength 30
                           try {
-                            const sanitized = (e.target.value || '').replace(/[^\p{L}\s]/gu, '').slice(0,30);
+                            const sanitized = (e.target.value || '').replace(/[^A-Za-z\u00C0-\u024F\u1E00-\u1EFF\s]/g, '').slice(0,30);
                             setFirstName(sanitized);
                           } catch {
                             // Fallback for environments without Unicode regex support
@@ -713,7 +698,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                         value={lastName} 
                         onChange={(e)=> {
                           try {
-                            const sanitized = (e.target.value || '').replace(/[^\p{L}\s]/gu, '').slice(0,30);
+                            const sanitized = (e.target.value || '').replace(/[^A-Za-z\u00C0-\u024F\u1E00-\u1EFF\s]/g, '').slice(0,30);
                             setLastName(sanitized);
                           } catch {
                             const sanitized = (e.target.value || '').replace(/[^A-Za-z\s]/g, '').slice(0,30);
@@ -729,7 +714,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                       <label htmlFor="preferredName">Preferred name (optional) <span className="hint">ⓘ</span></label>
                       <input id="preferredName" className="themed" value={preferredName} onChange={(e)=> {
                         try {
-                          const sanitized = (e.target.value || '').replace(/[^\p{L}\s]/gu, '').slice(0,30);
+                          const sanitized = (e.target.value || '').replace(/[^A-Za-z\u00C0-\u024F\u1E00-\u1EFF\s]/g, '').slice(0,30);
                           setPreferredName(sanitized);
                         } catch {
                           const sanitized = (e.target.value || '').replace(/[^A-Za-z\s]/g, '').slice(0,30);

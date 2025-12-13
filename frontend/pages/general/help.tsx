@@ -95,6 +95,7 @@ export default function HelpPage() {
         lastName: '',
         email: '',
         title: '',
+        topic: '',
         content: ''
       });
       setUserDataLoaded(false);
@@ -125,6 +126,7 @@ export default function HelpPage() {
           lastName: formData.lastName,
           email: formData.email,
           title: formData.title,
+          topic: formData.topic,
           content: formData.content
         })
       });
