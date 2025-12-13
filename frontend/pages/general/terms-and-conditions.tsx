@@ -127,74 +127,67 @@ export default function TermsAndConditions() {
                 <h2 className="h4 mb-3">{t('termsAndConditions.section7.title')}</h2>
                 <p>{t('termsAndConditions.section7.intro')}</p>
                 
-                <h3 className="h5 mb-3 mt-4">{t('termsAndConditions.section7.kycRequirements.title')}</h3>
-                <p>{t('termsAndConditions.section7.kycRequirements.intro')}</p>
-                <div dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section7.kycRequirements.regulations') }} />
-                <p>{t('termsAndConditions.section7.kycRequirements.documentsRequired')}</p>
-                <div dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section7.kycRequirements.documents') }} />
-                <p>{t('termsAndConditions.section7.kycRequirements.verification')}</p>
-
-                <h3 className="h5 mb-3 mt-4">{t('termsAndConditions.section7.whyWeCollect.title')}</h3>
-                <p>{t('termsAndConditions.section7.whyWeCollect.intro')}</p>
+                <h3 className="h5 mb-3 mt-4">{t('termsAndConditions.section7.kyc.title')}</h3>
+                <p>{t('termsAndConditions.section7.kyc.intro')}</p>
                 <ul>
-                  {t('termsAndConditions.section7.whyWeCollect.purposes', { returnObjects: true }).map((purpose: string, idx: number) => (
-                    <li key={idx}>{purpose}</li>
+                  {t('termsAndConditions.section7.kyc.requirements', { returnObjects: true }).map((req: string, idx: number) => (
+                    <li key={idx} dangerouslySetInnerHTML={{ __html: req }} />
                   ))}
                 </ul>
 
-                <h3 className="h5 mb-3 mt-4">{t('termsAndConditions.section7.howWeSecure.title')}</h3>
-                <p>{t('termsAndConditions.section7.howWeSecure.intro')}</p>
+                <h3 className="h5 mb-3 mt-4">{t('termsAndConditions.section7.whyCollect.title')}</h3>
+                <p>{t('termsAndConditions.section7.whyCollect.intro')}</p>
                 <ul>
-                  {t('termsAndConditions.section7.howWeSecure.measures', { returnObjects: true }).map((measure: string, idx: number) => (
-                    <li key={idx}>{measure}</li>
+                  {t('termsAndConditions.section7.whyCollect.purposes', { returnObjects: true }).map((purpose: string, idx: number) => (
+                    <li key={idx} dangerouslySetInnerHTML={{ __html: purpose }} />
                   ))}
                 </ul>
 
-                <h3 className="h5 mb-3 mt-4">{t('termsAndConditions.section7.dataRetention.title')}</h3>
-                <p dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section7.dataRetention.content') }} />
+                <h3 className="h5 mb-3 mt-4">{t('termsAndConditions.section7.howSecure.title')}</h3>
+                <p>{t('termsAndConditions.section7.howSecure.intro')}</p>
+                <ul>
+                  {t('termsAndConditions.section7.howSecure.measures', { returnObjects: true }).map((measure: string, idx: number) => (
+                    <li key={idx} dangerouslySetInnerHTML={{ __html: measure }} />
+                  ))}
+                </ul>
+
+                <h3 className="h5 mb-3 mt-4">{t('termsAndConditions.section7.retention.title')}</h3>
+                <p>{t('termsAndConditions.section7.retention.content')}</p>
               </section>
 
               <section className="mb-5">
                 <h2 className="h4 mb-3">{t('termsAndConditions.section8.title')}</h2>
-                <p>{t('termsAndConditions.section8.content')}</p>
+                <p>{t('termsAndConditions.section8.intro')}</p>
                 <ul>
                   {t('termsAndConditions.section8.activities', { returnObjects: true }).map((activity: string, idx: number) => (
-                    <li key={idx}>{activity}</li>
+                    <li key={idx} dangerouslySetInnerHTML={{ __html: activity }} />
                   ))}
                 </ul>
-                <p dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section8.consequences') }} />
               </section>
+
+
 
               <section className="mb-5">
                 <h2 className="h4 mb-3">{t('termsAndConditions.section9.title')}</h2>
-                <p>{t('termsAndConditions.section9.intro')}</p>
-                <ul>
-                  {t('termsAndConditions.section9.policies', { returnObjects: true }).map((policy: string, idx: number) => (
-                    <li key={idx} dangerouslySetInnerHTML={{ __html: policy }} />
-                  ))}
-                </ul>
+                <p dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section9.beforeProcessing') }} />
+                <p dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section9.afterProcessing') }} />
+                <p dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section9.refunds') }} />
               </section>
 
               <section className="mb-5">
                 <h2 className="h4 mb-3">{t('termsAndConditions.section10.title')}</h2>
-                <p>
-                  <strong>Refunds:</strong> Refunds are issued in the original currency (CAD) and may be subject to exchange rate differences. Processing fees are non-refundable except in cases of service error.
-                </p>
-              </section>
-
-              <section className="mb-5">
-                <h2 className="h4 mb-3">{t('termsAndConditions.section10.title')}</h2>
-                <p>{t('termsAndConditions.section10.intro')}</p>
                 <ul>
-                  {t('termsAndConditions.section10.disclaimers', { returnObjects: true }).map((disclaimer: string, idx: number) => (
-                    <li key={idx}>{disclaimer}</li>
-                  ))}
+                  <li dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section10.serviceAvailability') }} />
+                  <li dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section10.exchangeRate') }} />
+                  <li dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section10.thirdParty') }} />
+                  <li dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section10.maxLiability') }} />
                 </ul>
               </section>
 
               <section className="mb-5">
                 <h2 className="h4 mb-3">{t('termsAndConditions.section11.title')}</h2>
-                <p>{t('termsAndConditions.section11.content')}</p>
+                <p>{t('termsAndConditions.section11.p1')}</p>
+                <p>{t('termsAndConditions.section11.p2')}</p>
               </section>
 
               <section className="mb-5">
@@ -209,7 +202,9 @@ export default function TermsAndConditions() {
 
               <section className="mb-5">
                 <h2 className="h4 mb-3">{t('termsAndConditions.section14.title')}</h2>
-                <div dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section14.content') }} />
+                <p>{t('termsAndConditions.section14.intro')}</p>
+                <p dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section14.email') }} />
+                <p dangerouslySetInnerHTML={{ __html: t('termsAndConditions.section14.website') }} />
               </section>
 
               <section className="mb-4">

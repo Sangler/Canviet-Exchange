@@ -90,7 +90,6 @@
       "title": "How we calculate your rate",
       "p1": "We offer competitive exchange rates with a transparent margin applied to the market rate.",
       "currentRate": "Your current exchange rate:",
-      "noFeePromo": "Send $1,000+ CAD to enjoy no transfer fee!",
       "note": "*Note: Currency exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.",
       "gotIt": "Got it"
     },
@@ -177,7 +176,7 @@
   },
   "footer": {
     "brand": "CanViet Exchange",
-    "copyright": "Money Transfer Platform.",
+    "copyright": "Money Services Platform.",
     "support": "Support",
     "helpCenter": "Help Center",
     "termsConditions": "Terms & Conditions",
@@ -265,7 +264,6 @@
       "p1": "We offer competitive exchange rates with a transparent margin applied to the market rate.",
       "currentRate": "Your current exchange rate:",
       "perCAD": "per CAD",
-      "noFeePromo": "Send $1,000+ CAD to enjoy no transfer fee!",
       "note": "*Note: Currency exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.",
       "gotIt": "Got it"
     },
@@ -414,18 +412,28 @@
         "Be legally authorized to send funds from the accounts you use"
       ]
     },
-    "section6": {
-      "title": "6. User Responsibilities",
-      "intro": "You agree to:",
+    "section4": {
+      "title": "4. Account Registration & User Responsibilities",
+      "content": "When registering, you agree to:",
       "responsibilities": [
-        "Provide accurate recipient information (bank details, account numbers)",
-        "Ensure you have authorization to send funds from your payment source",
-        "Not use the Service for illegal activities, money laundering, or fraud",
-        "Verify all transfer details before confirming submission",
-        "KYC process: You may be required to provide additional information for identity verification and AML due to regulations in your region",
-        "Fluctuating exchange rates: Be aware that exchange rates may vary between the time you initiate a transfer and when it is completed",
-        "Keep your account information secure and confidential"
-      ]
+        "Provide accurate, complete, and up-to-date information",
+        "Maintain the security of your account login information",
+        "Notify us immediately of any unauthorized access or use",
+        "Be responsible for all activities that occur under your account",
+        "Ensure your use of the Service is lawful and complies with all applicable laws",
+        "Provide supporting documentation for your transactions when requested",
+        "Notify us of any changes to your personal information"
+      ],
+      "kycNote": "<strong>KYC Note:</strong> According to Canadian lawsuits, we must verify your identity before you can use our Service. See section 7 below."
+    },
+    "section5": {
+      "title": "5. Fees and Exchange Rates",
+      "content": "Transfer fees and exchange rates will be clearly displayed before you confirm any transaction. These rates may fluctuate based on market conditions but will be locked in once you confirm your transaction. We reserve the right to adjust fees based on the chosen payment method."
+    },
+    "section6": {
+      "title": "6. Payment Methods and Processing Times",
+      "content": "You are allow to proceed the payment via Interac e-Transfer, Debit/Credit Card. Processing times vary after request \"Approved\":<ul><li>EFT: 5-7 business days</li><li>Interac e-Transfer: 8-24 hours</li><li>Debit/Credit Card: 2-24 hours</li></ul>We are not responsible for any delays caused by payment providers or third-party banks."
+    
     },
     "section7": {
       "title": "7. Privacy and Data Protection",
@@ -454,7 +462,7 @@
         "title": "How We Secure Your Information",
         "intro": "We take the security and confidentiality of your personal information seriously and implement multiple layers of protection:",
         "measures": [
-          "<strong>Encryption:</strong> All data transmitted between your device and our servers is encrypted using industry-standard SSL/TLS protocols",
+          "<strong>Encryption:</strong> All data transmitted between your device and our servers is encrypted",
           "<strong>Secure Storage:</strong> Personal information and documents are stored in encrypted databases with restricted access",
           "<strong>Data Minimization:</strong> We only collect information that is necessary for regulatory compliance and service provision"
         ]
@@ -462,8 +470,7 @@
       "retention": {
         "title": "Data Retention and Your Rights",
         "content": "We retain your personal information for as long as required by Canadian law (typically 5-7 years after your last transaction) to comply with record-keeping obligations under FINTRAC regulations."
-      },
-      "disclaimer": "Data Security Disclaimer"
+      }
     },
     "section8": {
       "title": "8. Prohibited Activities",
@@ -479,7 +486,7 @@
     },
     "section9": {
       "title": "9. Cancellations and Refunds",
-      "beforeProcessing": "<strong>Before Processing:</strong> You may cancel a transfer before it has been processed. Contact us immediately for assistance.",
+      "beforeProcessing": "<strong>Before Processing:</strong> You may cancel a transfer before it has been processed or approved status. Contact us immediately for assistance.",
       "afterProcessing": "<strong>After Processing:</strong> Once a transfer has been processed and sent to the recipient's bank, it cannot be cancelled or reversed.",
       "refunds": "<strong>Refunds:</strong> Refunds are issued in the original currency (CAD) and may be subject to exchange rate differences. Processing fees are non-refundable except in cases of service error."
     },
@@ -646,6 +653,8 @@
           "⏱️ <strong>Response Time:</strong> We strive to respond within 24 hours."
         ],      
         "actions": {
+          "submitQuestion":"Back to Home",
+          "viewHistory": "Transfers History",
           "startTransfer": "Start a Transfer",
           "goToDashboard": "Go to Dashboard"
       }
@@ -799,7 +808,7 @@
     "competitiveRates": "We offer competitive exchange rates with a transparent margin applied to the market rate.",
     "currentRate": "Your current exchange rate",
     "perCAD": "per CAD",
-    "noFeePromo": "Send $1,000+ CAD to enjoy no transfer fee!",
+
     "rateFluctuation": "Note: Exchange rate might be fluctuating due to market change, political events, and other factors in long or short term.",
     "welcomeBack": "Welcome back!",
     "continueWhereLeft": "Continue where you are left off!",

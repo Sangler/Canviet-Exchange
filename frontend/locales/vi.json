@@ -118,7 +118,6 @@
       "p1": "Chúng tôi cung cấp tỷ giá cạnh tranh với biên độ minh bạch áp dụng trên tỷ giá thị trường.",
       "currentRate": "Tỷ giá hiện tại của bạn:",
       "perCAD": "mỗi CAD",
-      "noFeePromo": "Gửi từ $1,000 CAD trở lên để được miễn phí chuyển khoản!",
       "note": "*Lưu ý: Tỷ giá có thể biến động do thay đổi thị trường, sự kiện chính trị và các yếu tố khác trong ngắn hoặc dài hạn.",
       "gotIt": "Đã hiểu"
     },
@@ -136,7 +135,7 @@
       "ctaTitle": "Sẵn sàng gửi tiền?",
       "ctaSignUp": "Đăng ký ngay",
       "ctaLogin": "Đăng nhập",
-      "ctaSubtitle": "Tham gia cùng hàng ngàn khách hàng hài lòng"
+      "ctaSubtitle": "Đăng ký gửi tiền cùng với những khách hàng trung thành"
     },
     "faq": {
       "title": "Câu hỏi thường gặp",
@@ -147,7 +146,7 @@
       },
       "q2": {
         "q": "Phí gửi tiền như thế nào?",
-        "a": "Phí chuyển tiêu chuẩn của chúng tôi là $1.50 CAD. Tuy nhiên, nếu bạn gửi $1,000 CAD hoặc hơn, chúng tôi sẽ miễn phí hoàn toàn! Không có phí ẩn - bạn thấy gì là thanh toán đó."
+        "a": "Phí chuyển tiền cố định là $1.50 CAD - số tiền bạn thấy gì là số tiền nhận được đó."
       },
       "q3": {
         "q": "Tiền của tôi có an toàn không?",
@@ -278,7 +277,6 @@
       "p1": "Chúng tôi cung cấp tỷ giá cạnh tranh với biên độ minh bạch áp dụng trên tỷ giá thị trường.",
       "currentRate": "Tỷ giá hiện tại của bạn:",
       "perCAD": "mỗi CAD",
-      "noFeePromo": "Gửi từ $1,000 CAD trở lên để được miễn phí chuyển khoản!",
       "note": "*Lưu ý: Tỷ giá có thể biến động do thay đổi thị trường, sự kiện chính trị và các yếu tố khác trong ngắn hoặc dài hạn.",
       "gotIt": "Đã hiểu"
     },
@@ -453,17 +451,8 @@
       "content": "Phí chuyển tiền và tỷ giá hối đoái sẽ được hiển thị rõ ràng trước khi bạn xác nhận bất kỳ giao dịch nào. Các tỷ giá này có thể thay đổi theo điều kiện thị trường nhưng sẽ được cố định sau khi bạn xác nhận giao dịch. Chúng tôi bảo lưu quyền điều chỉnh phí tùy theo phương thức thanh toán được chọn."
     },
     "section6": {
-      "title": "6. Trách nhiệm Người dùng",
-      "intro": "Bạn đồng ý:",
-      "responsibilities": [
-        "Cung cấp thông tin người nhận chính xác (chi tiết ngân hàng, số tài khoản)",
-        "Đảm bảo bạn có quyền gửi tiền từ nguồn thanh toán mà bạn sử dụng",
-        "Không sử dụng Dịch Vụ cho các hoạt động bất hợp pháp, rửa tiền hoặc gian lận",
-        "Xác minh tất cả thông tin chuyển tiền trước khi xác nhận gửi",
-        "Quá trình KYC: Bạn có thể được yêu cầu cung cấp thêm thông tin để xác minh danh tính và tuân thủ AML theo quy định khu vực",
-        "Tỷ giá có thể thay đổi: Lưu ý rằng tỷ giá có thể thay đổi giữa thời điểm bạn khởi tạo và hoàn tất giao dịch",
-        "Bảo mật thông tin tài khoản: Giữ thông tin tài khoản của bạn an toàn và bảo mật"
-      ]
+      "title": "6. Thanh Toán và Xử Lý",
+      "content": "Bạn có thể thanh toán cho chuyển tiền qua Interac e-Transfer, thẻ tín dụng hoặc thẻ ghi nợ. Thời gian xử lý giao dịch được chấp thuận sẽ khác nhau:<ul><li>EFT: 5-7 ngày làm việc</li><li>Interac e-Transfer: 8-24 giờ</li><li>Thẻ tín dụng/ghi nợ: 2-24 giờ</li></ul>Chúng tôi không chịu trách nhiệm về bất kỳ sự chậm trễ nào do các nhà cung cấp thanh toán hoặc ngân hàng bên thứ ba."
     },
     "section7": {
       "title": "7. Quyền Riêng Tư và Bảo Vệ Dữ Liệu",
@@ -472,12 +461,9 @@
         "title": "Yêu Cầu Biết Khách Hàng (KYC)",
         "intro": "CanViet Exchange tuân thủ các quy định KYC nghiêm ngặt của Canada. Chúng tôi có thể yêu cầu các thông tin sau:",
         "requirements": [
-          "Tuân thủ FINTRAC và các quy định AML/CTF theo luật Canada",
-          "Tên đầy đủ, ngày sinh và địa chỉ",
-          "Tài liệu nhận dạng do chính phủ cấp (hộ chiếu, bằng lái, thẻ PR)",
-          "Ảnh selfie để xác minh sự hiện diện",
-          "Số SIN hoặc số nhận dạng khác (nếu được yêu cầu)",
-          "Thông tin về nguồn tiền cho một số giao dịch lớn"
+          "<strong>Hoạt động tội phạm (Rửa tiền) và Đạo luật Tài trợ Khủng bố (PCMLTFA)</strong>",
+          "<strong>Financial Transactions and Reports Analysis Centre of Canada (FINTRAC)</strong> regulations",
+          "<strong>Chống rửa tiền (AML)</strong> và các yêu cầu về Tài trợ Chống Khủng bố (CTF)"
         ]
       },
       "whyCollect": {
@@ -495,7 +481,7 @@
         "title": "Cách Chúng Tôi Bảo Mật Dữ Liệu Của Bạn",
         "intro": "Chúng tôi thực hiện các biện pháp bảo mật tiêu chuẩn ngành để bảo vệ thông tin cá nhân của bạn:",
         "measures": [
-          "Mã hóa (TLS/SSL) cho tất cả dữ liệu truyền tải",
+          "Mã hóa cho tất cả dữ liệu truyền tải",
           "Lưu trữ an toàn với kiểm soát truy cập",
           "Kiểm toán bảo mật và đánh giá tuân thủ thường xuyên"
         ]
@@ -503,8 +489,7 @@
       "retention": {
         "title": "Lưu Trữ Dữ Liệu",
         "content": "Theo luật Canada, chúng tôi lưu giữ hồ sơ KYC và giao dịch trong tối thiểu 5 năm sau giao dịch cuối cùng. Sau thời gian đó, dữ liệu có thể được ẩn danh hoặc xóa an toàn theo chính sách lưu giữ của chúng tôi và yêu cầu pháp lý."
-      },
-      "disclaimer": "Data Security Disclaimer"
+      }
     },
     "section8": {
       "title": "8. Hoạt Động Bị Cấm",
@@ -520,8 +505,8 @@
     },
     "section9": {
       "title": "9. Hủy và Hoàn Tiền",
-      "beforeProcessing": "<strong>Trước khi Xử Lý:</strong> Bạn có thể hủy một giao dịch trước khi nó được xử lý để được hoàn tiền đầy đủ.",
-      "afterProcessing": "<strong>Sau khi Xử Lý:</strong> Khi giao dịch đã được xử lý, việc hủy có thể không khả thi. Chúng tôi sẽ cố gắng thu hồi tiền nhưng không thể đảm bảo.",
+      "beforeProcessing": "<strong>Trước khi Xử Lý:</strong> Bạn có thể hủy giao dịch trước khi nó được xử lý hoặc chấp thuận để tiền bạn không bị mất hoặc được hoàn lại.",
+      "afterProcessing": "<strong>Sau khi Xử Lý:</strong> Khi giao dịch đã được xử lý, việc hủy giao dịch không khả thi.",
       "refunds": "<strong>Phí Hoàn Tiền:</strong> Phí hoàn tiền có thể áp dụng cho việc hủy sau khi xử lý."
     },
     "section10": {
@@ -691,6 +676,8 @@
           "⏱️ <strong>Thời gian phản hồi:</strong> Chúng tôi cố gắng phản hồi trong vòng 24 giờ."
         ],
         "actions": {
+          "submitQuestion":"Quay lại Trang Chủ",
+          "viewHistory": "Lịch Sử Giao Dịch",
           "startTransfer": "Bắt đầu giao dịch",
           "goToDashboard": "Đi tới Bảng điều khiển"
         }
@@ -842,7 +829,6 @@
     "competitiveRates": "Chúng tôi cung cấp tỷ giá cạnh tranh với biên độ minh bạch áp dụng trên tỷ giá thị trường.",
     "currentRate": "Tỷ giá hiện tại của bạn",
     "perCAD": "trên mỗi CAD",
-    "noFeePromo": "Gửi từ $1,000 CAD trở lên để được miễn phí chuyển khoản!",
     "rateFluctuation": "Lưu ý: Tỷ giá có thể biến động do thay đổi thị trường, sự kiện chính trị và các yếu tố khác trong ngắn hoặc dài hạn.",
     "welcomeBack": "Chào mừng trở lại!",
     "continueWhereLeft": "Tiếp tục từ nơi bạn đã dừng!",
