@@ -215,7 +215,9 @@
       "fee": "Fee",
       "rateUpdated": "Rate updated",
       "refreshRate": "Refresh rate",
-      "startTransfer": "Start Transfer"
+      "startTransfer": "Start Transfer",
+      "yourRate": "Your Rate:"
+
     },
     "placeholders": {
       "youSend": "You Send CAD",

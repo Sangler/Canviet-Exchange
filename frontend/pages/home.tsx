@@ -159,11 +159,18 @@ export default function Home() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Serve compressed mobile versions when available
-  const heroSources = [
-    isMobile ? '/mainpage/CanViet_Exchange_Video_Banner_Extension_mobile.mp4' : '/mainpage/CanViet_Exchange_Video_Banner_Extension.mp4',
-    isMobile ? '/mainpage/Banner_Video_Remake_With_Better_Soundtrack_mobile.mp4' : '/mainpage/Banner_Video_Remake_With_Better_Soundtrack.mp4'
-  ];
+  // Serve compressed mobile versions when available. Use public folder absolute paths.
+  const heroSources = useMemo(() => {
+    const list = isMobile
+      ? [
+          '/mainpage/CanViet_Exchange_Video_Banner_Extension.mp4',
+          '/mainpage/Banner_Video_Remake_With_Better_Soundtrack.mp4'
+        ]
+      : [
+          '/mainpage/Banner_Video_Remake_With_Better_Soundtrack.mp4'
+        ];
+    return list.filter(Boolean);
+  }, [isMobile]);
   const [heroSourceIndex, setHeroSourceIndex] = useState(0);
   const [heroMuted, setHeroMuted] = useState(true);
   const [heroPaused, setHeroPaused] = useState(false);
@@ -173,11 +180,12 @@ export default function Home() {
     const v = heroVideoRef.current;
     if (!v) return;
     const onEnded = () => {
-      setHeroSourceIndex((idx) => (idx + 1) % heroSources.length);
+      const len = Math.max(1, heroSources.length);
+      setHeroSourceIndex((idx) => (idx + 1) % len);
     };
     v.addEventListener('ended', onEnded);
     return () => v.removeEventListener('ended', onEnded);
-  }, []);
+  }, [heroSources.length]);
 
   // Sync play/pause state with the video element
   useEffect(() => {
@@ -197,12 +205,13 @@ export default function Home() {
   useEffect(() => {
     const v = heroVideoRef.current;
     if (!v) return;
+    const src = heroSources[heroSourceIndex] || '';
     v.pause();
-    v.src = heroSources[heroSourceIndex];
+    v.src = src;
     try { v.load(); } catch (e) {}
     v.play().catch(() => {});
     setHeroPaused(false);
-  }, [heroSourceIndex]);
+  }, [heroSourceIndex, heroSources]);
 
   // Mirror muted state to the element
   useEffect(() => {
@@ -240,11 +249,11 @@ export default function Home() {
   const rateStr = effectiveRate ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate) : null;
   return (
     <div>
-      <div className="wrapper d-flex flex-column min-vh-100">
+      <div className="wrapper d-flex flex-column min-vh-100 align-centre">
         <AppHeader />
 
 
-        <div className="body flex-grow-1 home-full-bleed">
+        <div className="body flex-grow-1 home-full-bleed centered">
           <div className="home-container-fullwidth">
             <div className="row g-0">
               <div className="col-12 w-100 home-col-no-padding">

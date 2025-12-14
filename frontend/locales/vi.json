@@ -237,7 +237,9 @@
       "fee": "Phí",
       "rateUpdated": "Tỷ giá được cập nhật",
       "refreshRate": "Làm mới tỷ giá",
-      "startTransfer": "Bắt đầu chuyển tiền"
+      "startTransfer": "Bắt đầu chuyển tiền",
+      "yourRate": "Tỷ giá của bạn:"
+
     },
     "features": {
       "title": "Tại sao chọn CanViet Exchange?",
