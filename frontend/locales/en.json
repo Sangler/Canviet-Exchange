@@ -560,14 +560,12 @@
       "sendingMoney": {
         "title": "Sending Money",
         "q1": {
-          "q": "Why does my transfer take longer than expected?",
-          "cardPayments": "<strong>Card payments:</strong> within 24 business hours",
-          "eTransfer": "<strong>E-Transfer:</strong> Within 24 business hours",
-          "eft": "<strong>Electronic Funds Transfers (EFT):</strong> 5-7 business days",
-          "note": "<em>Note: Processing time may vary based on payment method, recipient bank, and other factors.</em>"
-        }
+          "a": "<strong>Card payments:</strong> within 24 business hours<br/><strong>E-Transfer:</strong> Within 24 business hours<br/><strong>Electronic Funds Transfers (EFT):</strong> 5-7 business days<br/><em>Note: Processing time may vary based on payment method, recipient bank, and other factors.</em>",
+          "q": "Why does my transfer take longer than expected?"
+           }
       },
       "feesRates": {
+        "title": "Fee & Exchange rate",
         "q1": {
           "q": "How is your exchange rate calculated?",
           "a": "In order to have <strong>an appealing rate</strong>, we utilize stablecoin-backed dollar sending encrypted currency across the world. Our exchange rate is calculated accuracy in timing and better pricing."
@@ -585,10 +583,7 @@
         },
         "q2": {
           "q": "What do the different statuses mean?",
-          "pending": "<strong>Pending:</strong> We've received your request and are processing it",
-          "approved": "<strong>Approved:</strong> Transfer approved and funds are being sent to recipient",
-          "completed": "<strong>Completed:</strong> Recipient has received the money",
-          "rejected": "<strong>Rejected:</strong> Transfer could not be processed (contact support)"
+          "a":"<strong>Pending:</strong> We've received your request and are awaiting to receive your funds</br><strong>Approved:</strong> Transfer approved and funds are being sent to recipient</br><strong>Completed:</strong> Recipient has received the money</br><strong>Rejected:</strong> Transfer could not be processed (contact support if needed)"
         }
       },
       "troubleshooting": {

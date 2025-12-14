@@ -580,11 +580,8 @@
       "sendingMoney": {
         "title": "Gửi Tiền",
         "q1": {
-          "q": "Mất bao lâu để chuyển tiền đến người nhận?",
-          "cardPayments": "<strong>Thẻ tín dụng/ghi nợ:</strong> 2-3 giờ",
-          "eTransfer": "<strong>Interac e-Transfer:</strong> 1-2 giờ",
-          "eft": "<strong>Chuyển khoản ngân hàng:</strong> 1-2 ngày làm việc",
-          "note": "<em>Lưu ý: Thời gian có thể khác nhau tùy thuộc vào phương thức thanh toán, ngân hàng người nhận và các yếu tố khác.</em>"
+            "a": "<strong>Thẻ tín dụng/ghi nợ:</strong> 24 giờ<br/><strong>Interac e-Transfer:</strong> 24 giờ<br/><strong>Chuyển khoản EFT:</strong> 5-7 ngày làm việc<br/><em>Lưu ý: Thời gian có thể khác nhau tùy thuộc vào phương thức thanh toán, ngân hàng người nhận và các yếu tố khác.</em>",
+            "q": "Mất bao lâu để chuyển tiền đến người nhận?"
         }
       },
       "feesRates": {
@@ -606,10 +603,8 @@
         },
         "q2": {
           "q": "Các trạng thái giao dịch có nghĩa là gì?",
-          "pending": "<strong>Đang chờ:</strong> Giao dịch của bạn đã được gửi và đang chờ xử lý.",
-          "approved": "<strong>Đã xử lý:</strong> Thanh toán đã được xử lý và đang được gửi đến người nhận.",
-          "completed": "<strong>Hoàn thành:</strong> Người nhận đã nhận được tiền.",
-          "rejected": "<strong>Bị từ chối:</strong> Giao dịch đã bị từ chối (thường do xác minh thanh toán hoặc KYC thất bại)."
+          "a":"<strong>Đang chờ:</strong>Chúng tôi đã nhận yêu câu giao dịch và đang đợi tiền từ bạn</br><strong>Chấp thuận:</strong>Giao dịch đã được chấp thuận và tiền đang được gửi đến người nhận</br><strong>Hoàn thành:</strong> Người nhận đã nhận được tiền và giao dịch thành công</br><strong>Bị từ chối:</strong> Giao dịch bị hủy (liên hệ hỗ trợ nếu cần)"
+
         }
       },
       "troubleshooting": {
@@ -620,7 +615,7 @@
         },
         "q2": {
           "q": "Tôi đã nhập sai thông tin người nhận. Tôi có thể sửa không?",
-          "a": "Nếu giao dịch vẫn đang <strong>Đang chờ</strong>, bạn có thể liên hệ với bộ phận hỗ trợ để cập nhật chi tiết người nhận. Tuy nhiên, sau khi giao dịch được <strong>Xử lý</strong>, việc thay đổi có thể không khả thi."
+          "a": "Nếu giao dịch vẫn đang \"Đang chờ\", bạn có thể liên hệ với bộ phận hỗ trợ để cập nhật chi tiết người nhận. Tuy nhiên, sau khi giao dịch được \"Xử lý\", việc thay đổi có thể không được và giao dịch sẽ bị từ chối."
         },
         "q3": {
           "q": "Tại sao giao dịch của tôi bị từ chối?",

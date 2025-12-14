@@ -89,6 +89,16 @@ app.use('/api/kyc', kycRoutes)
 app.use('/api/payments', paymentsRoutes)
 app.use('/api/contributions', contributionsRoutes)
 
+// Health check for /api root so requests to /api return a clear JSON response
+// Respond to both /api and /api/ so proxy redirects or trailing-slash rewrites work
+app.get(['/api', '/api/'], (_req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'CanViet Exchange Backend',
+    env: process.env.NODE_ENV || 'development'
+  })
+})
+
 // Compatibility redirect: if OAuth provider is configured with missing /api prefix
 app.get('/auth/google/callback', (req, res) => {
   try {
