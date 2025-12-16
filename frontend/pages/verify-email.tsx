@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { getAuthToken, logout } from '../lib/auth';
+import { logout } from '../lib/auth';
 import { useLanguage } from '../context/LanguageContext';
 import { getSafeRedirectPath } from '../lib/routeValidation';
-import RequireAuth from '../components/RequireAuth';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -32,20 +31,8 @@ export default function VerifyEmailPage() {
     // Check user's email verification status from database
     (async () => {
       try {
-        const token = getAuthToken();
-
-        // If there is no auth token, do not call /api/users/me to avoid backend 401 noise.
-        if (!token) {
-          const qEmail = (router.query.email as string) || '';
-          if (qEmail) {
-            setEmail(qEmail);
-            setEmailLocked(true);
-          }
-          return;
-        }
-
-        // Authenticated: fetch profile and react accordingly
-        const resp = await fetch(`/api/users/me`, { headers: { Authorization: `Bearer ${token}` } });
+        // Authenticated: fetch profile and react accordingly (cookie-based auth)
+        const resp = await fetch(`/api/users/me`, { credentials: 'include' });
         const data = await resp.json();
 
         if (data?.user?.emailVerified) {
@@ -142,7 +129,7 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <RequireAuth>
+    <>
       <Head>
         <title>{t('auth.verifyEmail')}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
@@ -257,6 +244,6 @@ export default function VerifyEmailPage() {
           </div>
         </div>
       </div>
-    </RequireAuth>
+    </>
   );
 }

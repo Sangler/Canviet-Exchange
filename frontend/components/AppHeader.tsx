@@ -99,7 +99,7 @@ const AppHeader: React.FC = () => {
         <CHeaderNav className="d-flex">
           <CNavItem>
             <div className="d-flex align-items-center ms-3">
-              <button
+                <button
                 type="button"
                 className="btn p-0"
                 onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}
@@ -107,7 +107,11 @@ const AppHeader: React.FC = () => {
                 title="Change to Dark/Light Mode"
                 style={{ background: 'transparent', border: 0 }}
               >
-                <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />
+                {/* Render both icons to keep server and client markup identical; CSS will show/hide as needed */}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} aria-hidden>
+                  <CIcon icon={cilSun} size="lg" className="sun-icon" />
+                  <CIcon icon={cilMoon} size="lg" className="moon-icon" />
+                </span>
               </button>
             </div>
           </CNavItem>
@@ -137,16 +141,10 @@ const AppHeader: React.FC = () => {
                     onClick={async () => {
                       if (window.confirm('⚠️ WARNING: This will permanently delete your account and all associated data including transfers, KYC information, and personal details. This action CANNOT be undone.\n\nAre you absolutely sure you want to close your account?')) {
                         try {
-                          const token = getAuthToken();
-                          if (!token) {
-                            alert('You are not logged in.');
-                            return;
-                          }
-                          
                           const response = await fetch('/api/users/close-account', {
                             method: 'DELETE',
+                            credentials: 'include',
                             headers: {
-                              'Authorization': `Bearer ${token}`,
                               'Content-Type': 'application/json'
                             }
                           });

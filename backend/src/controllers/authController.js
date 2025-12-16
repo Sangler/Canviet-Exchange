@@ -4,7 +4,7 @@ const User = require('../models/User')
 
 // JWT_SECRET is validated at startup in app.js - no fallback needed for security
 const JWT_SECRET = process.env.JWT_SECRET
-const ACCESS_EXPIRES = process.env.ACCESS_EXPIRES || '20m'
+const ACCESS_EXPIRES = process.env.ACCESS_EXPIRES || '30m'
 const PASSWORD_PEPPER = process.env.PASSWORD_PEPPER || ''
 
 function createToken(payload) {
@@ -72,9 +72,34 @@ exports.register = async (req, res) => {
       } catch (e) {
       }
     }
+    // If the newly created account already has both email and phone verified, grant 1 point.
+    // Do not modify the User schema; handle missing `points` safely.
+    try {
+      const hasEmailVerified = !!user.emailVerified
+      const hasPhoneVerified = !!user.phoneVerified
+      if (hasEmailVerified && hasPhoneVerified) {
+        user.points = (typeof user.points === 'number' ? user.points : 0) + 1
+        await user.save()
+      }
+    } catch (e) {
+      // Best-effort: don't block registration on save error
+    }
     
   const token = createToken({ sub: user.id, email: user.email, role: user.role })
-    return res.json({ token, user: user.toJSON() })
+    // Set HttpOnly cookie for access token
+    try {
+      const maxAge = 30 * 60 * 1000 // default 30 minutes
+      res.cookie('access_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge,
+      })
+    } catch (e) {
+      // If cookie fails, still return token in body as fallback
+      return res.json({ token, user: user.toJSON() })
+    }
+    return res.json({ user: user.toJSON(), ok: true })
   } catch (err) {
     if (err && err.code === 11000) {
       // Handle unique index conflicts for email/phone
@@ -134,7 +159,19 @@ exports.login = async (req, res) => {
     kycStatus: user.KYCStatus,
     suspended: user.KYCStatus === 'suspended'
   })
-    return res.json({ token, user: user.toJSON() })
+    // Set HttpOnly cookie for access token (fallback to JSON token if cookie fails)
+    try {
+      const maxAge = 30 * 60 * 1000 // default 30 minutes
+      res.cookie('access_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge,
+      })
+      return res.json({ user: user.toJSON(), ok: true })
+    } catch (e) {
+      return res.json({ token, user: user.toJSON() })
+    }
   } catch (err) {
     return res.status(500).json({ message: 'Internal server error' })
   }
@@ -169,12 +206,22 @@ exports.googleOAuth = async (req, res) => {
         suspended: req.user.KYCStatus === 'suspended'
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.ACCESS_EXPIRES || '15m' }
+      { expiresIn: process.env.ACCESS_EXPIRES || '30m' }
     )
-    // Redirect to frontend app with token as query param.
-    // Frontend will read the token and complete sign-in (set cookie/localStorage etc.).
+    // Set HttpOnly cookie then redirect to frontend without exposing token in URL
+    try {
+      const maxAge = 30 * 60 * 1000
+      res.cookie('access_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge,
+      })
+    } catch (e) {
+      // ignore cookie errors and continue with redirect
+    }
     const frontend = process.env.FRONTEND_URL || ''
-    const redirectUrl = `${frontend.replace(/\/$/, '')}/oauth-callback?token=${encodeURIComponent(token)}`
+    const redirectUrl = `${frontend.replace(/\/$/, '')}/oauth-callback`
     return res.redirect(redirectUrl)
   } catch (error) {
     res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`)
@@ -205,7 +252,7 @@ exports.forgotPassword = async (req, res) => {
         purpose: 'password-reset'
       },
       JWT_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: '30m' }
     )
 
     // Send email with reset link
@@ -337,5 +384,47 @@ exports.validateReferralCode = async (req, res) => {
       valid: false, 
       message: 'Error validating referral code' 
     })
+  }
+}
+
+// Return authenticated user's profile. Protected by auth middleware.
+exports.me = async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: 'Unauthenticated' })
+    // Load full user from DB to provide authoritative fields (emailVerified, address, KYCStatus, etc.)
+    const userId = req.user.id || req.user._id || req.auth?.sub
+    if (!userId) return res.status(401).json({ message: 'Unauthenticated' })
+    const fullUser = await User.findById(userId)
+    if (!fullUser) return res.status(404).json({ message: 'User not found' })
+
+    // Determine profile completeness (same rules as usersController.isProfileComplete)
+    const isProfileComplete = (u) => {
+      if (!u) return false
+      if (!u.dateOfBirth) return false
+      const addr = u.address || {}
+      if (addr.country === 'Vietnam') {
+        const hasAddr = addr.street && addr.country
+        if (!hasAddr) return false
+      } else {
+        const hasAddr = addr.street && addr.postalCode && addr.city && addr.country
+        if (!hasAddr) return false
+      }
+      if (!u.employmentStatus) return false
+      return true
+    }
+
+    return res.json({ user: fullUser.toJSON(), complete: isProfileComplete(fullUser) })
+  } catch (e) {
+    return res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+// Logout: clear access_token cookie
+exports.logout = async (req, res) => {
+  try {
+    res.clearCookie('access_token', { path: '/' })
+    return res.json({ ok: true })
+  } catch (e) {
+    return res.status(500).json({ message: 'Internal server error' })
   }
 }

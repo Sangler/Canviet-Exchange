@@ -45,20 +45,22 @@ export default function ReceiptPage() {
   const router = useRouter();
   const { hash } = router.query;
   const { token, logout } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  // Avoid using token during SSR — only consider authenticated state after mount
+  const isAuthenticated = mounted && Boolean(token);
   const [request, setRequest] = useState<Request | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // mark as mounted to enable client-only conditional rendering
+    setMounted(true);
+
     if (!hash) return;
 
     async function fetchReceipt() {
       try {
-        const response = await fetch(`/api/requests/receipt/${hash}`, {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : '',
-          },
-        });
+        const response = await fetch(`/api/requests/receipt/${hash}`, { credentials: 'include' });
 
         // If token is invalid/expired the server will return 401 — force logout
         if (response.status === 401) {
@@ -82,6 +84,16 @@ export default function ReceiptPage() {
 
     fetchReceipt();
   }, [hash]);
+
+  const maskEmail = (email?: string) => {
+    if (!email) return '';
+    try {
+      const [local, domain] = email.split('@');
+      if (!domain) return email;
+      if (local.length <= 2) return `${local[0]}***@${domain}`;
+      return `${local[0]}***${local[local.length - 1]}@${domain}`;
+    } catch { return email; }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -230,19 +242,20 @@ export default function ReceiptPage() {
                 <div className="row mb-3">
                   <div className="col-md-6">
                     <small className="text-muted dark:text-slate-400">Email</small>
-                    <p className="mb-0 dark:text-slate-100">{request.userEmail}</p>
+                    <p className="mb-0 dark:text-slate-100">{isAuthenticated ? request.userEmail : maskEmail(request.userEmail)}</p>
                   </div>
                   <div className="col-md-6">
                     <small className="text-muted dark:text-slate-400">Phone</small>
                     <p className="mb-0 dark:text-slate-100">
-                      {typeof request.userPhone === 'object' 
+                      {isAuthenticated ? (typeof request.userPhone === 'object' 
                         ? `(${request.userPhone.countryCode || ''}) ${request.userPhone.phoneNumber || ''}`
-                        : ''}
+                        : '') : ''}
                     </p>
                   </div>
                 </div>
 
-                {request.sendingMethod.type === 'wire' && (request.sendingMethod.senderBankAccount || request.sendingMethod.bankTransfer) && (
+                {/* Only show bank/account/transit/institution numbers to authenticated users */}
+                {isAuthenticated && request.sendingMethod.type === 'wire' && (request.sendingMethod.senderBankAccount || request.sendingMethod.bankTransfer) && (
                   <>
                     <div className="row mb-3">
                       <div className="col-md-4">
@@ -285,7 +298,7 @@ export default function ReceiptPage() {
                 <div className="row mb-3">
                   <div className="col-md-6">
                     <small className="text-muted dark:text-slate-400">Account Number</small>
-                    <p className="mb-0 dark:text-slate-100">{request.recipientBank.accountNumber}</p>
+                    <p className="mb-0 dark:text-slate-100">{isAuthenticated ? request.recipientBank.accountNumber : ''}</p>
                   </div>
                   {request.recipientBank.transferContent && (
                     <div className="col-md-6">
@@ -295,6 +308,12 @@ export default function ReceiptPage() {
                   )}
                 </div>
 
+                {/* If user is not authenticated, show a limited-view banner */}
+                {!isAuthenticated && (
+                  <div className="alert alert-warning mt-3">
+                    <strong>Limited view:</strong> You are viewing a public, redacted receipt. Sign in to see full details.
+                  </div>
+                )}
                 <hr />
 
                 {/* Timestamps */}

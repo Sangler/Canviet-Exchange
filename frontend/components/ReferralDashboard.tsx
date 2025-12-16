@@ -34,7 +34,7 @@ export default function ReferralDashboard() {
         setLoading(true);
         setError(null);
         const response = await fetch('/api/users/referral/stats', {
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: 'include',
         });
         
         if (!response.ok) {

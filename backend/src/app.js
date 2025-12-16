@@ -73,9 +73,29 @@ app.use(passport.initialize())
 // If behind a reverse proxy (e.g., Vercel, Nginx), this allows req.ip and x-forwarded-for to be trusted
 app.set('trust proxy', true)
 // Request logging with IPs
+const isProd = process.env.NODE_ENV === 'production'
+const configuredOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean)
+
+if (isProd && configuredOrigins.length === 0) {
+  process.exit(1)
+}
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: isProd
+    ? (origin, cb) => {
+        // Allow non-browser requests (no Origin header), but lock browsers to configured origins
+        if (!origin) return cb(null, true)
+        return cb(null, configuredOrigins.includes(origin))
+      }
+    : true,
+  // The app may use HttpOnly cookies for auth tokens; enable credentialed CORS for browser clients.
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204,
 }))
 
 app.use('/api/auth', authRoutes)

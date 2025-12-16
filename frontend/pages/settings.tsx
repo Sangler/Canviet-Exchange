@@ -17,7 +17,7 @@ export default function SettingsPage() {
     const loadPrefs = async () => {
       try {
         const res = await fetch('/api/users/me', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
+          credentials: 'include'
         });
         if (res.ok) {
           const json = await res.json();
@@ -37,9 +37,9 @@ export default function SettingsPage() {
     try {
       const res = await fetch('/api/users/me', {
         method: 'PATCH',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ receiveTransferEmails, receiveNewEmails })
       });

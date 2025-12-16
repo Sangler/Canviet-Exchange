@@ -12,47 +12,54 @@ export default function OAuthCallback() {
     const handleOAuthCallback = async () => {
       const q = router.query
       const token = typeof q.token === 'string' ? q.token : (q.token && Array.isArray(q.token) ? q.token[0] : undefined)
-      
-      if (!token) {
-        setStatus(t('common.error'))
-        void router.replace('/login?error=oauth_failed')
-        return
+
+      // If a token was provided in the query (legacy flow), store it temporarily in session storage
+      if (token) {
+        try { setAuthToken(token, { persistent: false, setCookie: false }) } catch {}
+      }
+
+      // Clear pending referral from sessionStorage after successful OAuth if present
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('pendingReferral');
       }
 
       try {
-        // Save token (session storage by default)
-        setAuthToken(token, { persistent: false, setCookie: false })
-        
-        // Clear pending referral from sessionStorage after successful OAuth
-        if (typeof window !== 'undefined') {
-          sessionStorage.removeItem('pendingReferral');
-        }
-        
-        // Fetch user profile to check completeness
-        const meResp = await fetch('/api/users/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        
+        // Attempt to fetch user profile; this works when the server set an HttpOnly cookie
+        const meResp = await fetch('/api/users/me', { credentials: 'include' })
+
         if (!meResp.ok) {
+          // If fetch failed and we had a token in query, the legacy fallback may still work
+          if (token) {
+            // try again; server may accept Authorization header if cookie wasn't set
+            const fallback = await fetch('/api/users/me', { headers: { Authorization: `Bearer ${token}` } })
+            if (!fallback.ok) throw new Error('Failed to fetch user profile')
+            const meData = await fallback.json()
+            const user = meData?.user
+            const profileComplete = meData?.complete
+            setStatus(t('auth.redirecting'))
+            if (user?.role === 'user' && !profileComplete) void coordinateRedirect(router, '/personal-info')
+            else void coordinateRedirect(router, '/transfers')
+            return
+          }
           throw new Error('Failed to fetch user profile')
         }
 
         const meData = await meResp.json()
         const user = meData?.user
         const profileComplete = meData?.complete
-        
+
         setStatus(t('auth.redirecting'))
-        
+
         // Check if profile is complete for regular users
         if (user?.role === 'user' && !profileComplete) {
-          void router.replace('/personal-info')
+          void coordinateRedirect(router, '/personal-info')
         } else {
-          void router.replace('/transfers')
+          void coordinateRedirect(router, '/transfers')
         }
       } catch (error) {
         console.error('OAuth callback error:', error)
         setStatus('Error processing authentication')
-        void router.replace('/login?error=auth_processing_failed')
+        void coordinateRedirect(router, '/login?error=auth_processing_failed')
       }
     }
 

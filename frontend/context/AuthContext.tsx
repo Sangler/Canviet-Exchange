@@ -18,45 +18,56 @@ type AuthState = {
 const AuthCtx = createContext<AuthState | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize token from storage/cookie
+  // On mount, request profile from server (cookie-based auth). Server returns 401 if unauthenticated.
   useEffect(() => {
-    setToken(getAuthToken());
-    setLoading(false);
-  }, []);
-
-  // Listen for token changes (login/logout) and storage updates
-  useEffect(() => {
-    const handler = () => setToken(getAuthToken());
+    let mounted = true;
+    const run = async () => {
+      try {
+        const resp = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!mounted) return;
+        if (!resp.ok) {
+          setUser(null);
+          setToken(null);
+          setLoading(false);
+          return;
+        }
+        const data = await resp.json();
+        setUser(data.user || null);
+        // Provide a non-sensitive token placeholder so legacy callers (getAuthToken/token checks)
+        // that expect a `token` field continue to work. This is NOT the real JWT.
+        if (data.user) setToken('present');
+      } catch (e) {
+        setUser(null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    run();
+    const handler = () => {
+      // Storage event or manual dispatch indicates auth change; refetch profile
+      void run();
+    };
     window.addEventListener('auth_token_changed', handler);
     window.addEventListener('storage', handler);
     return () => {
+      mounted = false;
       window.removeEventListener('auth_token_changed', handler);
       window.removeEventListener('storage', handler);
     };
   }, []);
 
-  // Decode user info from token
-  useEffect(() => {
-    if (!token) {
-      setUser(null);
-      return;
-    }
-    const payload = parseJwt<{ sub?: string; email?: string; role?: string; firstName?: string }>(token);
-    if (payload?.sub && payload?.email) {
-      setUser({ id: payload.sub, email: payload.email, role: payload.role, firstName: payload.firstName });
-    } else {
-      setUser(null);
-    }
-  }, [token]);
-
-  const logout = () => {
+  const logout = async (redirect?: string) => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch {}
     clearAuthToken();
+    setToken(null);
     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+      window.location.href = redirect || '/login';
     }
   };
 

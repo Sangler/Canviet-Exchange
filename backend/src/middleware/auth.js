@@ -5,6 +5,8 @@ const JWT_SECRET = process.env.JWT_SECRET
 
 // Extract Bearer token from Authorization header
 function getToken(req) {
+  // Prefer cookie (HttpOnly) token if present, fall back to Authorization header for API clients
+  if (req && req.cookies && req.cookies.access_token) return req.cookies.access_token
   const auth = req.headers['authorization'] || ''
   const [scheme, token] = auth.split(' ')
   if (scheme && scheme.toLowerCase() === 'bearer' && token) return token

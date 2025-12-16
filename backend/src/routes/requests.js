@@ -2,6 +2,7 @@ const router = require('express').Router();
 const Request = require('../models/Requests');
 const authMiddleware = require('../middleware/auth');
 const { transferLimiter } = require('../middleware/rateLimit');
+const { requireAdmin } = require('../middleware/roles');
 const crypto = require('crypto');
 const Stripe = require('stripe');
 const emailSvc = require('../services/email');
@@ -121,26 +122,9 @@ function formatNumber(value) {
   return n.toLocaleString('en-US');
 }
 
-// Optional auth middleware - doesn't reject if no token
-const optionalAuth = (req, res, next) => {
-  try {
-    const auth = req.headers['authorization'];
-    const [scheme, token] = auth.split(' ');
-    if (scheme && scheme.toLowerCase() === 'bearer' && token) {
-      const jwt = require('jsonwebtoken');
-      const JWT_SECRET = process.env.JWT_SECRET;
-      const decoded = jwt.verify(token, JWT_SECRET);
-      req.auth = decoded;
-    }
-  } catch (err) {
-    // Token invalid or expired, log-out!
-  }
-  return next();
-};
-
 // GET /api/requests - Get user's transfer history (or all requests for admin)
 // Query params: status, limit, skip
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const { status, limit = 50, skip = 0 } = req.query;
 
@@ -148,13 +132,11 @@ router.get('/', optionalAuth, async (req, res) => {
     const filter = {};
     
     // If authenticated, filter by the authenticated user's ID (unless admin)
-    const authenticatedUserId = req.auth?.sub || req.auth?.id;
+    const authenticatedUserId = req.user?.id;
     const userRole = req.auth?.role;
     
     // Admin can see all requests; regular users only see their own
-    if (authenticatedUserId && userRole !== 'admin') {
-      filter.userId = authenticatedUserId;
-    }
+    if (userRole !== 'admin') filter.userId = authenticatedUserId;
     
     // If status is provided, validate and filter by status
     const VALID_STATUSES = ['pending', 'approved', 'reject', 'completed'];
@@ -213,12 +195,50 @@ router.get('/', optionalAuth, async (req, res) => {
 
 // GET /api/requests/receipt/:hash - Get request by receipt hash
 // IMPORTANT: This route MUST be before /:id route to avoid conflict
-router.get('/receipt/:hash', optionalAuth, async (req, res) => {
+router.get('/receipt/:hash', async (req, res) => {
   try {
     const { hash } = req.params;
 
-    // Find all requests and check which one matches the hash
-    const requests = await Request.find().select('-sendingMethod.cardNumber -sendingMethod.cardName').lean();
+    // Optional auth: accept HttpOnly cookie `access_token` first, fall back to Authorization header.
+    // This allows the public receipt page to show full details to owners/admins when the
+    // client stored the JWT in an HttpOnly cookie (cookie-parser is enabled in app.js).
+    let viewer = null;
+    try {
+      const jwt = require('jsonwebtoken');
+      const JWT_SECRET = process.env.JWT_SECRET;
+      // Prefer cookie-held token
+      const cookieToken = req.cookies && req.cookies.access_token;
+      if (cookieToken) {
+        try {
+          viewer = jwt.verify(cookieToken, JWT_SECRET);
+        } catch (_) {
+          viewer = null;
+        }
+      } else {
+        const auth = req.headers['authorization'] || '';
+        const [scheme, token] = auth.split(' ');
+        if (scheme && scheme.toLowerCase() === 'bearer' && token) {
+          try { viewer = jwt.verify(token, JWT_SECRET); } catch (_) { viewer = null; }
+        }
+      }
+    } catch (e) {
+      viewer = null;
+    }
+
+    const userRole = viewer?.role;
+    const authenticatedUserId = viewer?.sub || viewer?.id || viewer?.userId;
+
+    // For receipt lookup we allow searching the collection so that:
+    // - Owners and admins receive full details.
+    // - Any other viewer (authenticated non-owner or public guest) can lookup the receipt
+    //   and will receive a redacted public view. This intentionally permits non-owner
+    //   authenticated users to view the redacted version as requested.
+    // IMPORTANT: scanning the full collection can be slow at scale. Recommended improvement:
+    // add a `receiptHash` field to the `Request` model, populate it at creation, and add an index
+    // so lookups can be performed with `findOne({ receiptHash: hash })` instead of scanning.
+    const query = {};
+
+    const requests = await Request.find(query).select('-sendingMethod.cardNumber -sendingMethod.cardName').lean();
     
     let matchedRequest = null;
     for (const request of requests) {
@@ -245,10 +265,54 @@ router.get('/receipt/:hash', optionalAuth, async (req, res) => {
       });
     }
 
-    return res.json({
-      ok: true,
-      request: matchedRequest
-    });
+    // Determine whether viewer can see full details: owner or admin
+    const ownerId = matchedRequest.userId ? String(matchedRequest.userId) : '';
+    const viewerIdStr = authenticatedUserId ? String(authenticatedUserId) : '';
+    const isOwner = viewerIdStr && ownerId === viewerIdStr;
+    const isAdmin = userRole === 'admin';
+
+    if (isOwner || isAdmin) {
+      return res.json({ ok: true, request: matchedRequest });
+    }
+
+    // Public view: redact sensitive fields per product policy
+    const redacted = JSON.parse(JSON.stringify(matchedRequest));
+
+    // Remove payment-related details
+    delete redacted.paymentIntentId;
+    delete redacted.paymentStatus;
+
+    // Remove or mask sender bank details
+    if (redacted.sendingMethod && redacted.sendingMethod.bankTransfer) {
+      delete redacted.sendingMethod.bankTransfer.institutionNumber;
+      delete redacted.sendingMethod.bankTransfer.transitNumber;
+      delete redacted.sendingMethod.bankTransfer.accountNumber;
+    }
+
+    // Remove recipient account numbers but keep holder name
+    if (redacted.recipientBank) {
+      delete redacted.recipientBank.accountNumber;
+      if (redacted.recipientBank.recipientPhone) delete redacted.recipientBank.recipientPhone;
+    }
+
+    // Remove phone numbers for both sender/user
+    if (redacted.userPhone) delete redacted.userPhone;
+
+    // Mask emails (show first and last character before @ with '***' in middle)
+    function maskEmail(e) {
+      if (!e || typeof e !== 'string') return '';
+      const parts = e.split('@');
+      if (parts.length < 2) return '';
+      const local = parts[0];
+      const domain = parts.slice(1).join('@');
+      if (local.length <= 2) return `${local[0]}***@${domain}`;
+      return `${local[0]}***${local[local.length-1]}@${domain}`;
+    }
+
+    if (redacted.userEmail) redacted.userEmail = maskEmail(redacted.userEmail);
+    if (redacted.sendingMethod && redacted.sendingMethod.email) redacted.sendingMethod.email = maskEmail(redacted.sendingMethod.email);
+
+    return res.json({ ok: true, request: redacted });
 
   } catch (err) {
     return res.status(500).json({
@@ -260,7 +324,7 @@ router.get('/receipt/:hash', optionalAuth, async (req, res) => {
 });
 
 // GET /api/requests/:id - Get specific request by ID
-router.get('/:id', optionalAuth, async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -273,6 +337,15 @@ router.get('/:id', optionalAuth, async (req, res) => {
         ok: false,
         message: 'Transfer request not found'
       });
+    }
+
+    // Enforce ownership for non-admin users
+    const userRole = req.auth?.role;
+    const authenticatedUserId = req.user?.id;
+    const ownerId = request.userId ? String(request.userId) : '';
+    if (userRole !== 'admin' && ownerId !== String(authenticatedUserId)) {
+      // Return 404 to avoid leaking existence of other users' requests
+      return res.status(404).json({ ok: false, message: 'Transfer request not found' });
     }
 
     // Add receiptHash if possible
@@ -490,7 +563,7 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
 });
 
 // PATCH /api/requests/:id/status - Update request status (admin only)
-router.patch('/:id/status', authMiddleware, async (req, res) => {
+router.patch('/:id/status', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -674,7 +747,7 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
         let receiptHash = '';
         try {
           if (updatedRequest.referenceID) {
-            receiptHash = crypto.createHash('sha256').update(String(updatedRequest.referenceID)).digest('hex').substring(0, 24);
+            receiptHash = crypto.createHash('sha256').update(String(updatedRequest.referenceID)).digest('hex').substring(0, 36);
           }
         } catch (rhErr) {
         }

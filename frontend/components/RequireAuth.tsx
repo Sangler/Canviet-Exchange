@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { getAuthToken, isAuthenticated, parseJwt, logout } from '../lib/auth';
+import { parseJwt } from '../lib/auth';
+import { useAuth } from '../context/AuthContext';
 import { CSpinner } from '@coreui/react';
 
 interface RequireAuthProps {
@@ -14,27 +15,29 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
   const router = useRouter();
   const [allowed, setAllowed] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(true);
+  const { token, user, loading: authLoading, logout: ctxLogout } = useAuth();
 
   useEffect(() => {
     if (!router.isReady) return;
-    // Avoid running during SSR
-    if (typeof window === 'undefined') return;
 
-    if (!isAuthenticated()) {
+    // Wait for auth context to finish initialization
+    if (authLoading) return;
+
+    if (!token) {
       const next = encodeURIComponent(router.asPath);
-      router.replace(`/login?next=${next}`).catch(() => router.replace('/login'));
+      void coordinateRedirect(router, `/login?next=${next}`);
       return;
     }
 
-    // If roles are required, decode JWT and verify role and expiration
+    // If roles are required, check user role from context when available
     if (roles) {
-      const token = getAuthToken();
-      const payload = token ? parseJwt<{ role?: string; exp?: number }>(token) : null;
-      const now = Math.floor(Date.now() / 1000);
-      const notExpired = payload?.exp ? payload.exp > now : true; // if no exp, assume ok in dev
-      // TODO: handle token expiration case in backend as well
-      if (!payload || !notExpired) {
-        // Unauthorized: kick to login or a 403 page (using login for now)
+      const role = user?.role;
+      if (!role) {
+        const next = encodeURIComponent(router.asPath);
+        router.replace(`/login?next=${next}`).catch(() => router.replace('/login'));
+        return;
+      }
+      if (typeof roles === 'string' ? role !== roles : !Array.isArray(roles) || !roles.includes(role)) {
         const next = encodeURIComponent(router.asPath);
         router.replace(`/login?next=${next}`).catch(() => router.replace('/login'));
         return;
@@ -42,23 +45,21 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
     }
 
     setAllowed(true);
-  }, [router, roles]);
+  }, [router, roles, authLoading, token]);
 
   // After auth, fetch profile to ensure email is verified; if not, redirect to /verify-email
   useEffect(() => {
     const run = async () => {
       if (!router.isReady) return;
-      if (!isAuthenticated()) return; // handled above
+      if (authLoading) return;
+      if (!token) return; // handled above
       // avoid redirect loop if already on verify-email
       if (router.pathname === '/verify-email' || router.asPath.startsWith('/verify-email')) { setCheckingEmail(false); return; }
       try {
-        const token = getAuthToken();
-        const resp = await fetch(`/api/users/me`, {
-          headers: { Authorization: token ? `Bearer ${token}` : '' },
-        });
+        const resp = await fetch(`/api/auth/me`, { credentials: 'include' });
         if (resp.status === 401) {
           const next = encodeURIComponent(router.asPath);
-          await logout(`/login?next=${next}`);
+          await ctxLogout(`/login?next=${next}`);
           setCheckingEmail(false);
           return;
         }
@@ -68,18 +69,18 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
         const role: string | undefined = data?.user?.role;
         const profileComplete: boolean = !!data?.complete;
         // Enforce profile completeness ONLY for regular users
-        if (role === 'user' && !profileComplete && router.pathname !== '/personal-info') {
-          void router.replace(`/personal-info`).catch(() => {});
-          setCheckingEmail(false);
-          return;
-        }
-        if (!emailVerified) {
-          const next = encodeURIComponent(router.asPath);
-          // Fire-and-forget to avoid AbortError console noise on in-flight navigations
-          void router.replace(`/verify-email?next=${next}`).catch(() => {});
-          setCheckingEmail(false);
-          return;
-        }
+          if (role === 'user' && !profileComplete && router.pathname !== '/personal-info') {
+            void coordinateRedirect(router, `/personal-info`);
+            setCheckingEmail(false);
+            return;
+          }
+          if (!emailVerified) {
+            const next = encodeURIComponent(router.asPath);
+            // Fire-and-forget to avoid AbortError console noise on in-flight navigations
+            void coordinateRedirect(router, `/verify-email?next=${next}`);
+            setCheckingEmail(false);
+            return;
+          }
       } catch (e) {
         // If profile fails, keep user allowed; backend will re-check on actions
       } finally {
@@ -87,7 +88,7 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
       }
     };
     run();
-  }, [router]);
+  }, [router, authLoading, token]);
 
   if (!allowed || checkingEmail)
     return (

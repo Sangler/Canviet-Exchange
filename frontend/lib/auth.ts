@@ -2,21 +2,10 @@
 // These are intentionally framework-agnostic and synchronous for simple guards.
 
 export function getAuthToken(): string | null {
+  // With HttpOnly cookies, the JWT is not accessible to JS. Return null to force
+  // the app to rely on the `/api/auth/me` endpoint for authoritative auth state.
   if (typeof window === 'undefined') return null;
-  try {
-    const ss = window.sessionStorage?.getItem('auth_token');
-    if (ss) return ss;
-  } catch {}
-  try {
-    const ls = window.localStorage?.getItem('auth_token');
-    if (ls) return ls;
-  } catch {}
-  try {
-    const match = document.cookie.match(/(?:^|; )auth_token=([^;]*)/);
-    return match ? decodeURIComponent(match[1]) : null;
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 export function isAuthenticated(): boolean {
@@ -43,29 +32,21 @@ export function parseJwt<T = any>(token: string): T | null {
 
 // Store token in sessionStorage (default) or localStorage (when persistent=true). Also updates cookie if requested.
 export function setAuthToken(token: string, opts?: { persistent?: boolean; setCookie?: boolean; days?: number }) {
+  // No-op for actual token storage (HttpOnly cookie set by server). Store a small
+  // presence flag so legacy UI checks can detect auth changes.
   if (typeof window === 'undefined') return;
-  const { persistent = false, setCookie = false, days = 1 } = opts || {};
   try {
-    if (persistent) window.localStorage?.setItem('auth_token', token);
-    else window.sessionStorage?.setItem('auth_token', token);
+    const present = token ? '1' : '';
+    window.localStorage?.setItem('auth_present', present);
   } catch {}
   try { window.dispatchEvent(new Event('auth_token_changed')); } catch {}
-  if (setCookie) {
-    try {
-      const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
-      document.cookie = `auth_token=${encodeURIComponent(token)}; Path=/; Expires=${expires}; SameSite=Lax`;
-    } catch {}
-  }
 }
 
 export function clearAuthToken() {
   if (typeof window === 'undefined') return;
   try { window.sessionStorage?.removeItem('auth_token'); } catch {}
   try { window.localStorage?.removeItem('auth_token'); } catch {}
-  try {
-    // Expire cookie immediately
-    document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-  } catch {}
+  try { window.localStorage?.removeItem('auth_present'); } catch {}
   try { window.dispatchEvent(new Event('auth_token_changed')); } catch {}
 }
 

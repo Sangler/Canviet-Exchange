@@ -131,10 +131,8 @@ export default function LoginPage() {
       // If email is not verified, go straight to /verify-email with the intended target
       let emailVerified: boolean | undefined = userFromLogin?.emailVerified;
       try {
-        if (emailVerified === undefined && token) {
-          const meResp = await fetch(`/api/users/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+        if (emailVerified === undefined) {
+          const meResp = await fetch(`/api/users/me`, { credentials: 'include' });
           const me = await meResp.json().catch(() => ({} as any));
           emailVerified = !!me?.user?.emailVerified;
         }
@@ -149,12 +147,10 @@ export default function LoginPage() {
         let profileComplete = false;
         let role: string | undefined = userFromLogin?.role;
         try {
-          if (token) {
-            const meResp2 = await fetch(`/api/users/me`, { headers: { Authorization: `Bearer ${token}` } });
-            const me2 = await meResp2.json().catch(() => ({} as any));
-            profileComplete = !!me2?.complete;
-            role = role ?? me2?.user?.role;
-          }
+          const meResp2 = await fetch(`/api/users/me`, { credentials: 'include' });
+          const me2 = await meResp2.json().catch(() => ({} as any));
+          profileComplete = !!me2?.complete;
+          role = role ?? me2?.user?.role;
         } catch {}
         // Enforce completeness ONLY for 'user' role
         if (role === 'user' && !profileComplete) {

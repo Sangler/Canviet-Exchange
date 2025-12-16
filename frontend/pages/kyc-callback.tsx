@@ -13,18 +13,8 @@ export default function KycCallbackPage() {
   useEffect(() => {
     async function handleKycCallback() {
       try {
-        const token = getAuthToken();
-        if (!token) {
-          setStatus('failed');
-          setMessage(t('auth.redirecting'));
-          setTimeout(() => router.push('/login'), 2000);
-          return;
-        }
-
-        // Check KYC status
-        const kycResponse = await fetch('/api/kyc/status', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        // Check KYC status using cookie-based auth
+        const kycResponse = await fetch('/api/kyc/status', { credentials: 'include' });
 
         const kycData = await kycResponse.json();
 

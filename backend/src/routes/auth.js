@@ -10,7 +10,10 @@ const {
   validateResetToken,
   resetPassword,
   validateReferralCode,
+  me,
+  logout,
 } = require("../controllers/authController");
+const authMiddleware = require('../middleware/auth')
 const { loginLimiter, registerLimiter } = require("../middleware/rateLimit");
 const {
   authLoginValidator,
@@ -27,6 +30,8 @@ router.post(
   register
 );
 router.post("/login", loginLimiter, authLoginValidator, validate, login);
+router.get('/me', authMiddleware, me);
+router.post('/logout', logout);
 
 // Google OAuth routes
 // Start Google OAuth; pass referral via `state` when provided

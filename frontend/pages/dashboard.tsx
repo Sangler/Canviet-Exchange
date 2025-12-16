@@ -36,10 +36,7 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       try {
-        const token = getAuthToken();
-        const res = await fetch('/api/requests', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const res = await fetch('/api/requests', { credentials: 'include' });
         const json = await res.json();
         const requests = json.requests || [];
         setData(requests);
@@ -57,14 +54,11 @@ export default function DashboardPage() {
 
   const handleStatusChange = async (requestId: string, newStatus: string) => {
     setUpdatingStatus(prev => ({ ...prev, [requestId]: true }));
-    try {
-      const token = getAuthToken();
+      try {
       const res = await fetch(`/api/requests/${requestId}/status`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: token ? `Bearer ${token}` : '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
       

@@ -93,8 +93,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
     }
     (async () => {
       try {
-        const token = getAuthToken();
-          const resp = await fetch(`/api/users/me`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
+          const resp = await fetch(`/api/users/me`, { credentials: 'include' });
         if (resp.status === 401) {
           // Token invalid/expired: force re-auth
           await logout('/login?next=/personal-info');
@@ -293,15 +292,13 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
     
     setSendingOtp(true);
     setError(null);
-    try {
-      const token = getAuthToken();
+      try {
+      
       const fullPhone = `${phoneCountryCode}${phone}`;
       const resp = await fetch(`/api/otp/phone/request`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: token ? `Bearer ${token}` : ''
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ phone: fullPhone }),
       });
       
@@ -339,15 +336,13 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
     
     setVerifyingOtp(true);
     setError(null);
-    try {
-      const token = getAuthToken();
+      try {
+      
       const fullPhone = `${phoneCountryCode}${phone}`;
       const resp = await fetch(`/api/otp/phone/verify`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: token ? `Bearer ${token}` : ''
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ 
           phone: fullPhone, 
           code: phoneOtpCode
@@ -358,7 +353,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       if (!resp.ok) throw new Error(data?.message || 'Verification failed');
       
       // Reload user data to get the saved phone number from database
-      const meResp = await fetch(`/api/users/me`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
+      const meResp = await fetch(`/api/users/me`, { credentials: 'include' });
       const meData: MeResponse = await meResp.json();
       if (meData.user) {
         setUser(meData.user);
@@ -515,12 +510,12 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         },
         employmentStatus,
       };
-      const token = getAuthToken();
       // Debug: log outgoing payload to help diagnose 400 errors
       try { console.debug('POST /api/users/profile payload:', payload); } catch {}
       const resp = await fetch(`/api/users/profile`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
