@@ -44,6 +44,33 @@ const PORT = process.env.PORT || 5000
 
 app.use(helmet())
 
+// Simple request logger for development/troubleshooting
+app.use((req, res, next) => {
+  try {
+    const start = Date.now();
+    // Mask potentially sensitive fields
+    const safeBody = (() => {
+      try {
+        if (!req.body) return undefined
+        const b = { ...req.body }
+        if (b.password) b.password = '***'
+        if (b.token) b.token = '***'
+        if (b.accessToken) b.accessToken = '***'
+        return b
+      } catch (e) { return undefined }
+    })()
+
+    console.log(`[HTTP IN] ${req.ip} ${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl} query=${JSON.stringify(req.query)} body=${safeBody ? JSON.stringify(safeBody) : ''}`)
+    res.on('finish', () => {
+      const ms = Date.now() - start
+      console.log(`[HTTP OUT] ${req.ip} ${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl} -> ${res.statusCode} ${ms}ms`)
+    })
+  } catch (e) {
+    // ignore logging errors
+  }
+  next()
+})
+
 // Enforce HTTPS in production
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {

@@ -5,7 +5,6 @@ import { useColorModes } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilMoon, cilSun } from '@coreui/icons';
 import { useLanguage } from '../context/LanguageContext';
-import { setAuthToken } from '../lib/auth';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -122,6 +121,7 @@ export default function RegisterPage() {
       const resp = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
       if (!resp.ok) {
@@ -129,11 +129,8 @@ export default function RegisterPage() {
         throw new Error(data?.message || 'Registration failed');
       }
       const data = await resp.json();
-      const { token } = data;
-      if (token) {
-        // Store token in sessionStorage (non-persistent like login without "remember me")
-        setAuthToken(token, { persistent: false });
-      }
+      // Rely on server-set HttpOnly cookie for authentication; do not store raw JWT client-side.
+      
       setSuccess(true);
       await new Promise((r) => setTimeout(r, 250));
       void router.push(`/verify-email?email=${encodeURIComponent(email.trim())}&next=/login`);

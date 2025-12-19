@@ -5,7 +5,7 @@ import { cilSun, cilMoon } from '@coreui/icons';
 import Head from 'next/head';
 import Script from 'next/script';
 import RequireAuth from '../components/RequireAuth';
-import { getAuthToken, logout } from '../lib/auth';
+import { logout } from '../lib/auth';
 
 interface MeResponse {
   user?: {
@@ -105,6 +105,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         setUser(u);
         setFirstName(u.firstName || '');
         setLastName(u.lastName || '');
+        setPreferredName((u as any).preferredName || '');
         
         // Check KYC status
         setKycVerified(u.KYCStatus === 'verified');

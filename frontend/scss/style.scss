@@ -199,7 +199,7 @@ body {
 
 
 /* ---- Shared helpers ---- */
-.divider { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; color: #64748b !important; font-size: 12px; }
+.divider { display: flex; align-items: center; gap: 8px; margin: 6px 0 6px; color: #64748b !important; font-size: 12px; }
 .divider::before,
 .divider::after { content: ''; flex: 1; height: 1px; background: #cbd5e1 !important; }
 .social-buttons { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -976,7 +976,7 @@ select[name="receiverBank"]:focus {
 .expiry-group .slash { font-weight:700; color:#64748b; }
 
 /* Checkbox */
-.checkbox-row .checkbox { display:inline-flex; align-items:flex-start; gap:10px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 16px; cursor:pointer; transition: all 0.2s ease; }
+.checkbox-row .checkbox { display:inline-flex; align-items:flex-start; gap:10px; background:#e7eaee; border:1px solid #cbd5e1; border-radius:8px; padding:12px 16px; cursor:pointer; transition: all 0.2s ease; }
 .checkbox-row .checkbox:hover { border-color:#94a3b8; background:#f1f5f9; }
 .checkbox-row input[type="checkbox"] { width:18px; height:18px; margin-top:2px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
 .checkbox-row .checkbox span { flex:1; line-height:1.5; }
@@ -1135,12 +1135,9 @@ select.themed { padding-right: 36px; }
 .link-btn:hover { color: #0d9488; }
 
 /* ---- Responsive adjustments ---- */
-@media (max-width: 1024px) {
-  .grid-1 { grid-template-columns: repeat(2, 1fr); }
-}
-
 /* Prevent horizontal overflow from full-bleed hero on medium viewports */
 @media (max-width: 1024px) {
+  .grid-1 { grid-template-columns: repeat(2, 1fr); }
   html, body { overflow-x: hidden; }
   .hero-fullwidth-wrapper,
   .hero-section,
@@ -1155,6 +1152,19 @@ select.themed { padding-right: 36px; }
     position: relative !important;
   }
   .hero-fullwidth-wrapper { padding-left: 0; padding-right: 0; }
+  /* Ensure AppHeader remains fixed on small screens */
+  .app-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: var(--cui-body-bg, #ffffff);
+    box-shadow: 0 6px 18px rgba(11,16,32,0.08);
+  }
+  /* Push page content down to avoid being covered by fixed header */
+  .app-header + * {
+    margin-top: 64px !important;
+  }
 }
 
 @media (max-width: 992px) {
@@ -1649,9 +1659,76 @@ select[name="receiverBank"]:focus {
     aspect-ratio: auto; 
     min-height: 420px; 
   }
-  
+/* Responsive adjustments for new sections */
   .hero-media img { 
     object-position: center 30%; 
+  }
+    .testimonials-section,
+  .receiving-methods-section,
+  .how-it-works-section,
+  .faq-section {
+    padding: 5px 0;
+    
+    .section-title {
+      font-size: 1.6rem;
+    }
+  }
+  
+  .testimonial-card,
+  .receiving-method-card,
+  .step-card {
+    margin-bottom: 20px;
+  }
+  
+  .payment-methods-preview {
+    .payment-icons {
+      gap: 12px !important;
+      
+      .payment-icon {
+        min-width: 75px;
+        padding: 10px;
+      }
+    }
+    .referral-section {
+    .referral-card {
+      padding: 32px 24px;
+      border-radius: 16px;
+    }
+    
+    .referral-content {
+      .referral-title {
+        font-size: 1.6rem;
+      }
+      
+      .referral-description {
+        font-size: 1rem;
+      }
+      
+      .referral-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+    
+    .referral-image-wrapper {
+      .referral-badge {
+        top: 15px;
+        left: 15px;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+      }
+    }
+  }
+  }
+  
+  .how-it-works-section {
+    .step-card {
+      padding: 28px 20px;
+      
+      .step-icon {
+        font-size: 2.5rem;
+      }
+    }
   }
 }
 
@@ -2037,46 +2114,7 @@ select[name="receiverBank"]:focus {
   }
 }
 
-/* Responsive adjustments for new sections */
-@media (max-width: 768px) {
-  .testimonials-section,
-  .receiving-methods-section,
-  .how-it-works-section,
-  .faq-section {
-    padding: 5px 0;
-    
-    .section-title {
-      font-size: 1.6rem;
-    }
-  }
-  
-  .testimonial-card,
-  .receiving-method-card,
-  .step-card {
-    margin-bottom: 20px;
-  }
-  
-  .payment-methods-preview {
-    .payment-icons {
-      gap: 12px !important;
-      
-      .payment-icon {
-        min-width: 75px;
-        padding: 10px;
-      }
-    }
-  }
-  
-  .how-it-works-section {
-    .step-card {
-      padding: 28px 20px;
-      
-      .step-icon {
-        font-size: 2.5rem;
-      }
-    }
-  }
-}
+
 
 /* ========================================
    REFERRAL SECTION - Dynamic Styling
@@ -2159,14 +2197,17 @@ select[name="receiverBank"]:focus {
     
     .referral-tag {
       display: inline-block;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      /* more highlighted */
+      background: linear-gradient(135deg, #FFB800 0%, #FF8C00 100%);
+      color: #0b1220;
       padding: 8px 20px;
       border-radius: 50px;
       font-size: 0.8rem;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 1px;
       text-transform: uppercase;
+      box-shadow: 0 6px 18px rgba(255,140,0,0.22);
+      border: 1px solid rgba(255,184,0,0.12);
     }
     
     .referral-title {
@@ -2259,38 +2300,6 @@ select[name="receiverBank"]:focus {
   }
 }
 
-@media (max-width: 768px) {
-  .referral-section {
-    .referral-card {
-      padding: 32px 24px;
-      border-radius: 16px;
-    }
-    
-    .referral-content {
-      .referral-title {
-        font-size: 1.6rem;
-      }
-      
-      .referral-description {
-        font-size: 1rem;
-      }
-      
-      .referral-btn {
-        width: 100%;
-        justify-content: center;
-      }
-    }
-    
-    .referral-image-wrapper {
-      .referral-badge {
-        top: 15px;
-        left: 15px;
-        padding: 8px 16px;
-        font-size: 0.8rem;
-      }
-    }
-  }
-}
 
 /* Perks / Points UI (used on transfers review step) */
 .points-row {

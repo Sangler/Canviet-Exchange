@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { getAuthToken } from '../lib/auth';
 import { useLanguage } from '../context/LanguageContext';
 import Head from 'next/head';
 
@@ -45,7 +44,7 @@ export default function KycCallbackPage() {
           } else if (kycData.code === 'documentation_mismatch') {
             rejectionMessage += 'Documentation mismatched. Please try again with valid documents.';
           } else if (kycData.code === 'face_match_low_confidence') {
-            rejectionMessage += 'Face match confidence too low. Please try again with better lighting.';
+            rejectionMessage += 'Face match confidence too low. Please try again with better light or remove your glasses.';
           } else {
             rejectionMessage += 'Please try again.';
           }

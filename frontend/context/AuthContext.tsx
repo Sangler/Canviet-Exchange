@@ -1,18 +1,24 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getAuthToken, parseJwt, clearAuthToken } from '../lib/auth';
+import { clearAuthToken } from '../lib/auth';
 
 export type AuthUser = {
   id: string;
   email: string;
   firstName?: string;
+  lastName?: string;
   role?: string;
+  // Optional fields returned from server
+  KYCStatus?: string;
+  kycStatus?: string;
+  suspended?: boolean;
+  emailVerified?: boolean;
 };
 
 type AuthState = {
   token: string | null;
   user: AuthUser | null;
   loading: boolean;
-  logout: () => void;
+  logout: (redirect?: string) => void;
 };
 
 const AuthCtx = createContext<AuthState | undefined>(undefined);
@@ -27,7 +33,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let mounted = true;
     const run = async () => {
       try {
-        const resp = await fetch('/api/auth/me', { credentials: 'include' });
+        const base = process.env.BACKEND_URL || ''
+        const url = base ? `${base}/api/auth/me` : '/api/auth/me'
+        const resp = await fetch(url, { credentials: 'include' });
         if (!mounted) return;
         if (!resp.ok) {
           setUser(null);
@@ -37,8 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         const data = await resp.json();
         setUser(data.user || null);
-        // Provide a non-sensitive token placeholder so legacy callers (getAuthToken/token checks)
-        // that expect a `token` field continue to work. This is NOT the real JWT.
         if (data.user) setToken('present');
       } catch (e) {
         setUser(null);

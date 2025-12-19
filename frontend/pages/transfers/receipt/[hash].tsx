@@ -4,7 +4,6 @@ import { useAuth } from '../../../context/AuthContext';
 import AppSidebar from '../../../components/AppSidebar';
 import AppHeader from '../../../components/AppHeader';
 import AppFooter from '../../../components/AppFooter';
-import RequireAuth from '../../../components/RequireAuth';
 
 interface Request {
   _id: string;

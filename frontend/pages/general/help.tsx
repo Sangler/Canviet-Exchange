@@ -12,6 +12,7 @@ export default function HelpPage() {
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
+  const [mounted, setMounted] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -27,66 +28,39 @@ export default function HelpPage() {
 
   // Check if user is suspended and scroll to help form
   useEffect(() => {
-    if (token && user) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.suspended === true || payload.kycStatus === 'suspended') {
-          setIsSuspended(true);
-          // Scroll to help form after a short delay to ensure DOM is ready
-          setTimeout(() => {
-            const formSection = document.getElementById('help-form-section');
-            if (formSection) {
-              formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }, 500);
-        }
-      } catch (e) {
-        console.error('Failed to parse token:', e);
-      }
+    const kyc = (user?.KYCStatus || user?.kycStatus || '').toString()
+    const suspended = !!user && (kyc === 'suspended' || (user as any).suspended === true)
+    if (suspended) {
+      setIsSuspended(true)
+      // Scroll to help form after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        const formSection = document.getElementById('help-form-section')
+        if (formSection) formSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 500)
+    } else {
+      setIsSuspended(false)
     }
-  }, [token, user]);
+  }, [user]);
 
-  // Auto-fill user data when authenticated
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Auto-fill user data when authenticated (use `user` from AuthContext)
   useEffect(() => {
     if (user && !userDataLoaded) {
-      // Fetch full user details if logged in
-      if (token) {
-        fetch('/api/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        .then(res => res.json())
-        .then(data => {
-          // Backend returns { user: {...}, complete: boolean }
-          const userData = data.user || data;
-          if (userData.firstName && userData.lastName && userData.email) {
-            setFormData(prev => ({
-              ...prev,
-              firstName: userData.firstName,
-              lastName: userData.lastName,
-              email: userData.email
-            }));
-            setUserDataLoaded(true);
-          } else if (user.email) {
-            setFormData(prev => ({
-              ...prev,
-              email: user.email
-            }));
-            setUserDataLoaded(true);
-          }
-        })
-        .catch((err) => {
-          console.error('Failed to fetch user data:', err);
-          // If fetch fails, at least set email from token
-          if (user.email) {
-            setFormData(prev => ({
-              ...prev,
-              email: user.email
-            }));
-          }
-          setUserDataLoaded(true);
-        });
+      const userData = user
+      if (userData.firstName && userData.lastName && userData.email) {
+        setFormData(prev => ({
+          ...prev,
+          firstName: userData.firstName!,
+          lastName: userData.lastName!,
+          email: userData.email
+        }))
+        setUserDataLoaded(true)
+      } else if (user.email) {
+        setFormData(prev => ({ ...prev, email: user.email }))
+        setUserDataLoaded(true)
       }
     } else if (!user && userDataLoaded) {
       // Reset when user logs out
@@ -97,18 +71,18 @@ export default function HelpPage() {
         title: '',
         topic: '',
         content: ''
-      });
-      setUserDataLoaded(false);
+      })
+      setUserDataLoaded(false)
     }
-  }, [user, token, userDataLoaded]);
+  }, [user, userDataLoaded]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !token) {
-      alert('You must login before submitting a form');
-      router.push('/login');
-      return;
+    if (!user) {
+      alert('You must login before submitting a form')
+      router.push('/login')
+      return
     }
 
     setSubmitStatus('submitting');
@@ -117,9 +91,9 @@ export default function HelpPage() {
     try {
       const response = await fetch('/api/contributions', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           firstName: formData.firstName,
@@ -167,7 +141,7 @@ export default function HelpPage() {
         <div className="page-toolbar" role="navigation" aria-label="Page toolbar">
           <div className="toolbar-left">
             <a href="/transfers" className="toolbar-back" aria-label="Back to Transfers">
-              <CIcon icon={cilArrowLeft} size="lg" />
+              {mounted && <CIcon icon={cilArrowLeft} size="lg" />}
               <span className="d-none d-sm-inline ms-2">Back</span>
             </a>
           </div>
@@ -198,7 +172,7 @@ export default function HelpPage() {
               aria-label={`Toggle ${colorMode === 'dark' ? 'light' : 'dark'} mode`}
               title="Toggle color mode"
             >
-              <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />
+              {mounted && <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />}
             </button>
           </div>
         </div>

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import SuspendedModal from '../../components/SuspendedModal';
-import AppSidebar from '../../components/AppSidebar';
-import AppHeader from '../../components/AppHeader';
 import AppFooter from '../../components/AppFooter';
 import { useLanguage } from '../../context/LanguageContext';
 import { useColorModes } from '@coreui/react';
@@ -12,23 +10,19 @@ import { cilMoon, cilSun, cilArrowLeft } from '@coreui/icons';
 export default function TermsAndConditions() {
   const { language, setLanguage, t } = useLanguage();
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [isSuspended, setIsSuspended] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.suspended === true || payload.kycStatus === 'suspended') {
-          setIsSuspended(true);
-        }
-      } catch (e) {
-        console.error('Failed to parse token:', e);
-      }
-    } else {
-      setIsSuspended(false);
-    }
-  }, [token]);
+    const kyc = (user?.KYCStatus || user?.kycStatus || '').toString()
+    if (user && (kyc === 'suspended' || (user as any).suspended === true)) setIsSuspended(true)
+    else setIsSuspended(false)
+  }, [user]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div>
@@ -37,7 +31,7 @@ export default function TermsAndConditions() {
                       <div className="page-toolbar" role="navigation" aria-label="Page toolbar">
                         <div className="toolbar-left">
                           <a href="/transfers" className="toolbar-back" aria-label="Back to Transfers">
-                            <CIcon icon={cilArrowLeft} size="lg" />
+                            {mounted && <CIcon icon={cilArrowLeft} size="lg" />}
                             <span className="d-none d-sm-inline ms-2">Back</span>
                           </a>
                         </div>
@@ -68,7 +62,7 @@ export default function TermsAndConditions() {
                             aria-label={`Toggle ${colorMode === 'dark' ? 'light' : 'dark'} mode`}
                             title="Toggle color mode"
                           >
-                            <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />
+                            {mounted && <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />}
                           </button>
                         </div>
                       </div>

@@ -15,7 +15,7 @@ async function sendSms(phone, code) {
     throw new Error('Twilio not configured');
   }
   const from = process.env.TWILIO_PHONE_NUMBER;
-  const body = `Your CanViet Exchange verification code is: ${code}`;
+  const body = `CanViet Exchange: Your verification code is: ${code}. Note, code will expire in 60s`;
   await twilioClient.messages.create({ from, to: phone, body });
 }
 
@@ -127,6 +127,7 @@ exports.verifyPhoneOtp2 = async (req, res) => {
       return res.status(map[result.reason] || 400).json({ ok:false, message: result.reason });
     }
     user.phoneVerified = true;
+    user.points = (user.points || 0) + 1; // award 1 point after email-phone verification
     await user.save();
     return res.json({ ok:true, message:'Phone verified' });
   } catch (e) {
@@ -221,6 +222,17 @@ exports.verifyPhoneOtp = async (req, res) => {
     user.phone = { countryCode, phoneNumber };
     user.phoneVerified = true;
     await user.save();
+    // Try atomic award, fallback to direct increment
+    try {
+      await awardVerificationPoint(user.id || user._id)
+    } catch (e) {
+      try {
+        if (user.emailVerified && user.phoneVerified) {
+          user.points = Number(user.points || 0) + 1
+          await user.save()
+        }
+      } catch (err) {}
+    }
     return res.json({ ok:true, message:'Phone verified and saved' });
   } catch (e) {
     return res.status(500).json({ ok:false, message:'Unable to verify your code. Please try again.' });

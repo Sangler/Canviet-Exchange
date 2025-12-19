@@ -95,6 +95,7 @@ export default function LoginPage() {
       const resp = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
@@ -110,18 +111,8 @@ export default function LoginPage() {
       const token: string | undefined = data?.token;
       const userFromLogin = data?.user;
       if (token) {
-        // Save in Web Storage: sessionStorage (default) or localStorage when Remember Me is checked
+        // Set local presence flag only; actual JWT must be HttpOnly cookie set by server.
         setAuthToken(token, { persistent: remember });
-        // If the server didn’t set an HttpOnly cookie, optionally mirror token to a cookie for dev parity
-        const hasCookie =
-          typeof document !== "undefined" &&
-          document.cookie.includes("auth_token=");
-        if (!hasCookie)
-          setAuthToken(token, {
-            persistent: remember,
-            setCookie: true,
-            days: remember ? 30 : 1,
-          });
       }
 
       setSuccess(true);
@@ -394,6 +385,7 @@ export default function LoginPage() {
               <span className="btn-text">
                 {loading ? t('auth.signingIn') : t('auth.signIn')}
               </span>
+              
               <div className="btn-loader" aria-hidden>
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                   <circle
@@ -421,13 +413,10 @@ export default function LoginPage() {
                 </svg>
               </div>
             </button>
-            <p className="form-note small text-medium-emphasis mt-3 text-center">{t('common.form-note')} <a href="/general/terms-and-conditions" className="text-link">{t('common.form-note-href')}</a></p>
-          </form>
 
-          <div className="divider">
+            <div className="divider">
             <span>{t('auth.orContinueWith')}</span>
           </div>
-
           <div className="social-buttons">
             <button
               type="button"
@@ -469,6 +458,10 @@ export default function LoginPage() {
               Google
             </button>
           </div>
+            <p className="form-note small text-medium-emphasis mt-3 text-center">{t('common.form-note')} <a href="/general/terms-and-conditions" className="text-link">{t('common.form-note-href')}</a></p>
+          </form>
+
+          
 
           {/* signup-link removed as requested */}
 

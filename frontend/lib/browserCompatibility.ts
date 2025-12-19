@@ -102,15 +102,14 @@ function checkBrowserSupport(
   const osVersionNum = parseFloat(osVersion);
 
   // Check OS versions for mobile (warn only on very old devices ~2010-2015 era)
-  if (os === 'iOS' && osVersionNum < 10) return false;
-  if (os === 'Android' && osVersionNum < 5) return false;
+  if (os === 'iOS' && osVersionNum < 1) return false;
+  if (os === 'Android' && osVersionNum < 2) return false;
 
   // Check browser versions (very-old thresholds)
   if (browser === 'Internet Explorer') return false; // No IE support
   if (browser === 'Chrome' && versionNum < 15) return false;
   if (browser === 'Firefox' && versionNum < 15) return false;
-  if (browser === 'Safari' && versionNum < 1) return false;
-  if (browser === 'Edge' && versionNum < 20) return false;
+  if (browser === 'Edge' && versionNum < 10) return false;
 
   return true;
 }
@@ -154,11 +153,11 @@ export function getCompatibilityWarning(browserInfo: BrowserInfo): string | null
     return 'Internet Explorer is not supported. Please use a modern browser like Chrome, Firefox, Safari, or Edge.';
   }
 
-  if (browserInfo.os === 'iOS' && parseFloat(browserInfo.osVersion) < 10) {
+  if (browserInfo.os === 'iOS' && parseFloat(browserInfo.osVersion) < 1) {
     return `Your iOS version (${browserInfo.osVersion}) is outdated. Please update to iOS 10 or later for the best experience.`;
   }
 
-  if (browserInfo.os === 'Android' && parseFloat(browserInfo.osVersion) < 5) {
+  if (browserInfo.os === 'Android' && parseFloat(browserInfo.osVersion) < 1) {
     return `Your Android version (${browserInfo.osVersion}) is outdated. Please update to Android 5.0 or later for the best experience.`;
   }
 

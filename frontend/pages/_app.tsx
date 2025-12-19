@@ -1,7 +1,7 @@
 import { Provider } from 'react-redux'
 import type { AppProps } from 'next/app'
 import { useRouter } from 'next/router'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Script from 'next/script'
 import store from '../store/store'
 import '../styles/globals.css'
@@ -13,23 +13,20 @@ import ErrorBoundary from '../components/ErrorBoundary'
 
 function AppContentInner({ Component, pageProps }: { Component: AppProps['Component']; pageProps: AppProps['pageProps'] }) {
   const router = useRouter()
-  const { token } = useAuth()
+    const { token, user } = useAuth()
 
   useEffect(() => {
-    // Allow access to help page, terms and oauth callback pages
+    // Allow access to help page, login, terms and oauth callback pages
     const allowedPaths = ['/general/help', '/general/terms-and-conditions', 'help', '/terms-and-conditions', '/oauth-callback']
     const isAllowedPath = allowedPaths.some(path => router.pathname.startsWith(path))
 
-    if (token && !isAllowedPath) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        if (payload.suspended === true || payload.kycStatus === 'suspended') {
-          router.replace('/general/help')
-        }
-      } catch (e) {
-      }
+    const kyc = (user?.KYCStatus || user?.kycStatus || '').toString()
+    const isSuspended = !!user && (kyc === 'suspended' || (user as any).suspended === true)
+
+    if (isSuspended && !isAllowedPath) {
+      router.replace('/general/help')
     }
-  }, [router.pathname, token])
+  }, [router.pathname, user, token])
 
   return <Component {...pageProps} />
 }

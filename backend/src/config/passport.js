@@ -62,10 +62,10 @@ if (!GOOGLE_OAUTH_CLIENT_ID || !GOOGLE_OAUTH_CLIENT_SECRET) {
       })
 
       await newUser.save()
-      done(null, newUser)
+      return done(null, newUser)
     } catch (error) {
       console.error('Google OAuth error:', error)
-      done(error, null)
+      return done(error, null)
     }
   }))
 }

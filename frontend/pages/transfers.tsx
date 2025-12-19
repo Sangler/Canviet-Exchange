@@ -1494,7 +1494,7 @@ export default function Transfer() {
                                     type="text" 
                                     id="eft-transit"
                                     name="senderTransitNumber" 
-                                    placeholder="e.g., 012" 
+                                    placeholder="e.g., 12345" 
                                     value={bankTransitNumber}
                                     onChange={(e) => setBankTransitNumber(e.target.value)}
                                     required 
@@ -1509,7 +1509,7 @@ export default function Transfer() {
                                     type="text" 
                                     id="eft-institution"
                                     name="senderInstitutionNumber" 
-                                    placeholder="e.g., 01234" 
+                                    placeholder="e.g., 012" 
                                     value={bankInstitutionNumber}
                                     onChange={(e) => setBankInstitutionNumber(e.target.value)}
                                     required 

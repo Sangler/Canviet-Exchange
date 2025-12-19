@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { getAuthToken } from '../lib/auth';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 

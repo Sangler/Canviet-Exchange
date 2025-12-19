@@ -114,7 +114,7 @@ exports.updateProfile = async (req, res) => {
     const userId = req.auth?.sub
     if (!userId) return res.status(401).json({ message: 'Unauthorized' })
 
-    const { dateOfBirth, address, employmentStatus, phone } = req.body
+    const { dateOfBirth, address, employmentStatus, phone, preferredName } = req.body
 
     // Basic validation for required fields
     if (!dateOfBirth) return res.status(400).json({ message: 'dateOfBirth is required' })
@@ -149,6 +149,11 @@ exports.updateProfile = async (req, res) => {
       country: String(address.country || ''),
     }
     user.employmentStatus = String(employmentStatus)
+    // Save preferred name if provided (optional)
+    if (typeof preferredName === 'string' && preferredName.trim().length > 0) {
+      // limit length to 30 chars for safety
+      user.preferredName = String(preferredName).trim().slice(0, 30)
+    }
     
     // Phone number is saved during OTP verification, not here
     // Validate that phone is verified before allowing profile save
@@ -184,12 +189,12 @@ exports.getReferralStats = async (req, res) => {
     const totalReferrals = user.referrals?.length || 0
     const verifiedReferrals = user.referrals?.filter(r => r.KYCStatus === 'verified').length || 0
     
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    const frontendUrl = process.env.FRONTEND_URL
     
     return res.json({
       ok: true,
       referralCode: user.referralCode,
-      shareLink: `${frontendUrl}/register?ref=${user.referralCode}`,
+      shareLink: `${frontendUrl}/login?ref=${user.referralCode}`,
       stats: {
         totalReferrals,
         verifiedReferrals,

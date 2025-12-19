@@ -254,16 +254,7 @@
     },
     "howItWorks": {
       "title": "Cách thức hoạt động",
-      "step1": "Tạo tài khoản",
-      "step1Desc": "Đăng ký trong vài phút",
-      "step2": "Nhập số tiền",
-      "step2Desc": "Xem tỷ giá trước",
-    "reviews": {
-      "summary": "4.8 trên 5 dựa trên hơn 1.200 đánh giá"
-    },
-    "exchangeFallback": "Tỷ giá",
-      "step3": "Gửi tiền",
-      "step3Desc": "Tiền đến nhanh chóng"
+      "listHtml": "<li className=\"mb-2\">Chia sẻ mã giới thiệu hoặc liên kết với bạn bè</li><li className=\"mb-2\">Bạn bè của bạn đăng ký sử dụng mã của bạn</li><li className=\"mb-2\">Khi họ hoàn thành xác minh KYC và thực hiện giao dịch đầu tiên, bạn nhận được <strong>2 điểm</strong></li><li>Sử dụng điểm để được <strong>MIỄN PHÍ chuyển tiền & tỷ giá tốt hơn!</strong></li>"
     },
     "paymentMethods": {
       "title": "Phương thức thanh toán linh hoạt",
@@ -375,6 +366,7 @@
     },
     "exchangeFallback": "Tỷ giá"
   },
+
   "dashboard": {
     "title": "Bảng điều khiển",
     "allUserRequests": "Tất cả yêu cầu người dùng",
@@ -861,8 +853,8 @@
   "referral": {
     "title": "Giới thiệu bạn bè/người thân",
     "yourCode": "Mã giới thiệu của bạn",
-    "shareCode": "Chia sẻ mã giới thiệu của bạn và nhận thưởng",
-    "copyCode": "Giới thiệu Bạn bè",
+    "shareCode": "Chia sẻ mã giới thiệu hoặc liên kết của bạn và nhận thưởng",
+    "copyCode": "Sao chép mã",
     "copied": "Đã sao chép!",
     "earnings": "Tổng số điểm",
     "referrals": "Tổng số giới thiệu",

@@ -21,12 +21,34 @@ module.exports = function authMiddleware(req, res, next) {
     const decoded = jwt.verify(token, JWT_SECRET)
 
     // Check for account suspension
-    if (decoded.kycStatus === 'suspended') {
-      return res.status(403).json({ 
-        message: 'Account suspended due to multiple duplicate identity attempts', 
-        code: 'account_suspended' 
-      })
-    }
+      if (decoded.kycStatus === 'suspended') {
+        // Allowed frontend routes where suspended users should still be able to
+        // complete auth (login / oauth callback) and be redirected to help.
+        const allowedPaths = ['/general/help', '/general/terms-and-conditions', 'help', '/terms-and-conditions', '/oauth-callback']
+
+        // Allow suspended accounts to retrieve their own profile (`GET .../me`).
+        const isGetMeEndpoint = req.method === 'GET' && (req.originalUrl || req.url || '').toString().includes('/me')
+
+        // also allow when the request came from a frontend page in `allowedPaths`.
+        const referer = (req.get && req.get('referer')) || req.headers['referer'] || ''
+        let refererPath = ''
+        try {
+          if (referer) refererPath = new URL(referer).pathname
+        } catch (e) {
+          refererPath = referer.toString()
+        }
+        const reqPath = (req.originalUrl || req.url || '').toString()
+        const isAllowedPath = allowedPaths.some(p => refererPath.startsWith(p) || reqPath.startsWith(p))
+
+        if (!(isGetMeEndpoint || isAllowedPath)) {
+          return res.status(403).json({ 
+            message: 'Account suspended due to multiple duplicate identity attempts', 
+            code: 'account_suspended' 
+          })
+        }
+        // otherwise allow through so callers like `/api/auth/me` and `/api/users/me`
+        // or requests originating from allowed frontend pages are permitted.
+      }
 
     // Maintain existing req.auth reference
     req.auth = decoded

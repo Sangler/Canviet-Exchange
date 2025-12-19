@@ -12,6 +12,7 @@ const {
   validateReferralCode,
   me,
   logout,
+  exchangeOneTimeToken,
 } = require("../controllers/authController");
 const authMiddleware = require('../middleware/auth')
 const { loginLimiter, registerLimiter } = require("../middleware/rateLimit");
@@ -31,6 +32,7 @@ router.post(
 );
 router.post("/login", loginLimiter, authLoginValidator, validate, login);
 router.get('/me', authMiddleware, me);
+router.post('/exchange', exchangeOneTimeToken);
 router.post('/logout', logout);
 
 // Google OAuth routes

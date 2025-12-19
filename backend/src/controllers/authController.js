@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const crypto = require('crypto')
 const User = require('../models/User')
 
 // JWT_SECRET is validated at startup in app.js - no fallback needed for security
@@ -7,8 +8,26 @@ const JWT_SECRET = process.env.JWT_SECRET
 const ACCESS_EXPIRES = process.env.ACCESS_EXPIRES || '30m'
 const PASSWORD_PEPPER = process.env.PASSWORD_PEPPER || ''
 
+function getCookieOptions() {
+  const opts = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' }
+  if (process.env.COOKIE_DOMAIN) opts.domain = process.env.COOKIE_DOMAIN
+  return opts
+}
+
 function createToken(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRES })
+}
+
+// In-memory one-time token store for development-only exchange flow.
+// Map: otk -> { token, createdAt }
+const oneTimeTokenStore = new Map()
+
+function createOneTimeKey(token) {
+  const otk = crypto.randomBytes(24).toString('hex')
+  oneTimeTokenStore.set(otk, { token, createdAt: Date.now() })
+  // Auto-expire after 5 minutes
+  setTimeout(() => oneTimeTokenStore.delete(otk), 5 * 60 * 1000)
+  return otk
 }
 
 function applyPepper(password) {
@@ -72,34 +91,14 @@ exports.register = async (req, res) => {
       } catch (e) {
       }
     }
-    // If the newly created account already has both email and phone verified, grant 1 point.
-    // Do not modify the User schema; handle missing `points` safely.
-    try {
-      const hasEmailVerified = !!user.emailVerified
-      const hasPhoneVerified = !!user.phoneVerified
-      if (hasEmailVerified && hasPhoneVerified) {
-        user.points = (typeof user.points === 'number' ? user.points : 0) + 1
-        await user.save()
-      }
-    } catch (e) {
-      // Best-effort: don't block registration on save error
-    }
+
     
   const token = createToken({ sub: user.id, email: user.email, role: user.role })
-    // Set HttpOnly cookie for access token
+    // Set HttpOnly cookie for access token so frontend can use credentialed requests
     try {
-      const maxAge = 30 * 60 * 1000 // default 30 minutes
-      res.cookie('access_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge,
-      })
-    } catch (e) {
-      // If cookie fails, still return token in body as fallback
-      return res.json({ token, user: user.toJSON() })
-    }
-    return res.json({ user: user.toJSON(), ok: true })
+      res.cookie('access_token', token, getCookieOptions())
+    } catch (e) {}
+    return res.json({ token, user: user.toJSON() })
   } catch (err) {
     if (err && err.code === 11000) {
       // Handle unique index conflicts for email/phone
@@ -159,19 +158,11 @@ exports.login = async (req, res) => {
     kycStatus: user.KYCStatus,
     suspended: user.KYCStatus === 'suspended'
   })
-    // Set HttpOnly cookie for access token (fallback to JSON token if cookie fails)
+    // Set HttpOnly cookie for access token so frontend can use credentialed requests
     try {
-      const maxAge = 30 * 60 * 1000 // default 30 minutes
-      res.cookie('access_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge,
-      })
-      return res.json({ user: user.toJSON(), ok: true })
-    } catch (e) {
-      return res.json({ token, user: user.toJSON() })
-    }
+      res.cookie('access_token', token, getCookieOptions())
+    } catch (e) {}
+    return res.json({ token, user: user.toJSON() })
   } catch (err) {
     return res.status(500).json({ message: 'Internal server error' })
   }
@@ -195,35 +186,36 @@ exports.googleOAuth = async (req, res) => {
       } catch (e) {
       }
     }
-    const token = jwt.sign(
-      {
-        sub: req.user._id,
-        userId: req.user._id,
-        email: req.user.email,
-        role: req.user.role,
-        firstName: req.user.firstName,
-        kycStatus: req.user.KYCStatus,
-        suspended: req.user.KYCStatus === 'suspended'
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.ACCESS_EXPIRES || '30m' }
-    )
-    // Set HttpOnly cookie then redirect to frontend without exposing token in URL
-    try {
-      const maxAge = 30 * 60 * 1000
-      res.cookie('access_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge,
-      })
-    } catch (e) {
-      // ignore cookie errors and continue with redirect
+    // Create access token (payload consistent with login)
+    const token = createToken({
+      sub: req.user._id,
+      email: req.user.email,
+      role: req.user.role,
+      firstName: req.user.firstName,
+      kycStatus: req.user.KYCStatus,
+      suspended: req.user.KYCStatus === 'suspended'
+    })
+
+    const frontend = (process.env.FRONTEND_URL || '').replace(/\/$/, '')
+
+    // Production: prefer HttpOnly cookie only and redirect cleanly
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[AUTH] googleOAuth - production: setting HttpOnly cookie and redirecting to frontend oauth-callback')
+      res.cookie('access_token', token, getCookieOptions())
+      return res.redirect(`${frontend}/oauth-callback`)
     }
-    const frontend = process.env.FRONTEND_URL || ''
-    const redirectUrl = `${frontend.replace(/\/$/, '')}/oauth-callback`
-    return res.redirect(redirectUrl)
+
+    // Development: create a one-time key (OTK) and return that in query string
+    // so frontend can POST it to /api/auth/exchange to receive HttpOnly cookie.
+    const otk = createOneTimeKey(token)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[AUTH] googleOAuth - development: generated otk=${otk} for user=${req.user?._id}`)
+      return res.redirect(`${frontend}/oauth-callback?otk=${otk}`)
+    }
+    // In production this code path should not be reached (production uses HttpOnly cookie redirect)
+    return res.redirect(`${frontend}/oauth-callback`)
   } catch (error) {
+    console.error('[AUTH] googleOAuth error', error && (error.stack || error))
     res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`)
   }
 }
@@ -390,6 +382,9 @@ exports.validateReferralCode = async (req, res) => {
 // Return authenticated user's profile. Protected by auth middleware.
 exports.me = async (req, res) => {
   try {
+    // Prevent conditional GET/304 responses for /api/users/me so frontend always receives JSON
+    res.set('Cache-Control', 'no-store')
+    console.log('[AUTH] /api/users/me called - auth present:', !!req.auth, 'user present:', !!req.user)
     if (!req.user) return res.status(401).json({ message: 'Unauthenticated' })
     // Load full user from DB to provide authoritative fields (emailVerified, address, KYCStatus, etc.)
     const userId = req.user.id || req.user._id || req.auth?.sub
@@ -425,6 +420,54 @@ exports.logout = async (req, res) => {
     res.clearCookie('access_token', { path: '/' })
     return res.json({ ok: true })
   } catch (e) {
+    return res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+// Exchange a development one-time key (OTK) for the HttpOnly access_token cookie.
+// This endpoint is intentionally simple and only intended for non-production dev flows
+// where cookies may not be preserved through tunneling (ngrok). The stored token
+// is opaque (OTK) and expires automatically.
+exports.exchangeOneTimeToken = async (req, res) => {
+  try {
+    // Disable OTK exchange in production — this flow is dev-only
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ message: 'Not found' })
+    }
+    const { otk } = req.body || {}
+    if (!otk) {
+      console.warn('[AUTH] exchangeOneTimeToken called without otk')
+      return res.status(400).json({ message: 'otk required' })
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[AUTH] exchangeOneTimeToken - received otk=${otk}`)
+    } else {
+      console.log('[AUTH] exchangeOneTimeToken called')
+    }
+    const entry = oneTimeTokenStore.get(otk)
+    if (!entry || !entry.token) {
+      console.warn('[AUTH] exchangeOneTimeToken - invalid or expired otk')
+      return res.status(400).json({ message: 'Invalid or expired otk' })
+    }
+    const token = entry.token
+    // Set HttpOnly cookie (mirror production flags as much as possible)
+    try {
+      res.cookie('access_token', token, getCookieOptions())
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[AUTH] exchangeOneTimeToken - set HttpOnly access_token cookie')
+        try {
+          const sc = res.getHeader && res.getHeader('set-cookie')
+          console.log('[AUTH] exchangeOneTimeToken - response Set-Cookie header:', sc)
+        } catch (e) {}
+      }
+    } catch (e) {
+      console.error('[AUTH] exchangeOneTimeToken - failed to set cookie', e && (e.stack || e))
+    }
+    // Consume the one-time key
+    oneTimeTokenStore.delete(otk)
+    return res.json({ ok: true })
+  } catch (e) {
+    console.error('[AUTH] exchangeOneTimeToken error', e && (e.stack || e))
     return res.status(500).json({ message: 'Internal server error' })
   }
 }

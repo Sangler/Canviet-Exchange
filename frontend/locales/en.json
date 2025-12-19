@@ -237,12 +237,7 @@
     "paymentMethodsLabel": "Payment Methods:",
     "howItWorks": {
       "title": "How It Works",
-      "step1": "Create Account",
-      "step1Desc": "Sign up in minutes",
-      "step2": "Enter Amount",
-      "step2Desc": "See the rate upfront",
-      "step3": "Send Money",
-      "step3Desc": "Funds arrive quickly"
+      "listHtml": "<li className=\"mb-2\">Share your referral code or link with friends</li><li className=\"mb-2\">Your friends sign up using your code</li><li className=\"mb-2\">When they complete KYC verification and make a first transaction, you earn <strong>2 points</strong></li><li>Use points for <strong>NO transfer fee & higher exchange rate!</strong></li>"
     },
     "paymentMethods": {
       "title": "Flexible Payment Methods",
@@ -842,7 +837,7 @@
     "title": "Referral Program",
     "yourCode": "Your Referral Code",
     "shareCode": "Share your code and earn rewards",
-    "copyCode": "Copy Code",
+    "copyCode": "Copy referral link",
     "copied": "Copied!",
     "earnings": "Total Earnings",
     "referrals": "Total Referrals",

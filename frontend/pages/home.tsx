@@ -167,7 +167,9 @@ export default function Home() {
           '/mainpage/Banner_Video_Remake_With_Better_Soundtrack.mp4'
         ]
       : [
-          '/mainpage/Banner_Video_Remake_With_Better_Soundtrack.mp4'
+          '/mainpage/Banner_Video_Remake_With_Better_Soundtrack.mp4',
+          '/mainpage/CanViet_Exchange_Video_Banner_Extension.mp4'
+
         ];
     return list.filter(Boolean);
   }, [isMobile]);
@@ -292,33 +294,11 @@ export default function Home() {
                       <h1 className="display-4 mb-3">
                         {rate ? `1 CAD = ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate)} VND` : t('home.exchangeFallback')}
                       </h1>
-                      <p className="lead text-medium-emphasis mb-4">
-                        {t('home.sendFromCanada')}{' '}
-                        <img 
-                          src="/flags/Flag_of_Canada.png" 
-                          alt="Canada" 
-                          className="icon-small" 
-                        />{' '}
-                        {t('home.toVietnam')}{' '}
-                        <img 
-                          src="/flags/Flag_of_Vietnam.png" 
-                          alt="Vietnam" 
-                          className="icon-small" 
-                        />{' '}
-                        {t('home.withRatesAndDelivery')}
-                      </p>
+
                   </div>
                 </div>
 
                     <div className="hero-content">
-                        <div className="d-flex gap-3 justify-content-center flex-wrap w-100">
-                        <a href="/register" className="btn btn-primary btn-lg">
-                          {t('home.hero.getStarted')}
-                        </a>
-                        <a href="/login" className="btn btn-outline-primary btn-lg">
-                          {t('auth.signIn')}
-                        </a>
-                      </div>
                     </div>
                 <div className="hero-fullwidth-wrapper">
                   <div className="main-body hero-section text-center">
@@ -336,7 +316,7 @@ export default function Home() {
                           muted={heroMuted}
                           playsInline
                           controls={false}
-                          style={{ width: '100%', maxHeight: 520, objectFit: 'cover', borderRadius: 8, zIndex: 1 }}
+                          style={{ width: '100%', maxHeight: 620, objectFit: 'cover', borderRadius: 8, zIndex: 1 }}
                         >
                           <source src={heroSources[0]} type="video/mp4" />
                         </video>
@@ -377,12 +357,21 @@ export default function Home() {
                           <h1 className="h3">{t('home.calculator.title')}</h1>
                           <p className="text-medium-emphasis">{t('home.hero.subtitle')}</p>
                           <hr />
+
                           <div className="d-flex align-items-center gap-3">
                             <div className="fs-1">💰</div>
                             <div>
                               <strong>{t('home.features.bestRates')}</strong>
                               <div className="small text-medium-emphasis">{t('home.calculator.rateUpdated')}</div>
                             </div>
+                            <div className="d-flex gap-3 justify-content-center flex-wrap w-100">
+                            <a href="/register" className="btn btn-primary btn-lg">
+                              {t('home.hero.getStarted')}
+                            </a>
+                            {/* <a href="/login" className="btn btn-outline-primary btn-lg">
+                              {t('auth.signIn')}
+                            </a> */}
+                          </div>
                           </div>
                         </div>
 
@@ -633,6 +622,7 @@ export default function Home() {
                             <div className="referral-badge">
                               <span className="badge-icon">🎁</span>
                               <span className="badge-text">Earn Together</span>
+
                             </div>
                           </div>
                         </div>
@@ -659,7 +649,7 @@ export default function Home() {
                                 </div>
                               </div>
                             </div>
-                            <a href="/register" className="btn btn-primary btn-lg referral-btn">
+                            <a href="/referral" className="btn btn-primary btn-lg referral-btn">
                               {t('home.referralSection.cta')}
                               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="ms-2">
                                 <path d="M10 0l10 10-10 10-1.5-1.5L15.2 11H0V9h15.2L8.5 1.5z"/>

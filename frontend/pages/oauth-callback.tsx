@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { setAuthToken } from '../lib/auth'
 import { useLanguage } from '../context/LanguageContext'
 
 export default function OAuthCallback() {
@@ -11,34 +10,43 @@ export default function OAuthCallback() {
   useEffect(() => {
     const handleOAuthCallback = async () => {
       const q = router.query
+      const otk = typeof q.otk === 'string' ? q.otk : (q.otk && Array.isArray(q.otk) ? q.otk[0] : undefined)
       const token = typeof q.token === 'string' ? q.token : (q.token && Array.isArray(q.token) ? q.token[0] : undefined)
 
-      // If a token was provided in the query (legacy flow), store it temporarily in session storage
-      if (token) {
-        try { setAuthToken(token, { persistent: false, setCookie: false }) } catch {}
-      }
-
       // Clear pending referral from sessionStorage after successful OAuth if present
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('pendingReferral');
-      }
+      if (typeof window !== 'undefined') sessionStorage.removeItem('pendingReferral')
 
       try {
+        // If an OTK is present (dev flow), exchange it for an HttpOnly cookie
+        if (otk) {
+          try {
+            await fetch('/api/auth/exchange', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ otk }),
+            })
+          } catch (e) {
+            // ignore; next fetch will fail if exchange didn't work
+          }
+        }
+
+        // Small delay to allow browser to process Set-Cookie
+        await new Promise((r) => setTimeout(r, 300))
+
         // Attempt to fetch user profile; this works when the server set an HttpOnly cookie
         const meResp = await fetch('/api/users/me', { credentials: 'include' })
-
         if (!meResp.ok) {
-          // If fetch failed and we had a token in query, the legacy fallback may still work
+          // Legacy fallback: if server returned a token in query, try Authorization header
           if (token) {
-            // try again; server may accept Authorization header if cookie wasn't set
             const fallback = await fetch('/api/users/me', { headers: { Authorization: `Bearer ${token}` } })
             if (!fallback.ok) throw new Error('Failed to fetch user profile')
             const meData = await fallback.json()
             const user = meData?.user
             const profileComplete = meData?.complete
             setStatus(t('auth.redirecting'))
-            if (user?.role === 'user' && !profileComplete) void coordinateRedirect(router, '/personal-info')
-            else void coordinateRedirect(router, '/transfers')
+            if (user?.role === 'user' && !profileComplete) void router.push('/personal-info')
+            else void router.push('/transfers')
             return
           }
           throw new Error('Failed to fetch user profile')
@@ -49,24 +57,20 @@ export default function OAuthCallback() {
         const profileComplete = meData?.complete
 
         setStatus(t('auth.redirecting'))
-
-        // Check if profile is complete for regular users
         if (user?.role === 'user' && !profileComplete) {
-          void coordinateRedirect(router, '/personal-info')
+          void router.push('/personal-info')
         } else {
-          void coordinateRedirect(router, '/transfers')
+          void router.push('/transfers')
         }
       } catch (error) {
         console.error('OAuth callback error:', error)
         setStatus('Error processing authentication')
-        void coordinateRedirect(router, '/login?error=auth_processing_failed')
+        void router.push('/login?error=auth_processing_failed')
       }
     }
 
-    if (router.isReady) {
-      void handleOAuthCallback()
-    }
-  }, [router, router.isReady])
+    if (router.isReady) void handleOAuthCallback()
+  }, [router, router.isReady, t])
 
   return (
     <div className="page-center-flex">

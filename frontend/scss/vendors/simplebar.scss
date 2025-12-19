@@ -32,6 +32,11 @@
 // md breakpoint ~ 768px
 @media (min-width: 768px) {
   .sidebar-brand-full img { height: 44px; }
+  /* Desktop: restore right alignment */
+  .header .ms-auto {
+    width: auto;
+    justify-content: flex-end;
+  }
 }
 
 // xl breakpoint ~ 1200px
@@ -86,13 +91,6 @@
   }
 }
 
-/* Desktop: restore right alignment */
-@media (min-width: 768px) {
-  .header .ms-auto {
-    width: auto;
-    justify-content: flex-end;
-  }
-}
 
 .footer {
   min-height: calc(3rem + 1px);

@@ -6,8 +6,6 @@ const { requireAdmin } = require('../middleware/roles');
 const crypto = require('crypto');
 const Stripe = require('stripe');
 const emailSvc = require('../services/email');
-const fs = require('fs');
-const path = require('path');
 
 // --- FX helper (copied logic from routes/fx.js to keep local calculation) ---
 const https = require('https');
@@ -510,19 +508,19 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
 
     await newRequest.save();
 
-    // Build bookkeeper entry (best-effort, do not block request on failure)
+    // Persist bookkeeper entry to database (best-effort, do not block request on failure)
     (async () => {
       try {
         const fx = await computeCadVndRates();
-        const bookDir = path.join(__dirname, '..', '..', 'bookkeepers');
-        await fs.promises.mkdir(bookDir, { recursive: true });
+        const Bookkeeper = require('../models/Bookkeepers');
         const now = new Date();
-        const filename = `${now.toISOString().replace(/[:.]/g, '-')}_bookkeeper.json`;
-        const filePath = path.join(bookDir, filename);
 
-        const entry = {
-          timestamp: now.toISOString(),
+        const entry = new Bookkeeper({
+          timestamp: now,
           userId: userId || null,
+          userEmail: userEmail || null,
+          referenceID: referenceNumber,
+          requestId: newRequest._id ? String(newRequest._id) : undefined,
           exchange: fx ? {
             rateAtTime: fx.rateWithMargin,
             cadPerUsdc: fx.cadPerUsdc,
@@ -535,12 +533,10 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
           } : null,
           amountSentCAD: amountSent,
           amountToVND: amountReceived,
-          paymentMethod: normalizedSendingMethod || sendingMethod || null,
-          requestId: newRequest._id ? String(newRequest._id) : undefined,
-          referenceID: referenceNumber
-        };
+          paymentMethod: normalizedSendingMethod || sendingMethod || null
+        });
 
-        await fs.promises.writeFile(filePath, JSON.stringify(entry, null, 2), 'utf8');
+        await entry.save();
       } catch (bkErr) {
         // swallow errors - bookkeeper is best-effort
       }

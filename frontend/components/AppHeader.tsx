@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useSelector, useDispatch } from 'react-redux';
-import { getAuthToken } from '../lib/auth';
 import {
   CContainer,
   CDropdown,
@@ -55,7 +54,7 @@ const AppHeader: React.FC = () => {
   }, [colorMode]);
 
   return (
-    <CHeaderAny position="sticky" className="p-0">
+    <CHeaderAny position="sticky" className="app-header p-0">
       <CContainer className="border-bottom px-4 d-flex align-items-center" fluid>
         
         {user && (
@@ -107,11 +106,7 @@ const AppHeader: React.FC = () => {
                 title="Change to Dark/Light Mode"
                 style={{ background: 'transparent', border: 0 }}
               >
-                {/* Render both icons to keep server and client markup identical; CSS will show/hide as needed */}
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} aria-hidden>
-                  <CIcon icon={cilSun} size="lg" className="sun-icon" />
-                  <CIcon icon={cilMoon} size="lg" className="moon-icon" />
-                </span>
+                <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />
               </button>
             </div>
           </CNavItem>
