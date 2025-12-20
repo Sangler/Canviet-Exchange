@@ -142,7 +142,7 @@
       "subtitle": "Mọi điều bạn cần biết về gửi tiền về Việt Nam",
       "q1": {
         "q": "Mất bao lâu để tiền đến Việt Nam?",
-        "a": "Hầu hết các giao dịch đến trong vòng 1-4 giờ trong giờ hành chính ở Việt Nam. Chuyển khoản ngân hàng có thể mất đến 24 giờ tùy thuộc vào thời gian xử lý của ngân hàng nhận. Giao dịch ví điện tử (Momo, ZaloPay) thường là tức thì."
+        "a": "Hầu hết các giao dịch đến trong vòng 1-8 giờ trong giờ hành chính ở Việt Nam. Chuyển khoản ngân hàng có thể mất đến 24 giờ tùy thuộc vào thời gian xử lý của ngân hàng nhận. Giao dịch ví điện tử (Momo, ZaloPay) thường là tức thì."
       },
       "q2": {
         "q": "Phí gửi tiền như thế nào?",
@@ -226,7 +226,7 @@
     "hero": {
       "title": "Chuyển Tiền Nhanh Chóng, An Toàn Đến Việt Nam",
       "subtitle": "Gửi tiền với sự tự tin. Tỷ giá tốt nhất, được đảm bảo.",
-      "getStarted": "Bắt đầu",
+      "getStarted": "Bắt đầu gửi",
       "sendMoney": "Gửi tiền ngay"
     },
     "calculator": {
@@ -335,7 +335,7 @@
       "subtitle": "Mọi điều bạn cần biết về gửi tiền về Việt Nam",
       "q1": {
         "q": "Mất bao lâu để tiền đến Việt Nam?",
-        "a": "Hầu hết các giao dịch đến trong vòng 1-4 giờ trong giờ hành chính ở Việt Nam. Chuyển khoản ngân hàng có thể mất đến 24 giờ tùy thuộc vào thời gian xử lý của ngân hàng nhận. Giao dịch ví điện tử (Momo, ZaloPay) thường là tức thì."
+        "a": "Hầu hết các giao dịch đến trong vòng 1-8 giờ trong giờ hành chính ở. Chuyển khoản ngân hàng có thể mất đến 24 giờ tùy thuộc vào thời gian xử lý của ngân hàng nhận. Giao dịch ví điện tử (Momo, ZaloPay) thường là tức thì."
       },
       "q2": {
         "q": "Phí gửi tiền như thế nào?",

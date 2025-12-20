@@ -1082,7 +1082,6 @@ export default function Transfer() {
                   <h3 className="rate-modal-title">{t('transfers.rateCalculation')}</h3>
                   <p className="rate-modal-p">{t('transfers.competitiveRates')}</p>
                   <p className="rate-modal-p">{t('transfers.currentRate')}: <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> {t('transfers.perCAD')}</p>
-                  <p className="rate-modal-p">{t('transfers.noFeePromo')}</p>
                   <p className="rate-modal-p note">*{t('transfers.rateFluctuation')}</p>
                   <div className="rate-modal-actions">
                     <button className="btn" type="button" onClick={() => setShowRateModal(false)}>{t('common.gotIt')}</button>

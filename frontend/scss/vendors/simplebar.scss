@@ -29,20 +29,6 @@
   padding: 5px;
 }
 
-// md breakpoint ~ 768px
-@media (min-width: 768px) {
-  .sidebar-brand-full img { height: 44px; }
-  /* Desktop: restore right alignment */
-  .header .ms-auto {
-    width: auto;
-    justify-content: flex-end;
-  }
-}
-
-// xl breakpoint ~ 1200px
-@media (min-width: 1200px) {
-  .sidebar-brand-full img { height: 46px; }
-}
 
 .sidebar-header {
   .nav-underline-border {
@@ -79,17 +65,28 @@
   width: 100%;
 }
 
-/* Mobile-specific button sizing for header guest buttons */
-@media (max-width: 767px) {
-  .header .btn {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.875rem;
-  }
-  
-  .header .ms-auto {
-    margin-left: 0 !important;
-  }
+/* Make header buttons responsive: shrink padding & font-size with viewport */
+.app-header .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* fluid padding and font-size to scale with viewport while keeping sensible limits */
+  padding: clamp(6px, 0.6vw, 10px) clamp(8px, 1.2vw, 16px);
+  font-size: clamp(12px, 0.9vw, 14px);
+  line-height: 1;
+  height: auto;
+  min-height: 34px;
+  max-height: 44px;
 }
+
+/* Ensure icons inside buttons scale proportionally */
+.app-header .btn img,
+.app-header .btn svg {
+  height: 1em;
+  width: auto;
+}
+
 
 
 .footer {
@@ -275,9 +272,9 @@
   }
 }
 
-/* Responsive adjustments */
 @media (max-width: 640px) {
-  .browser-warning-content {
+/* Responsive adjustments */
+    .browser-warning-content {
     padding: 12px 16px;
     gap: 10px;
   }
@@ -290,4 +287,50 @@
     width: 20px;
     height: 20px;
   }
+  /* Stack or collapse if needed on very small screens */
+  .app-header .d-flex.align-items-center.justify-content-center.gap-2 {
+    gap: 6px !important;
+    flex-wrap: wrap;
+  }
+  .app-header .btn {
+    padding: 6px 8px;
+    font-size: 11px;
+    min-height: 30px;
+  }
+}
+
+// md breakpoint ~ 768px
+@media (min-width: 768px) {
+/* Mobile-specific button sizing for header guest buttons */
+  .header .btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .header .ms-auto {
+    margin-left: 0 !important;
+  }
+  .sidebar-brand-full img { height: 44px; }
+  /* Desktop: restore right alignment */
+  .header .ms-auto {
+    width: auto;
+    justify-content: flex-end;
+  }
+}
+
+/* Tighter spacing on smaller screens */
+@media (max-width: 992px) {
+  .app-header .d-flex.align-items-center.justify-content-center.gap-2 {
+    gap: 6px !important;
+  }
+  .app-header .btn {
+    padding: 6px 8px;
+    font-size: 12px;
+    min-height: 32px;
+  }
+}
+
+// xl breakpoint ~ 1200px
+@media (min-width: 1200px) {
+  .sidebar-brand-full img { height: 46px; }
 }

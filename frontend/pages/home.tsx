@@ -276,12 +276,7 @@ export default function Home() {
                             rel="noopener noreferrer"
                             className="trustpilot-link"
                           >
-                            See our reviews on{' '}<img
-                              src="/flags/Trustpilot_Logo.svg"
-                              alt="Trustpilot"
-                              className="trustpilot-icon"
-                              style={{ height: '1rem', verticalAlign: 'middle', margin: '0 0.35rem' }}
-                            /> Trustpilot!
+                            See our reviews on <img src="/flags/Trustpilot_Logo.svg" alt="Trustpilot" className="trustpilot-icon" /> Trustpilot!
                           </a>
                         </p>
                       </div>
@@ -303,10 +298,7 @@ export default function Home() {
                 <div className="hero-fullwidth-wrapper">
                   <div className="main-body hero-section text-center">
                     <div className="hero-media">
-                      <div
-                        className="hero-video-frame"
-                        style={{ position: 'relative' }}
-                      >
+                      <div className="hero-video-frame">
                         {/* Controlled video that plays two sources consecutively */}
                         {/* Sources: 1) CanViet_Exchange_Video_Banner_Extension.mp4 2) Banner_Video_Remake_With_Better_Soundtrack.mp4 */}
                         <video
@@ -316,18 +308,16 @@ export default function Home() {
                           muted={heroMuted}
                           playsInline
                           controls={false}
-                          style={{ width: '100%', maxHeight: 620, objectFit: 'cover', borderRadius: 8, zIndex: 1 }}
                         >
                           <source src={heroSources[0]} type="video/mp4" />
                         </video>
 
                         {/* Buttons: Pause/Play and Mute/Unmute */}
-                        <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8, zIndex: 9999, pointerEvents: 'auto' }}>
+                        <div className="hero-video-controls">
                           <button
                             aria-label="Pause or play video"
                             title="Pause / Play"
-                            className="btn btn-sm"
-                            style={{ padding: '6px 8px', borderRadius: 6, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', pointerEvents: 'auto' }}
+                            className="btn btn-sm hero-video-btn"
                             onClick={togglePlay}
                           >
                             {heroPaused ? '▶️' : '⏸'}
@@ -336,8 +326,7 @@ export default function Home() {
                           <button
                             aria-label="Mute or unmute video"
                             title="Mute / Unmute"
-                            className="btn btn-sm"
-                            style={{ padding: '6px 8px', borderRadius: 6, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', pointerEvents: 'auto' }}
+                            className="btn btn-sm hero-video-btn"
                             onClick={toggleMute}
                           >
                             {heroMuted ? '🔇' : '🔊'}
@@ -364,15 +353,8 @@ export default function Home() {
                               <strong>{t('home.features.bestRates')}</strong>
                               <div className="small text-medium-emphasis">{t('home.calculator.rateUpdated')}</div>
                             </div>
-                            <div className="d-flex gap-3 justify-content-center flex-wrap w-100">
-                            <a href="/register" className="btn btn-primary btn-lg">
-                              {t('home.hero.getStarted')}
-                            </a>
-                            {/* <a href="/login" className="btn btn-outline-primary btn-lg">
-                              {t('auth.signIn')}
-                            </a> */}
                           </div>
-                          </div>
+                          <img src="/mainpage/hero-section.jpg" alt="Hero section" className="img-fluid home-hero-img mt-3" />
                         </div>
 
                         <div className="col-md-6">
@@ -451,7 +433,14 @@ export default function Home() {
                                     </div>
                                   </div>
                                 </div>
-
+                                <div className="d-flex gap-3 justify-content-center flex-wrap w-100">
+                                  <a href="/register" className="btn btn-primary btn-lg">
+                                    {t('home.hero.getStarted')}
+                                  </a>
+                                  {/* <a href="/login" className="btn btn-outline-primary btn-lg">
+                                    {t('auth.signIn')}
+                                  </a> */}
+                              </div>
                                 {/* Payment Methods Display */}
                                 <div className="payment-methods-preview mt-4">
                                   <div className="text-center mb-3">
@@ -671,8 +660,6 @@ export default function Home() {
               <h3 className="rate-modal-title">{t('home.rateModal.title')}</h3>
               <p className="rate-modal-p">{t('home.rateModal.p1')}</p>
               <p className="rate-modal-p">{t('home.rateModal.currentRate')} <strong>{rateStr ? `${rateStr} VND` : (effectiveRate ? `${effectiveRate} VND` : '—')}</strong> {t('home.rateModal.perCAD') || t('home.rateModal.p1')}</p>
-              <p className="rate-modal-p">{t('home.rateModal.noFeePromo')}</p>
-
               <p className="rate-modal-p note">{t('home.rateModal.note')}</p>
               <div className="rate-modal-actions">
                 <button className="btn" type="button" onClick={() => setShowRateModal(false)}>{t('home.rateModal.gotIt')}</button>
@@ -763,16 +750,16 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="accordion-item">
+                  {/* <div className="accordion-item">
                     <h3 className="accordion-header" id="faq2">
-                      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
+                      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="true" aria-controls="collapse2">
                         {t('home.faq.q2.q')}
                       </button>
                     </h3>
-                    <div id="collapse2" className="accordion-collapse collapse" aria-labelledby="faq2" data-bs-parent="#faqAccordion">
+                    <div id="collapse2" className="accordion-collapse collapse show" aria-labelledby="faq2" data-bs-parent="#faqAccordion">
                       <div className="accordion-body" dangerouslySetInnerHTML={{ __html: t('home.faq.q2.a') }} />
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="accordion-item">
                     <h3 className="accordion-header" id="faq3">

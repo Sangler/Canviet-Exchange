@@ -199,7 +199,7 @@
     "hero": {
       "title": "Fast, Secure Money Transfers to Vietnam",
       "subtitle": "Send money with confidence. Best rates, guaranteed.",
-      "getStarted": "Get Started",
+      "getStarted": "Send now",
       "sendMoney": "Send Money Now"
     },
     "flagsLine": "Send money from Canada to Vietnam with transparent rates and fast delivery.",
@@ -319,8 +319,8 @@
       "title": "Frequently Asked Questions",
       "subtitle": "Everything you need to know about sending money to Vietnam",
       "q1": {
-        "q": "How long does it take for money to arrive in Vietnam?",
-        "a": "Most transfers arrive within 1-4 hours during business hours in Vietnam. Bank transfers may take up to 24 hours depending on the receiving bank's processing time. E-wallet transfers (Momo, ZaloPay) are typically instant."
+        "q": "How long does it take for money to arrive?",
+        "a": "Most transfers arrive within 1-8 hours during business hours in Vietnam. Bank transfers may take up to 24 hours depending on the receiving bank's processing time. E-wallet transfers (Momo, ZaloPay) are typically instant."
       },
       "q2": {
         "q": "What are the fees for sending money?",
@@ -836,7 +836,7 @@
   "referral": {
     "title": "Referral Program",
     "yourCode": "Your Referral Code",
-    "shareCode": "Share your code and earn rewards",
+    "shareCode": "Share your code or link to earn rewards",
     "copyCode": "Copy referral link",
     "copied": "Copied!",
     "earnings": "Total Earnings",
