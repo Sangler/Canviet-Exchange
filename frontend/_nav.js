@@ -23,7 +23,7 @@ import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 const _nav = [
   {
     component: CNavItem,
-    name: 'Dashboard',
+    name: 'nav.dashboard',
     to: '/',
     icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
     roles: 'admin',
@@ -33,18 +33,24 @@ const _nav = [
     },
   },
   {
+    component: CNavItem,
+    name: 'nav.personalInfo',
+    to: '/personal-info',
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
+  },
+  {
     component: CNavTitle,
-    name: 'Transfer',
+    name: 'nav.transfer',
   },
   {
     component: CNavItem,
-    name: 'Send Money',
+    name: 'nav.sendMoney',
     to: '/transfers',
     icon: <CIcon icon={cilCreditCard} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: 'History Transaction',
+    name: 'nav.historyTransaction',
     to: '/transfers-history',
     // visible to users only (not admin)
     roles: 'user',
@@ -52,7 +58,7 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'All Requests',
+    name: 'nav.allRequests',
     to: '/transfers-history',
     // visible to admin only - shows all user requests
     roles: 'admin',
@@ -60,21 +66,21 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Analytics',
+    name: 'nav.analytics',
     to: '/analytics',
     roles: "admin",
     icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: 'Referral Program',
+    name: 'nav.referralProgram',
     to: '/referral',
     roles: 'user',
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: 'Settings & Profile',
+    name: 'nav.settingsProfile',
     to: '/settings',
     icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
   },

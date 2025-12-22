@@ -240,14 +240,12 @@ export default function Home() {
   if (loading) {
     return null;
   }
-
   // If user is logged in, don't render (redirect happening)
   if (user) {
     return null;
   }
 
   // Guest home page content
-  const baseRateStr = rate ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rate) : null;
   const rateStr = effectiveRate ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(effectiveRate) : null;
   return (
     <div>

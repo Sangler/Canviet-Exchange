@@ -398,6 +398,8 @@ th { font-weight: 600; color: #374151; }
 /* Buttons */
 .btn { text-decoration:none; display:inline-flex; align-items:center; justify-content:center; font-weight:600; padding:12px 22px; border-radius:10px; font-size:14px; transition:background .18s, color .18s, box-shadow .18s, border-color .18s; border:1px solid transparent; }
 .btn.primary { background:rgba(255,255,255,0.12); color:#f8fafc; border-color:rgba(255,255,255,0.25); backdrop-filter:blur(4px); z-index:auto}
+
+/* Avatar styles moved to vendors/simplebar.scss to consolidate header component styles */
 .btn.primary:hover { background:#fff; color:#0f172a; }
 .btn.ghost { background:rgba(255,255,255,0.04); color:#fff; border-color:rgba(255,255,255,0.18); }
 .btn.ghost:hover { background:rgba(255,255,255,.18); }
@@ -643,7 +645,7 @@ button[disabled] { opacity:.7; cursor:wait; }
 .page-center-flex { display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column; gap: 1rem; }
 
 /* Alert width helper */
-.alert-maxwide { max-width: 860px; margin-left: auto; margin-right: auto; }
+.alert-maxwide { max-width: 860px; margin-bottom:0px;}
 
 .label-inline-info {display: inline-flex;align-items: center;gap: 8px;margin-left: 8px;font-weight: 600; font-size: 12px; color: #64748b; white-space: nowrap;
 }
@@ -2262,7 +2264,7 @@ select[name="receiverBank"]:focus {
   }
   /* Push page content down to avoid being covered by fixed header */
   .app-header + * {
-    margin-top: 64px !important;
+    margin-top: 80px !important;
   }
 }
 

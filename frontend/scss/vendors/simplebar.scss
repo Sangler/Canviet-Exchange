@@ -87,6 +87,36 @@
   width: auto;
 }
 
+/* Header avatar: make it visually clickable immediately */
+.app-header .avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  line-height: 1;
+  border-radius: 9999px;
+  border: 2px solid rgba(203,213,225,0.9);
+  background: var(--cui-tertiary-bg, #ffffff);
+  transition: box-shadow .12s ease, transform .08s ease, border-color .12s ease, background .12s ease;
+  cursor: pointer;
+}
+.app-header .avatar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(2,6,23,0.12);
+  border-color: rgba(91,141,239,0.9);
+}
+.app-header .avatar:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(91,141,239,0.18);
+}
+
+/* Ensure buttons containing avatars show pointer and no unexpected padding */
+.app-header button, .app-header .btn {
+  cursor: pointer;
+}
+
 
 
 .footer {

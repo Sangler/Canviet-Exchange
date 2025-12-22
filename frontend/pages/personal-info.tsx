@@ -6,6 +6,7 @@ import Head from 'next/head';
 import Script from 'next/script';
 import RequireAuth from '../components/RequireAuth';
 import { logout } from '../lib/auth';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MeResponse {
   user?: {
@@ -19,6 +20,7 @@ interface MeResponse {
 
 export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) {
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
+  const { language, setLanguage, t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<MeResponse['user'] | null>(null);
@@ -287,7 +289,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
 
   const requestPhoneOtp = async () => {
     if (!phone || phone.length !== 10) {
-      surfaceError('Please enter a valid 10-digit phone number');
+      surfaceError(t('personalInfo.validation.invalidPhone10'));
       return;
     }
     
@@ -307,12 +309,12 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       
       if (!resp.ok) {
         // Check if it's a phone validation error from Twilio Lookup
-        if (data?.reason === 'invalid_number' || data?.reason === 'invalid_phone') {
-          throw new Error('Please enter an existing phone number.');
+          if (data?.reason === 'invalid_number' || data?.reason === 'invalid_phone') {
+          throw new Error(t('personalInfo.validation.existingPhone'));
         }
         // Check if it's a country restriction error
         if (data?.reason === 'unsupported_country') {
-          throw new Error('Only Canada and US phone numbers are supported.');
+          throw new Error(t('personalInfo.validation.unsupportedPhoneCountry'));
         }
         throw new Error(data?.message || 'Failed to send verification code');
       }
@@ -323,7 +325,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       setOtpCountdown(expires);
       setError(null);
     } catch (err: any) {
-      surfaceError(err?.message || 'Failed to send verification code');
+      surfaceError(err?.message || t('personalInfo.otp.sendFailed'));
     } finally {
       setSendingOtp(false);
     }
@@ -331,7 +333,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
 
   const verifyPhoneOtp = async () => {
     if (!phoneOtpCode || phoneOtpCode.length !== 6) {
-      surfaceError('Please enter the 6-digit code');
+      surfaceError(t('personalInfo.otp.enter6'));
       return;
     }
     
@@ -371,7 +373,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       setShowChangeNumber(true);
       setError(null);
     } catch (err: any) {
-      surfaceError(err?.message || 'Invalid verification code');
+      surfaceError(err?.message || t('personalInfo.otp.invalid'));
     } finally {
       setVerifyingOtp(false);
     }
@@ -387,7 +389,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       const trimmedPreferred = preferredName.trim();
       // Validate required names
       if (!trimmedFirst || !trimmedLast) {
-        surfaceError('Please enter your legal first and last name.');
+        surfaceError(t('personalInfo.validation.enterNames'));
         setSaving(false);
         return;
       }
@@ -395,12 +397,12 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       // Names: letters (including common Latin accents) and spaces only, max 30 chars
       const nameRegex = /^[A-Za-z\u00C0-\u024F\u1E00-\u1EFF\s]{1,30}$/;
       if (!nameRegex.test(trimmedFirst) || !nameRegex.test(trimmedLast)) {
-        surfaceError('Names may contain only letters and spaces (max 30 characters).');
+        surfaceError(t('personalInfo.validation.nameFormat'));
         setSaving(false);
         return;
       }
       if (trimmedPreferred && !nameRegex.test(trimmedPreferred)) {
-        surfaceError('Preferred name may contain only letters and spaces (max 30 characters).');
+        surfaceError(t('personalInfo.validation.preferredNameInvalid'));
         setSaving(false);
         return;
       }
@@ -415,7 +417,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         }
       }
       if (!dobIso) {
-        surfaceError('Please provide your date of birth.');
+        surfaceError(t('personalInfo.validation.provideDob'));
         setSaving(false);
         return;
       }
@@ -429,13 +431,13 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
           age -= 1;
         }
         if (age < 18) {
-          surfaceError('You must be at least 18 years old.');
+          surfaceError(t('personalInfo.validation.mustBe18'));
           setSaving(false);
           return;
         }
       } catch (e) {
         // If parsing fails, treat as invalid DOB
-        surfaceError('Please provide a valid date of birth.');
+        surfaceError(t('personalInfo.validation.validDob'));
         setSaving(false);
         return;
       }
@@ -443,13 +445,13 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       const fullPhone = phone ? `${phoneCountryCode}${phone}` : '';
 
       if (!phone || phone.length !== 10) {
-        surfaceError('Phone number must be exactly 10 digits.');
+        surfaceError(t('personalInfo.validation.phoneExactly10'));
         setSaving(false);
         return;
       }
 
       if (!phoneVerified) {
-        surfaceError('Please verify your phone number before continuing.');
+        surfaceError(t('personalInfo.validation.verifyPhoneFirst'));
         setSaving(false);
         return;
       }
@@ -463,20 +465,20 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       // For Vietnam, only street and country are required
       if (trimmedCountry === 'Vietnam') {
         if (!trimmedStreet || !trimmedCountry) {
-          surfaceError('Please complete your address (street, country).');
+          surfaceError(t('personalInfo.validation.addressVietnam'));
           setSaving(false);
           return;
         }
       } else {
         // For other countries (Canada), validate postal code and all fields
         if (!trimmedStreet || !trimmedPostal || !trimmedCity || !trimmedCountry) {
-          surfaceError('Please complete your address (street, city, postal code, country).');
+          surfaceError(t('personalInfo.validation.addressOther'));
           setSaving(false);
           return;
         }
 
         if (!trimmedProvince) {
-          surfaceError('Please select your province.');
+          surfaceError(t('personalInfo.validation.selectProvince'));
           setSaving(false);
           return;
         }
@@ -485,14 +487,14 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
         const postalNormalized = trimmedPostal.replace(/\s+/g, '').toUpperCase();
         const postalRegex = /^[A-Z]\d[A-Z]\d[A-Z]\d$/;
         if (!postalRegex.test(postalNormalized) || postalNormalized.length !== 6) {
-          surfaceError('Postal code must be in format A1A 1A1 (letters and digits, 6 characters).');
+          surfaceError(t('personalInfo.validation.postalFormat'));
           setSaving(false);
           return;
         }
       }
 
       if (!employmentStatus) {
-        surfaceError('Please choose your employment status.');
+        surfaceError(t('personalInfo.validation.chooseEmployment'));
         setSaving(false);
         return;
       }
@@ -537,7 +539,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
       // On success, redirect to transfers
       window.location.href = '/transfers';
     } catch (err: any) {
-      setError(err?.message || 'Failed to save profile');
+      setError(err?.message || t('personalInfo.error'));
     } finally {
       setSaving(false);
     }
@@ -547,7 +549,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
     <RequireAuth>
       <>
         <Head>
-          <title>Introduction</title>
+          <title>{t('personalInfo.title')}</title>
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -581,11 +583,29 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
             </svg>
           </a>
           <div className="top-right" aria-label="Controls">
-            <span className="lang-switch">
-              <a href="?lang=en">EN</a>
-              <span aria-hidden>|</span>
-              <a href="?lang=vi">VI</a>
-            </span>
+              <span className="ms-3" style={{ display: 'inline-flex', gap: 8 }}>
+                <a 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); setLanguage('en'); }} 
+                  style={{ 
+                    textDecoration: 'none', 
+                    fontWeight: language === 'en' ? 'bold' : 'normal' 
+                  }}
+                >
+                  EN
+                </a>
+                <span aria-hidden>|</span>
+                <a 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); setLanguage('vi'); }} 
+                  style={{ 
+                    textDecoration: 'none', 
+                    fontWeight: language === 'vi' ? 'bold' : 'normal' 
+                  }}
+                >
+                  VI
+                </a>
+              </span>
             <button
               type="button"
               className="mode-btn"
@@ -601,8 +621,8 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
               <div className="logo" aria-hidden>
                 <img src="/logo.png" alt="CanViet Exchange" className="logo-img" />
               </div>
-              <h1 className="pi-title">Tell us about yourself</h1>
-              <p className="pi-sub">We need a few details to complete your profile.</p>
+              <h1 className="pi-title">{t('personalInfo.title')}</h1>
+              <p className="pi-sub">{t('personalInfo.subtitle')}</p>
             </div>
 
             <div
@@ -631,11 +651,11 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
               <>
 
                 <section className="pi-section">
-                  <h2>Personal details</h2>
+                  <h2>{t('personalInfo.personalDetailsHeading')}</h2>
                   <div className="grid-1">
                     <div className="field-group">
                       <label htmlFor="firstName">
-                        Full legal first and middle name(s)
+                        {t('personalInfo.firstNameLabel')}
                         {kycVerified && (
                           <span style={{ 
                             marginLeft: '8px', 
@@ -673,7 +693,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                     </div>
                     <div className="field-group">
                       <label htmlFor="lastName">
-                        Full legal last name(s)
+                        {t('personalInfo.lastNameLabel')}
                         {kycVerified && (
                           <span style={{ 
                             marginLeft: '8px', 
@@ -954,9 +974,9 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                 </section>
 
                 <section className="pi-section">
-                  <h2>Additional information</h2>
+                  <h2>{t('personalInfo.additionalInfo')}</h2>
                   <div className="field-group">
-                    <label htmlFor="employment">Employment Status</label>
+                    <label htmlFor="employment">{t('personalInfo.employmentStatusLabel')}</label>
                     <select id="employment" className="themed" value={employmentStatus} onChange={(e)=> setEmploymentStatus(e.target.value)} required>
                       <option value="">Select</option>
                       <option value="Student">Student</option>
@@ -968,9 +988,9 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                   </div>
                 </section>
 
-                <div className="actions">
+                  <div className="actions">
                   <button type="submit" className={`submit-btn submit-btn--accent-gradient ${saving ? 'loading' : ''}`} disabled={saving}>
-                    <span className="btn-text">{saving ? 'Saving…' : 'Save changes'}</span>
+                    <span className="btn-text">{saving ? t('personalInfo.saving') : t('personalInfo.saveChanges')}</span>
                     <div className="btn-loader" aria-hidden>
                       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                         <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity="0.25" />

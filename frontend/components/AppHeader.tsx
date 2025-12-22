@@ -29,7 +29,7 @@ const AppHeader: React.FC = () => {
   const sidebarShow = useSelector((state: any) => state.sidebarShow);
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   const { user, logout } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
 
   // Safe display name: some user objects may include `preferredName` not declared on the AuthUser type.
   const displayName = ((user as any)?.preferredName) || user?.firstName || 'Nguyen';
@@ -102,8 +102,8 @@ const AppHeader: React.FC = () => {
                 type="button"
                 className="btn p-0"
                 onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}
-                aria-label={`Toggle ${colorMode === 'dark' ? 'light' : 'dark'} mode`}
-                title="Change to Dark/Light Mode"
+                aria-label={t('header.toggleThemeTitle')}
+                title={t('header.toggleThemeTitle')}
                 style={{ background: 'transparent', border: 0 }}
               >
                 <CIcon icon={colorMode === 'dark' ? cilSun : cilMoon} size="lg" />
@@ -116,20 +116,20 @@ const AppHeader: React.FC = () => {
         {user && (
           <CHeaderNav className="ms-auto ms-md-0 d-flex align-items-center">
             <div className="d-flex align-items-center">
-              <span className="me-3">Hi, {displayName}</span>
+              <span className="me-3">{t('header.greeting')}, {displayName}</span>
               <CDropdown variant="nav-item">
-                <CDropdownToggle className="py-0 pe-0" caret={false}>
+                <CDropdownToggle className="py-0 pe-0" caret={false} aria-label={t('header.openUserMenu')} title={t('header.openUserMenu')} style={{ cursor: 'pointer' }}>
                   <div className="avatar avatar-md">👤</div>
                 </CDropdownToggle>
                 <CDropdownMenu className="pt-0 profile-dropdown">
                   <CDropdownItem href="/personal-info">
                     <CIcon icon={cilUser} className="me-2" />
-                    Personal Details
+                    {t('header.personalDetails')}
                   </CDropdownItem>
 
                   <CDropdownItem onClick={() => logout()}>
                     <CIcon icon={cilList} className="me-2" />
-                    Logout
+                    {t('common.logout')}
                   </CDropdownItem>
                   
                   <CDropdownItem 
@@ -160,7 +160,7 @@ const AppHeader: React.FC = () => {
                     className="text-danger"
                   >
                     <CIcon icon={cilTrash} className="me-2" />
-                    Close Account
+                    {t('header.closeAccount')}
                   </CDropdownItem>
                 </CDropdownMenu>
               </CDropdown>

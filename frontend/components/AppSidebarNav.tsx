@@ -6,6 +6,7 @@ import 'simplebar-react/dist/simplebar.min.css';
 import { CNavLink, CSidebarNav } from '@coreui/react';
 import { useAuth } from '../context/AuthContext';
 import { hasRequiredRole, Role } from '../lib/roles';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NavItem {
   component: React.ElementType;
@@ -27,6 +28,7 @@ export const AppSidebarNav: React.FC<AppSidebarNavProps> = ({ items }) => {
   const router = useRouter();
   const { user } = useAuth();
   const userRole = user?.role;
+  const { t } = useLanguage();
 
   // Recursively filter items based on roles property
   const filterItemsByRole = (list?: NavItem[]): NavItem[] => {
@@ -61,7 +63,7 @@ export const AppSidebarNav: React.FC<AppSidebarNavProps> = ({ items }) => {
                 <span className="nav-icon-bullet"></span>
               </span>
             )}
-        {name && name}
+        {name && (typeof name === 'string' ? t(name) : name)}
       </>
     );
   };

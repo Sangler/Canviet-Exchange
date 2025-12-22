@@ -1,4 +1,22 @@
 {
+  "nav": {
+    "dashboard": "Dashboard",
+    "personalInfo": "Personal Info",
+    "transfer": "Transfer",
+    "sendMoney": "Send Money",
+    "historyTransaction": "History Transaction",
+    "allRequests": "All Requests",
+    "analytics": "Analytics",
+    "referralProgram": "Referral Program",
+    "settingsProfile": "Settings & Profile"
+  },
+  "header": {
+    "greeting": "Hi",
+    "openUserMenu": "Open user menu",
+    "toggleThemeTitle": "Change to Dark/Light Mode",
+    "personalDetails": "Personal Details",
+    "closeAccount": "Close Account"
+  },
   "common": {
     "email": "Email",
     "password": "Password",
@@ -192,6 +210,7 @@
   "sidebar": {
     "brand": "CanViet Exchange"
   },
+
   "home": {
     "reviews": {
       "summary": "4.8 out of 5 based on 1,200+ reviews"
@@ -868,5 +887,54 @@
     "goBack": "Go Back",
     "goToTransfers": "Go to Transfers",
     "goHome": "Go Home"
+  },
+  "personalInfo":{
+    "title": "Tell us about yourself",
+    "subtitle": "We need a few details to complete your profile.",
+    "personalDetailsHeading": "Personal details",
+    "firstNameLabel": "Full legal first and middle name(s)",
+    "lastNameLabel": "Full legal last name(s)",
+    "preferredNameLabel": "Preferred name (optional)",
+    "dobHeading": "Date of birth",
+    "dobLabel": "Date of birth",
+    "phoneHeading": "Phone number",
+    "phonePlaceholder": "Your phone",
+    "addressHeading": "Address",
+    "streetLabel": "Street address",
+    "addressLine2Label": "Address line 2 (optional)",
+    "cityLabel": "City",
+    "postalCodeLabel": "Postal code",
+    "provinceLabel": "Province / State",
+    "countryLabel": "Country",
+    "employmentStatusLabel": "Employment status",
+    "additionalInfo": "Additional information",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "success": "Profile updated successfully",
+    "error": "Failed to update profile",
+    "otp": {
+      "enter6": "Please enter the 6-digit code",
+      "invalid": "Invalid verification code",
+      "sendFailed": "Failed to send verification code"
+    },
+    "validation": {
+      "invalidPhone10": "Please enter a valid 10-digit phone number",
+      "existingPhone": "Please enter an existing phone number.",
+      "unsupportedPhoneCountry": "Only Canada and US phone numbers are supported.",
+      "enterNames": "Please enter your legal first and last name.",
+      "preferredNameInvalid": "Preferred name may contain only letters and spaces (max 30 characters).",
+      "nameFormat": "Names may contain only letters and spaces (max 30 characters).",
+      "provideDob": "Please provide your date of birth.",
+      "mustBe18": "You must be at least 18 years old.",
+      "validDob": "Please provide a valid date of birth.",
+      "phoneExactly10": "Phone number must be exactly 10 digits.",
+      "verifyPhoneFirst": "Please verify your phone number before continuing.",
+      "addressVietnam": "Please complete your address (street, country).",
+      "addressOther": "Please complete your address (street, city, postal code, country).",
+      "selectProvince": "Please select your province.",
+      "postalFormat": "Postal code must be in format A1A 1A1 (letters and digits, 6 characters).",
+      "chooseEmployment": "Please choose your employment status."
+    }
   }
+
 }

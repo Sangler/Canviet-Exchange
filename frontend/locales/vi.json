@@ -1,4 +1,22 @@
 {
+  "nav": {
+    "dashboard": "Bảng điều khiển",
+    "personalInfo": "Thông tin cá nhân",
+    "transfer": "Chuyển tiền",
+    "sendMoney": "Gửi tiền",
+    "historyTransaction": "Lịch sử giao dịch",
+    "allRequests": "Tất cả yêu cầu",
+    "analytics": "Phân tích",
+    "referralProgram": "Chương trình giới thiệu",
+    "settingsProfile": "Cài đặt & Hồ sơ"
+  },
+  "header": {
+    "greeting": "Xin chào",
+    "openUserMenu": "Mở menu người dùng",
+    "toggleThemeTitle": "Chuyển chế độ Sáng/Tối",
+    "personalDetails": "tài khoản cá nhân",
+    "closeAccount": "Đóng tài khoản"
+  },
   "common": {
     "email": "Địa chỉ Email",
     "password": "Mật khẩu",
@@ -210,6 +228,7 @@
   "sidebar": {
     "brand": "CanViet Exchange"
   },
+
   "home": {
     "reviews": {
       "summary": "4.8 trên 5 dựa trên hơn 1.200 đánh giá"
@@ -841,9 +860,9 @@
     "identityVerified": "Đã xác minh danh tính!",
     "canSendMoney": "Bạn có thể gửi tiền ngay.",
     "startVerification": "Bắt đầu xác minh",
-    "startVerifying": "Bắt đầu xác minh",
+    "startVerifying": "Bắt đầu",
     "verifyIdentity": "Xác minh danh tính của bạn",
-    "toSubmitTransfers": "để gửi giao dịch. Chỉ mất vài phút.",
+    "toSubmitTransfers": "để gửi tiền. Chỉ mất vài phút.",
     "remindLater": "Nhắc tôi sau",
     "verificationDescription": "Để chuyển tiền ra nước ngoài, bạn cần hoàn tất xác minh danh tính (KYC) một lần, mất khoảng 2–5 phút.",
     "whyNeeded": "Vì sao cần điều này?",
@@ -886,5 +905,53 @@
     "goBack": "Quay Lại",
     "goToTransfers": "Đến Trang Chuyển Tiền",
     "goHome": "Về Trang Chủ"
+  },
+  "personalInfo":{
+    "title": "Cho chúng tôi biết về bạn",
+    "subtitle": "Chúng tôi cần một vài thông tin để hoàn tất hồ sơ của bạn.",
+    "personalDetailsHeading": "Thông tin cá nhân",
+    "firstNameLabel": "Họ và tên khai sinh (tên đệm và tên đệm giữa)",
+    "lastNameLabel": "Tên họ (họ)",
+    "preferredNameLabel": "Tên riêng (không bắt buộc)",
+    "dobHeading": "Ngày sinh",
+    "dobLabel": "Ngày sinh",
+    "phoneHeading": "Số điện thoại",
+    "phonePlaceholder": "Số điện thoại của bạn",
+    "addressHeading": "Địa chỉ",
+    "streetLabel": "Địa chỉ (số nhà, đường)",
+    "addressLine2Label": "Địa chỉ dòng 2 (không bắt buộc)",
+    "cityLabel": "Thành phố",
+    "postalCodeLabel": "Mã bưu điện",
+    "provinceLabel": "Tỉnh / Bang",
+    "countryLabel": "Quốc gia",
+    "employmentStatusLabel": "Tình trạng nghề nghiệp",
+      "additionalInfo": "Thông tin bổ sung",
+    "saveChanges": "Lưu thay đổi",
+    "saving": "Đang lưu...",
+    "success": "Cập nhật hồ sơ thành công",
+    "error": "Cập nhật hồ sơ thất bại",
+    "otp": {
+      "enter6": "Vui lòng nhập mã 6 chữ số",
+      "invalid": "Mã xác thực không hợp lệ",
+      "sendFailed": "Gửi mã xác thực thất bại"
+    },
+    "validation": {
+      "invalidPhone10": "Vui lòng nhập số điện thoại hợp lệ gồm 10 chữ số",
+      "existingPhone": "Vui lòng nhập số điện thoại đã tồn tại.",
+      "unsupportedPhoneCountry": "Chỉ hỗ trợ số điện thoại Canada và Mỹ.",
+      "enterNames": "Vui lòng nhập họ và tên hợp lệ.",
+      "preferredNameInvalid": "Tên riêng chỉ chứa chữ và khoảng trắng (tối đa 30 ký tự).",
+      "nameFormat": "Họ tên gồm có chữ và khoảng cách (tối đa 30 ký tự).",
+      "provideDob": "Vui lòng cung cấp ngày sinh.",
+      "mustBe18": "Bạn phải từ 18 tuổi trở lên.",
+      "validDob": "Vui lòng cung cấp ngày sinh hợp lệ.",
+      "phoneExactly10": "Số điện thoại phải đúng 10 chữ số.",
+      "verifyPhoneFirst": "Vui lòng xác minh số điện thoại trước khi tiếp tục.",
+      "addressVietnam": "Vui lòng hoàn tất địa chỉ (đường, quốc gia).",
+      "addressOther": "Vui lòng hoàn tất địa chỉ (đường, thành phố, mã bưu điện, quốc gia).",
+      "selectProvince": "Vui lòng chọn tỉnh/thành.",
+      "postalFormat": "Mã bưu điện phải theo định dạng A1A 1A1 (chữ và số, 6 ký tự).",
+      "chooseEmployment": "Vui lòng chọn tình trạng nghề nghiệp."
+    }
   }
 }
