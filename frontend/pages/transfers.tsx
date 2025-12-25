@@ -1101,7 +1101,7 @@ export default function Transfer() {
                 </p>
 
                 <div className="intro-cta lt-phone:flex-col lt-phone:items-stretch">
-                  <a href="#exchange" className="btn primary">{t('home.hero.getStarted')}</a>
+                  {/* <a href="#exchange" className="btn primary">{t('home.hero.getStarted')}</a> */}
                 </div>
               </div>
               <div className="intro-decor" aria-hidden />

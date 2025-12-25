@@ -247,9 +247,15 @@ exports.forgotPassword = async (req, res) => {
       { expiresIn: '30m' }
     )
 
-    // Send email with reset link
+    // Send email with reset link. Failures to send email should not leak
+    // information or cause a 500 — log the error and still return success
     const { sendPasswordResetEmail } = require('../services/email')
-    await sendPasswordResetEmail(user.email, resetToken)
+    try {
+      await sendPasswordResetEmail(user.email, resetToken)
+    } catch (emailErr) {
+      console.error('[AUTH] sendPasswordResetEmail error for', user.email, emailErr && (emailErr.stack || emailErr.message || emailErr))
+      // Continue — we intentionally return a generic success message below
+    }
 
     return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' })
   } catch (err) {
@@ -430,8 +436,8 @@ exports.logout = async (req, res) => {
 // is opaque (OTK) and expires automatically.
 exports.exchangeOneTimeToken = async (req, res) => {
   try {
-    // Disable OTK exchange in production — this flow is dev-only
-    if (process.env.NODE_ENV === 'production') {
+    // Disable OTK exchange in production by default — allow when explicitly enabled
+    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_OTK_EXCHANGE !== 'true') {
       return res.status(404).json({ message: 'Not found' })
     }
     const { otk } = req.body || {}

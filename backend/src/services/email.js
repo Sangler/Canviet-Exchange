@@ -148,17 +148,17 @@ async function sendPasswordResetEmail(to, resetToken) {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   const resetUrl = `${frontendUrl.replace(/\/$/, '')}/reset-password/${resetToken}`;
   const subject = '🔐 Reset Your CanViet Exchange Password';
-  const text = `Reset your CanViet Exchange password\n\nClick the link to reset your password: ${resetUrl}\n\nThis link expires in 15 minutes.`;
+  const text = `Reset your CanViet Exchange password\n\nClick the link to reset your password: ${resetUrl}\n\nThis link expires in 30 minutes.`;
   const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#1f2937;">` +
     `<div style="text-align:center;padding:20px 0;"><img src="https://canvietexchange.com/logo.png" alt="CanViet Exchange" style="height:50px;"/></div>` +
     `<div style="padding:20px;">` +
-    `<h1>Reset Your Password</h1><p>Click the button below to reset your password.</p>`
+    `<h1>Reset Your Password</h1><p>Click the button below to reset your password.</p>` +
     `<p style="text-align:center;"><a href="${resetUrl}" style="background:#1e3a8a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;">Reset My Password</a></p>` +
     `<p>If the button doesn't work, copy-paste this URL into your browser: ${escapeHtml(resetUrl)}</p>` +
     `</div>`;
 
   // Vietnamese copy appended below an <hr>
-  const textVn = `\n\n---\nVietnamese:\nĐặt lại mật khẩu CanViet Exchange của bạn\n\nNhấp vào liên kết để đặt lại mật khẩu: ${resetUrl}\n\nLiên kết này hết hạn sau 15 phút.`;
+  const textVn = `\n\n---\nVietnamese:\nĐặt lại mật khẩu CanViet Exchange của bạn\n\nNhấp vào liên kết để đặt lại mật khẩu: ${resetUrl}\n\nLiên kết này hết hạn sau 30 phút.`;
   const htmlVn = `<hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;"/>` +
     `<div style="padding:20px;"><h2>Đặt lại mật khẩu</h2><p>Nhấp vào nút bên dưới để đặt lại mật khẩu của bạn.</p>` +
     `<p style="text-align:center;"><a href="${resetUrl}" style="background:#1e3a8a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;">Đặt lại mật khẩu</a></p>` +

@@ -40,6 +40,7 @@
   },
   "auth": {
     "welcome": "Welcome! Please sign in to continue",
+    "incorrectCredentials": "Incorrect credential or password",
     "emailAddress": "Email address",
     "password": "Password",
     "rememberMe": "Remember me",
@@ -845,7 +846,7 @@
     "startVerification": "Start Verification",
     "startVerifying": "Start Verifying",
     "verifyIdentity": "Verify your identity",
-    "toSubmitTransfers": "to submit transfers. It only takes a few minutes.",
+    "toSubmitTransfers": "to submit transfers. Will take a few minutes.",
     "remindLater": "Remind Me Later",
     "verificationDescription": "To transfer money abroad, you need to complete a one-time identity verification (KYC) that takes 2–5 minutes.",
     "whyNeeded": "Why do we need this?",

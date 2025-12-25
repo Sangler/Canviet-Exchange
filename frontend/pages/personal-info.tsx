@@ -657,17 +657,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                       <label htmlFor="firstName">
                         {t('personalInfo.firstNameLabel')}
                         {kycVerified && (
-                          <span style={{ 
-                            marginLeft: '8px', 
-                            padding: '2px 8px', 
-                            backgroundColor: '#28a745', 
-                            color: 'white', 
-                            borderRadius: '4px', 
-                            fontSize: '12px', 
-                            fontWeight: 'bold' 
-                          }}>
-                            ✓
-                          </span>
+                          <span className="verified-badge" aria-hidden>✓</span>
                         )}
                       </label>
                       <input 
@@ -695,17 +685,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                       <label htmlFor="lastName">
                         {t('personalInfo.lastNameLabel')}
                         {kycVerified && (
-                          <span style={{ 
-                            marginLeft: '8px', 
-                            padding: '2px 8px', 
-                            backgroundColor: '#28a745', 
-                            color: 'white', 
-                            borderRadius: '4px', 
-                            fontSize: '12px', 
-                            fontWeight: 'bold' 
-                          }}>
-                            ✓
-                          </span>
+                          <span className="verified-badge" aria-hidden>✓</span>
                         )}
                       </label>
                       <input 
@@ -727,7 +707,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                       />
                     </div>
                     <div className="field-group">
-                      <label htmlFor="preferredName">Preferred name (optional) <span className="hint">ⓘ</span></label>
+                      <label htmlFor="preferredName">{t('personalInfo.preferredNameLabel')}<span className="hint">ⓘ</span></label>
                       <input id="preferredName" className="themed" value={preferredName} onChange={(e)=> {
                         try {
                           const sanitized = (e.target.value || '').replace(/[^A-Za-z\u00C0-\u024F\u1E00-\u1EFF\s]/g, '').slice(0,30);
@@ -742,22 +722,12 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                 </section>
 
                 <section className="pi-section">
-                  <h2>Date of birth</h2>
+                  <h2>{t('personalInfo.dobHeading')}</h2>
                   <div className="field-group">
                     <label htmlFor="dob">
-                      Date of birth
+                      {t('personalInfo.dobLabel')}
                       {kycVerified && (
-                        <span style={{ 
-                          marginLeft: '8px', 
-                          padding: '2px 8px', 
-                          backgroundColor: '#28a745', 
-                          color: 'white', 
-                          borderRadius: '4px', 
-                          fontSize: '12px', 
-                          fontWeight: 'bold' 
-                        }}>
-                          ✓
-                        </span>
+                        <span className="verified-badge" aria-hidden>✓</span>
                       )}
                     </label>
                     <input
@@ -781,7 +751,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                 </section>
 
                 <section className="pi-section">
-                  <h2>Phone number</h2>
+                  <h2>{t('personalInfo.phoneHeading')}</h2>
                   <div className="phone-row">
                     <select 
                       className="code themed" 
@@ -807,7 +777,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                           }
                         }
                       }} 
-                      placeholder="Your phone" 
+                      placeholder={t('personalInfo.phonePlaceholder')} 
                       maxLength={10}
                       pattern="[0-9]{10}"
                       required
@@ -861,11 +831,11 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                   {phoneOtpSent && !phoneVerified && (
                     <>
                       <div className="field-group mt-12">
-                        <label htmlFor="phoneOtpCode">Verification code</label>
+                        <label htmlFor="phoneOtpCode">{t('personalInfo.otp.enter6')}</label>
                         <input
                           id="phoneOtpCode"
                           className="themed"
-                          placeholder="Enter 6-digit code"
+                          placeholder={t('personalInfo.otp.enter6')}
                           value={phoneOtpCode}
                           onChange={(e) => setPhoneOtpCode(e.target.value.replace(/\D/g, ''))}
                           inputMode="numeric"
@@ -911,7 +881,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                 </section>
 
                 <section className="pi-section">
-                  <label className="field-label" htmlFor="country">Country of residence</label>
+                  <label className="field-label" htmlFor="country">{t('personalInfo.countryLabel')}</label>
                   <select id="country" className="themed" value={country} onChange={(e)=> {
                     const newCountry = e.target.value;
                     setCountry(newCountry);
@@ -937,24 +907,27 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                 </section>
 
                 <section className="pi-section">
-                  <h2>Address</h2>
-                  <div className="field-group"><label htmlFor="street">Home address</label><input id="street" ref={addressInputRef} placeholder="Start typing your address" className="themed" value={street} onChange={(e)=> setStreet(e.target.value)} required /></div>
+                  <h2>{t('personalInfo.addressHeading')}</h2>
                   <div className="field-group">
-                    <label htmlFor="addressLine2">Address Line 2</label>
+                    <label htmlFor="street">{t('personalInfo.streetLabel')}</label>
+                    <input id="street" ref={addressInputRef} placeholder={t('personalInfo.streetLabel')} className="themed" value={street} onChange={(e)=> setStreet(e.target.value)} required />
+                  </div>
+                  <div className="field-group">
+                    <label htmlFor="addressLine2">{t('personalInfo.addressLine2Label')}</label>
                     <input
                       id="addressLine2"
-                      placeholder="Apt, suite, unit, building, floor (optional)"
+                      placeholder={t('personalInfo.addressLine2Label')}
                       className="themed"
                       value={addressLine2}
                       onChange={(e)=> setAddressLine2(e.target.value)}
                     />
                   </div>
                   <div className="field-group">
-                    <label htmlFor="city">City</label>
+                    <label htmlFor="city">{t('personalInfo.cityLabel')}</label>
                     <input id="city" className="themed" value={city} onChange={(e)=> setCity(e.target.value)} required={country !== 'Vietnam'} disabled />
                   </div>
                   <div className="field-group">
-                    <label htmlFor="postal">Postcode</label>
+                    <label htmlFor="postal">{t('personalInfo.postalCodeLabel')}</label>
                     <input
                       id="postal"
                       className="themed"
@@ -963,11 +936,11 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
                       required={country !== 'Vietnam'}
                       disabled
                       pattern={country !== 'Vietnam' ? "[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d" : undefined}
-                      title={country !== 'Vietnam' ? "Postal code format: A1A 1A1 (letters and digits)" : undefined}
+                      title={country !== 'Vietnam' ? t('personalInfo.postalCodeLabel') + ' format: A1A 1A1 (letters and digits)' : undefined}
                     />
                   </div>
                   <div className="field-group">
-                    <label htmlFor="province">Province / State</label>
+                    <label htmlFor="province">{t('personalInfo.provinceLabel')}</label>
                     <input id="province" className="themed" value={province} onChange={(e)=> setProvince(e.target.value)} required={country !== 'Vietnam'} disabled />
                   </div>
 

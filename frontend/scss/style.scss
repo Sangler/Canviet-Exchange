@@ -418,6 +418,24 @@ button[disabled] { opacity:.7; cursor:wait; }
   letter-spacing: 0.2px;
 }
 
+/* Personal-info: verified badge (moved from inline styles in personal-info.tsx) */
+.verified-badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  background-color: #28a745;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.verified-badge:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(40,167,69,0.18);
+}
+
 .btn-lg {
   font-size: 16px; /* slightly larger for easy reading */
   padding: 14px 26px;

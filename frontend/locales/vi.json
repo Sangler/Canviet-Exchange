@@ -40,6 +40,7 @@
   },
   "auth": {
     "welcome": "Chào mừng! Vui lòng đăng nhập để tiếp tục",
+    "incorrectCredentials": "thông tin đăng nhập sai hoặc sai mật khẩu",
     "emailAddress": "Địa chỉ email",
     "password": "Mật khẩu",
     "rememberMe": "Ghi nhớ đăng nhập",
