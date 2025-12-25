@@ -97,7 +97,7 @@ exports.closeAccount = async (req, res) => {
     // Delete the user account
     await User.findByIdAndDelete(userId)
     
-    console.log(`Account closed and all data deleted for user: ${userId}`)
+    // console.log(`Account closed and all data deleted for user: ${userId}`)
     
     return res.json({ 
       ok: true, 
