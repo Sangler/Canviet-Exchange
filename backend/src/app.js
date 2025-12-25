@@ -60,10 +60,10 @@ app.use((req, res, next) => {
       } catch (e) { return undefined }
     })()
 
-    console.log(`[HTTP IN] ${req.ip} ${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl} query=${JSON.stringify(req.query)} body=${safeBody ? JSON.stringify(safeBody) : ''}`)
+    // console.log(`[HTTP IN] ${req.ip} ${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl} query=${JSON.stringify(req.query)} body=${safeBody ? JSON.stringify(safeBody) : ''}`)
     res.on('finish', () => {
       const ms = Date.now() - start
-      console.log(`[HTTP OUT] ${req.ip} ${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl} -> ${res.statusCode} ${ms}ms`)
+      // console.log(`[HTTP OUT] ${req.ip} ${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl} -> ${res.statusCode} ${ms}ms`)
     })
   } catch (e) {
     // ignore logging errors

@@ -11,19 +11,19 @@ async function run() {
   await connectMongo(uri, { maxRetries: 2 })
   const filter = { $or: [ { referralCode: { $exists: false } }, { referralCode: null }, { referralCode: '' } ] }
   const users = await User.find(filter).exec()
-  console.log(`Found ${users.length} users missing referralCode`)
+  // console.log(`Found ${users.length} users missing referralCode`)
   let updated = 0
   for (const u of users) {
     try {
       // Pre-save hook will assign referralCode
       await u.save()
       updated++
-      console.log(`Updated: ${u._id} => ${u.referralCode}`)
+      // console.log(`Updated: ${u._id} => ${u.referralCode}`)
     } catch (e) {
       console.warn(`Failed for ${u._id}:`, e?.message)
     }
   }
-  console.log(`Done. Updated ${updated} users.`)
+  // console.log(`Done. Updated ${updated} users.`)
   process.exit(0)
 }
 

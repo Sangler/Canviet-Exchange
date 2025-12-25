@@ -200,7 +200,7 @@ exports.googleOAuth = async (req, res) => {
 
     // Production: prefer HttpOnly cookie only and redirect cleanly
     if (process.env.NODE_ENV === 'production') {
-      console.log('[AUTH] googleOAuth - production: setting HttpOnly cookie and redirecting to frontend oauth-callback')
+      // console.log('[AUTH] googleOAuth - production: setting HttpOnly cookie and redirecting to frontend oauth-callback')
       res.cookie('access_token', token, getCookieOptions())
       return res.redirect(`${frontend}/oauth-callback`)
     }
@@ -209,7 +209,7 @@ exports.googleOAuth = async (req, res) => {
     // so frontend can POST it to /api/auth/exchange to receive HttpOnly cookie.
     const otk = createOneTimeKey(token)
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[AUTH] googleOAuth - development: generated otk=${otk} for user=${req.user?._id}`)
+      // console.log(`[AUTH] googleOAuth - development: generated otk=${otk} for user=${req.user?._id}`)
       return res.redirect(`${frontend}/oauth-callback?otk=${otk}`)
     }
     // In production this code path should not be reached (production uses HttpOnly cookie redirect)
@@ -390,7 +390,7 @@ exports.me = async (req, res) => {
   try {
     // Prevent conditional GET/304 responses for /api/users/me so frontend always receives JSON
     res.set('Cache-Control', 'no-store')
-    console.log('[AUTH] /api/users/me called - auth present:', !!req.auth, 'user present:', !!req.user)
+    // console.log('[AUTH] /api/users/me called - auth present:', !!req.auth, 'user present:', !!req.user)
     if (!req.user) return res.status(401).json({ message: 'Unauthenticated' })
     // Load full user from DB to provide authoritative fields (emailVerified, address, KYCStatus, etc.)
     const userId = req.user.id || req.user._id || req.auth?.sub
@@ -446,9 +446,9 @@ exports.exchangeOneTimeToken = async (req, res) => {
       return res.status(400).json({ message: 'otk required' })
     }
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[AUTH] exchangeOneTimeToken - received otk=${otk}`)
+      // console.log(`[AUTH] exchangeOneTimeToken - received otk=${otk}`)
     } else {
-      console.log('[AUTH] exchangeOneTimeToken called')
+      // console.log('[AUTH] exchangeOneTimeToken called')
     }
     const entry = oneTimeTokenStore.get(otk)
     if (!entry || !entry.token) {
@@ -460,10 +460,10 @@ exports.exchangeOneTimeToken = async (req, res) => {
     try {
       res.cookie('access_token', token, getCookieOptions())
       if (process.env.NODE_ENV !== 'production') {
-        console.log('[AUTH] exchangeOneTimeToken - set HttpOnly access_token cookie')
+        // console.log('[AUTH] exchangeOneTimeToken - set HttpOnly access_token cookie')
         try {
           const sc = res.getHeader && res.getHeader('set-cookie')
-          console.log('[AUTH] exchangeOneTimeToken - response Set-Cookie header:', sc)
+          // console.log('[AUTH] exchangeOneTimeToken - response Set-Cookie header:', sc)
         } catch (e) {}
       }
     } catch (e) {
