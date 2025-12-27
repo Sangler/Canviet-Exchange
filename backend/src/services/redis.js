@@ -13,7 +13,7 @@ class RedisService {
     if (!this.client || this._wiredEvents) return
     this.client.on('error', (err) => {
       // eslint-disable-next-line no-console
-      console.error('[Redis] client error:', err?.message || err)
+      // console.error('[Redis] client error:', err?.message || err)
     })
     this._wiredEvents = true
   }

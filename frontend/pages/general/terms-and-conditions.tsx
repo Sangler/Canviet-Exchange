@@ -32,7 +32,7 @@ export default function TermsAndConditions() {
                         <div className="toolbar-left">
                           <a href="/transfers" className="toolbar-back" aria-label="Back to Transfers">
                             {mounted && <CIcon icon={cilArrowLeft} size="lg" />}
-                            <span className="d-none d-sm-inline ms-2">Back</span>
+                            <span className="d-none d-sm-inline ms-2">{t('common.back')}</span>
                           </a>
                         </div>
                         <div className="toolbar-right">

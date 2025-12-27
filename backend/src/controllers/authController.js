@@ -5,7 +5,7 @@ const User = require('../models/User')
 
 // JWT_SECRET is validated at startup in app.js - no fallback needed for security
 const JWT_SECRET = process.env.JWT_SECRET
-const ACCESS_EXPIRES = process.env.ACCESS_EXPIRES || '30m'
+const ACCESS_EXPIRES = process.env.ACCESS_EXPIRES || '15m'
 const PASSWORD_PEPPER = process.env.PASSWORD_PEPPER || ''
 
 function getCookieOptions() {
@@ -215,7 +215,7 @@ exports.googleOAuth = async (req, res) => {
     // In production this code path should not be reached (production uses HttpOnly cookie redirect)
     return res.redirect(`${frontend}/oauth-callback`)
   } catch (error) {
-    console.error('[AUTH] googleOAuth error', error && (error.stack || error))
+    // console.error('[AUTH] googleOAuth error', error && (error.stack || error))
     res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`)
   }
 }
@@ -244,7 +244,7 @@ exports.forgotPassword = async (req, res) => {
         purpose: 'password-reset'
       },
       JWT_SECRET,
-      { expiresIn: '30m' }
+      { expiresIn: '15m' }
     )
 
     // Send email with reset link. Failures to send email should not leak
@@ -253,7 +253,7 @@ exports.forgotPassword = async (req, res) => {
     try {
       await sendPasswordResetEmail(user.email, resetToken)
     } catch (emailErr) {
-      console.error('[AUTH] sendPasswordResetEmail error for', user.email, emailErr && (emailErr.stack || emailErr.message || emailErr))
+      // console.error('[AUTH] sendPasswordResetEmail error for', user.email, emailErr && (emailErr.stack || emailErr.message || emailErr))
       // Continue — we intentionally return a generic success message below
     }
 
@@ -303,8 +303,8 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Token and password are required' })
     }
 
-    if (password.length < 8) {
-      return res.status(400).json({ message: 'Password must be at least 8 characters' })
+    if (password.length < 10) {
+      return res.status(400).json({ message: 'Password must be at least 10 characters' })
     }
 
     // Verify JWT token
@@ -467,13 +467,13 @@ exports.exchangeOneTimeToken = async (req, res) => {
         } catch (e) {}
       }
     } catch (e) {
-      console.error('[AUTH] exchangeOneTimeToken - failed to set cookie', e && (e.stack || e))
+      // console.error('[AUTH] exchangeOneTimeToken - failed to set cookie', e && (e.stack || e))
     }
     // Consume the one-time key
     oneTimeTokenStore.delete(otk)
     return res.json({ ok: true })
   } catch (e) {
-    console.error('[AUTH] exchangeOneTimeToken error', e && (e.stack || e))
+    // console.error('[AUTH] exchangeOneTimeToken error', e && (e.stack || e))
     return res.status(500).json({ message: 'Internal server error' })
   }
 }

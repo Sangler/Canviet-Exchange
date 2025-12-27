@@ -16,7 +16,7 @@ exports.listUsers = async (req, res) => {
     }).sort({ createdAt: -1 }).lean()
     return res.json({ users })
   } catch (err) {
-    console.error('Admin.listUsers error:', err)
+    // console.error('Admin.listUsers error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }

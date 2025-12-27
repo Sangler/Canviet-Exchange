@@ -5,7 +5,7 @@ const User = require('../models/User')
 async function run() {
   const uri = process.env.MONGODB_URI || process.env.MONGODB_URI
   if (!uri) {
-    console.error('Missing MONGODB_URI env')
+    // console.error('Missing MONGODB_URI env')
     process.exit(1)
   }
   await connectMongo(uri, { maxRetries: 2 })
@@ -20,11 +20,13 @@ async function run() {
       updated++
       // console.log(`Updated: ${u._id} => ${u.referralCode}`)
     } catch (e) {
-      console.warn(`Failed for ${u._id}:`, e?.message)
+      // console.warn(`Failed for ${u._id}:`, e?.message)
     }
   }
   // console.log(`Done. Updated ${updated} users.`)
   process.exit(0)
 }
 
-run().catch((e) => { console.error(e); process.exit(1) })
+run().catch((e) => { 
+  // console.error(e); process.exit(1) 
+})

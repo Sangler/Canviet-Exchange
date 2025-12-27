@@ -608,7 +608,7 @@ export default function Home() {
                             />
                             <div className="referral-badge">
                               <span className="badge-icon">🎁</span>
-                              <span className="badge-text">Earn Together</span>
+                              <span className="badge-text">{t('home.referralSection.badgeText')}</span>
 
                             </div>
                           </div>

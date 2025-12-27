@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { CContainer, CSpinner } from '@coreui/react';
-import Dashboard from '../views/Dashboard';
+import Dashboard from '../pages/dashboard';
 
 const AppContent: React.FC = () => {
   return (

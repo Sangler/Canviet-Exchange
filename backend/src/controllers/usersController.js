@@ -10,7 +10,7 @@ exports.me = async (req, res) => {
 
     return res.json({ user: user.toJSON(), complete: isProfileComplete(user) })
   } catch (err) {
-    console.error('Users.me error:', err)
+    // console.error('Users.me error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -34,7 +34,7 @@ exports.updatePreferences = async (req, res) => {
     await user.save()
     return res.json({ ok: true, user: user.toJSON() })
   } catch (err) {
-    console.error('Users.updatePreferences error:', err)
+    // console.error('Users.updatePreferences error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -55,7 +55,7 @@ exports.setPhone = async (req, res) => {
     await user.save()
     return res.json({ ok:true, user: user.toJSON() })
   } catch (err) {
-    console.error('Users.setPhone error:', err)
+    // console.error('Users.setPhone error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -104,7 +104,7 @@ exports.closeAccount = async (req, res) => {
       message: 'Account and all associated data have been permanently deleted' 
     })
   } catch (err) {
-    console.error('Users.closeAccount error:', err)
+    // console.error('Users.closeAccount error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -166,7 +166,7 @@ exports.updateProfile = async (req, res) => {
     await user.save()
     return res.json({ ok: true, complete: isProfileComplete(user), user: user.toJSON() })
   } catch (err) {
-    console.error('Users.updateProfile error:', err)
+    // console.error('Users.updateProfile error:', err)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -207,7 +207,7 @@ exports.getReferralStats = async (req, res) => {
       })) || []
     })
   } catch (error) {
-    console.error('Get referral stats error:', error)
+    // console.error('Get referral stats error:', error)
     return res.status(500).json({ message: 'Error fetching referral stats' })
   }
 }

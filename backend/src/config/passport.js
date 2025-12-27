@@ -9,7 +9,7 @@ const { GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REDIREC
 
 if (!GOOGLE_OAUTH_CLIENT_ID || !GOOGLE_OAUTH_CLIENT_SECRET) {
   // Do not throw during app startup; log a warning and export passport without strategy.
-  console.warn('Google OAuth not configured: GOOGLE_OAUTH_CLIENT_ID or GOOGLE_OAUTH_CLIENT_SECRET is missing. Skipping GoogleStrategy setup.')
+  // console.warn('Google OAuth not configured: GOOGLE_OAUTH_CLIENT_ID or GOOGLE_OAUTH_CLIENT_SECRET is missing. Skipping GoogleStrategy setup.')
 } else {
   // Google OAuth Strategy
   passport.use(new GoogleStrategy({
@@ -64,7 +64,7 @@ if (!GOOGLE_OAUTH_CLIENT_ID || !GOOGLE_OAUTH_CLIENT_SECRET) {
       await newUser.save()
       return done(null, newUser)
     } catch (error) {
-      console.error('Google OAuth error:', error)
+      // console.error('Google OAuth error:', error)
       return done(error, null)
     }
   }))

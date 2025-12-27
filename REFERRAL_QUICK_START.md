@@ -261,13 +261,6 @@ Use this checklist to verify everything works:
 
 ## Support & Debugging
 
-**Enable verbose logging:**
-```javascript
-// In backend controllers, add:
-console.log('Referral validation:', { code, referrer });
-console.log('Points awarded:', { referrer: user.referredBy, points: 100 });
-```
-
 **Check frontend console:**
 - Open DevTools → Console
 - Look for validation API calls

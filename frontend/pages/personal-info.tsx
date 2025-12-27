@@ -50,7 +50,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
   const errorRef = useRef<HTMLDivElement | null>(null);
 
   const surfaceError = useCallback((message: string) => {
-    // console.log('[surfaceError] called with:', message);
+    console.log('[surfaceError] called with:', message);
     // Clear error first, then set it to ensure useEffect triggers even if the message is the same
     setError(null);
     // Use microtask to ensure state update is processed
@@ -59,7 +59,7 @@ export default function PersonalInfoPage({ googleKey }: { googleKey?: string }) 
     });
     // Keep a small debug snapshot for devs (not relied upon for scrolling)
     setTimeout(() => {
-      // console.log('[surfaceError] error state after setError:', errorRef.current, message);
+      console.log('[surfaceError] error state after setError:', errorRef.current, message);
     }, 100);
   }, []);
 
