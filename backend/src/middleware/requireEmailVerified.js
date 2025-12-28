@@ -43,7 +43,7 @@ function requireEmailVerified(shouldBeVerified = true) {
         })
       }
     } catch (e) {
-      // console.error('requireEmailVerified error', e)
+      console.error('requireEmailVerified error', e)
       return res.status(500).json({ ok: false, message: 'Internal server error' })
     }
   }

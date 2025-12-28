@@ -60,10 +60,10 @@ app.use((req, res, next) => {
       } catch (e) { return undefined }
     })()
 
-    // console.log(`[HTTP IN] ${req.ip} ${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl} query=${JSON.stringify(req.query)} body=${safeBody ? JSON.stringify(safeBody) : ''}`)
+    console.log(`[HTTP IN] ${req.ip} ${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl} query=${JSON.stringify(req.query)} body=${safeBody ? JSON.stringify(safeBody) : ''}`)
     res.on('finish', () => {
       const ms = Date.now() - start
-      // console.log(`[HTTP OUT] ${req.ip} ${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl} -> ${res.statusCode} ${ms}ms`)
+      console.log(`[HTTP OUT] ${req.ip} ${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl} -> ${res.statusCode} ${ms}ms`)
     })
   } catch (e) {
     // ignore logging errors
@@ -184,7 +184,11 @@ if (process.env.NODE_ENV === 'development') {
     }
   } catch (err) {
     const requireDb = (process.env.DB_REQUIRED || 'false').toLowerCase() === 'true'
-    if (requireDb) process.exit(1)
+    console.error('Database connection failed:', err && err.message)
+    // In production we should fail fast so the process manager (PM2) can restart
+    if (requireDb || process.env.NODE_ENV === 'production') {
+      process.exit(1)
+    }
   }
   app.listen(PORT, () => {
   })

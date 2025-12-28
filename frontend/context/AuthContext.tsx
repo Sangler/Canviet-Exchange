@@ -52,34 +52,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (mounted) setLoading(false);
       }
     };
-
-    // Avoid calling the backend on every anonymous page load which returns 401 and
-    // shows a noisy GET 401 message in browser DevTools. Use the local `auth_present`
-    // flag (set by `setAuthToken` on login) as a heuristic to decide whether to
-    // fetch the profile. We still listen for auth change events and will fetch
-    // when they occur.
-    const hasLocalFlag = typeof window !== 'undefined' && !!window.localStorage?.getItem('auth_present');
-    if (hasLocalFlag) {
-      void run();
-    } else {
-      // No local flag — treat as unauthenticated but keep loading false
-      setUser(null);
-      setToken(null);
-      setLoading(false);
-    }
-
+    run();
     const handler = () => {
       // Storage event or manual dispatch indicates auth change; refetch profile
-      const nowHas = typeof window !== 'undefined' && !!window.localStorage?.getItem('auth_present');
-      if (nowHas) {
-        void run();
-      } else {
-        setUser(null);
-        setToken(null);
-        setLoading(false);
-      }
+      void run();
     };
-
     window.addEventListener('auth_token_changed', handler);
     window.addEventListener('storage', handler);
     return () => {

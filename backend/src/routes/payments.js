@@ -6,7 +6,7 @@ const { paymentLimiter } = require('../middleware/rateLimit');
 
 // Initialize Stripe with secret key
 if (!process.env.STRIPE_SECRET_KEY) {
-  // console.error('❌ STRIPE_SECRET_KEY is not set in environment variables!');
+  console.error('❌ STRIPE_SECRET_KEY is not set in environment variables!');
 }
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 

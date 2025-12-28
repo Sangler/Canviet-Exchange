@@ -16,7 +16,13 @@ function getToken(req) {
 module.exports = function authMiddleware(req, res, next) {
   try {
     const token = getToken(req)
-    if (!token) return res.status(401).json({ message: 'Missing Authorization header' })
+    // Helper: if the request indicates a silent profile fetch, return
+    // a quiet 204 instead of a visible 401 to avoid DevTools noise.
+    const suppress = (req && (req.get && (req.get('x-suppress-auth-error') === '1' || req.get('x-suppress-auth-error') === 'true')))
+    if (!token) {
+      if (suppress) return res.status(204).end()
+      return res.status(401).json({ message: 'Missing Authorization header' })
+    }
 
     const decoded = jwt.verify(token, JWT_SECRET)
 
@@ -66,6 +72,9 @@ module.exports = function authMiddleware(req, res, next) {
 
     return next()
   } catch (err) {
+    // On invalid/expired token, honor suppress header for quiet checks.
+    const suppress = (req && (req.get && (req.get('x-suppress-auth-error') === '1' || req.get('x-suppress-auth-error') === 'true')))
+    if (suppress) return res.status(204).end()
     return res.status(401).json({ message: 'Invalid or expired token' })
   }
 }

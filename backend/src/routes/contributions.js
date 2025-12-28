@@ -86,7 +86,7 @@ router.post('/', auth, async (req, res) => {
         payload: contribution.toJSON()
       }).catch(err => console.error('[email] notifyNewPendingRequest error', err && err.message));
     } catch (e) {
-      // console.error('[email] notify failed', e && e.message);
+      console.error('[email] notify failed', e && e.message);
     }
 
     res.status(201).json({
@@ -100,7 +100,7 @@ router.post('/', auth, async (req, res) => {
     });
 
   } catch (error) {
-    // console.error('Error creating contribution:', error);
+    console.error('Error creating contribution:', error);
     res.status(500).json({
       ok: false,
       message: 'Server error while submitting feedback. Please try again later.'
@@ -128,7 +128,7 @@ router.get('/my', auth, async (req, res) => {
     });
 
   } catch (error) {
-    // console.error('Error fetching contributions:', error);
+    console.error('Error fetching contributions:', error);
     res.status(500).json({
       ok: false,
       message: 'Server error while fetching contributions'
@@ -177,7 +177,7 @@ router.get('/', auth, async (req, res) => {
     });
 
   } catch (error) {
-    // console.error('Error fetching all contributions:', error);
+    console.error('Error fetching all contributions:', error);
     res.status(500).json({
       ok: false,
       message: 'Server error while fetching contributions'

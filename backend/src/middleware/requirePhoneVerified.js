@@ -14,7 +14,7 @@ module.exports = async function requirePhoneVerified(req, res, next) {
       hasPhone: !!user.phone,
     })
   } catch (e) {
-    // console.error('requirePhoneVerified error', e)
+    console.error('requirePhoneVerified error', e)
     return res.status(500).json({ ok:false, message:'Internal server error' })
   }
 }

@@ -24,9 +24,19 @@ async function connectMongo(uri, opts = {}) {
 
   mongoose.set('strictQuery', true)
 
+  // In production we prefer fail-fast behavior rather than long buffering
+  if (process.env.NODE_ENV === 'production') {
+    mongoose.set('bufferCommands', false)
+    mongoose.set('bufferTimeoutMS', 5000)
+  }
+
   // Connection event logging
   const conn = mongoose.connection
-  conn.on('disconnected', () => {})
+  conn.on('connecting', () => console.info('MongoDB: connecting'))
+  conn.on('connected', () => console.info('MongoDB: connected'))
+  conn.on('reconnected', () => console.info('MongoDB: reconnected'))
+  conn.on('error', (err) => console.error('MongoDB error', err && err.message))
+  conn.on('disconnected', () => console.warn('MongoDB: disconnected'))
 
   let delay = retryDelayMs
   const totalAttempts = maxRetries + 1 // initial try + retries
@@ -34,7 +44,14 @@ async function connectMongo(uri, opts = {}) {
   // Try initial + retries
   for (let attempt = 1; attempt <= totalAttempts; attempt++) {
     try {
-      await mongoose.connect(uri, { serverSelectionTimeoutMS })
+      // connection options tuned for production reliability
+      const connectOpts = {
+        serverSelectionTimeoutMS,
+        socketTimeoutMS: 45000,
+        connectTimeoutMS: 10000,
+        family: 4,
+      }
+      await mongoose.connect(uri, connectOpts)
       return conn
     } catch (err) {
       const canRetry = attempt < totalAttempts
