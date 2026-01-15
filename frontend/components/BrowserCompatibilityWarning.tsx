@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { detectBrowser, getCompatibilityWarning, dismissCompatibilityWarning } from '../lib/browserCompatibility';
-import { useLanguage } from '../context/LanguageContext';
 
 /**
  * Browser compatibility warning banner

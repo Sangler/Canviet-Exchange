@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from '../context/AuthContext'
 import { LanguageProvider } from '../context/LanguageContext'
 import BrowserCompatibilityWarning from '../components/BrowserCompatibilityWarning'
 import ErrorBoundary from '../components/ErrorBoundary'
+import MaintenanceModal from '../components/MaintenanceModal'
 
 function AppContentInner({ Component, pageProps }: { Component: AppProps['Component']; pageProps: AppProps['pageProps'] }) {
   const router = useRouter()
@@ -38,6 +39,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         <LanguageProvider>
           <AuthProvider>
             <BrowserCompatibilityWarning />
+            <MaintenanceModal />
             <Script src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" strategy="afterInteractive" />
             <AppContentInner Component={Component} pageProps={pageProps} />
           </AuthProvider>

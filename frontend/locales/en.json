@@ -38,6 +38,11 @@
     "form-note":"By using our services, you agree to our",
     "form-note-href":"Terms & Conditions"
   },
+  "maintenance": {
+    "title": "Scheduled Maintenance",
+    "message": "This website is currently under maintenance; some features might be limited!",
+    "dismiss": "Dismiss"
+  },
   "auth": {
     "welcome": "Welcome! Please sign in to continue",
     "incorrectCredentials": "Incorrect credential or password",
@@ -95,6 +100,7 @@
       "trackDesc": "Monitor your transfers and resend easily"
     },
     "referralSection": {
+      "badgeText":"Earn Together",
       "specialOfferTag": "SPECIAL OFFER",
       "badgeText": "Earn Together",
       "title": "Refer Friends & Earn Rewards",

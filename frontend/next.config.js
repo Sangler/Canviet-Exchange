@@ -18,6 +18,7 @@ const nextConfig = {
   // Expose environment variables to browser
   env: {
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+    WEBSITE_MAINTENANCE_MODE: process.env.WEBSITE_MAINTENANCE_MODE,
   },
 
   async rewrites() {

@@ -38,6 +38,11 @@
     "form-note":"Để sử dụng dịch vụ, bạn đã đồng ý với các",
     "form-note-href":"Điều khoản & Điều kiện"
   },
+  "maintenance": {
+    "title": "Bảo trì hệ thống",
+    "message": "Trình duyệt đang được bảo trì; hãy chú ý, một số tính năng có thể bị giới hạn!",
+    "dismiss": "Tắt"
+  },
   "auth": {
     "welcome": "Chào mừng! Vui lòng đăng nhập để tiếp tục",
     "incorrectCredentials": "thông tin đăng nhập sai hoặc sai mật khẩu",
@@ -122,6 +127,7 @@
       "trackDesc": "Giám sát giao dịch và gửi lại dễ dàng"
     },
     "referralSection": {
+      "badgeText":"Cùng Nhau Nhận Thưởng",
       "specialOfferTag": "KHUYẾN MÃI",
       "badgeText": "Kiếm thưởng cùng nhau",
       "title": "Giới thiệu bạn bè & Nhận thưởng",
