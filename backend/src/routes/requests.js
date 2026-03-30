@@ -6,6 +6,7 @@ const { requireAdmin } = require('../middleware/roles');
 const crypto = require('crypto');
 const Stripe = require('stripe');
 const emailSvc = require('../services/email');
+const { sendUsdcFromEnv } = require('../services/evmTransfers');
 
 // --- FX helper (copied logic from routes/fx.js to keep local calculation) ---
 const https = require('https');
@@ -391,6 +392,8 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
       buffExchangeRate = false
     } = req.body;
 
+    const autoSendUsdc = String(process.env.EVM_AUTO_SEND_USDC || '').toLowerCase() === 'true';
+
 
     // Generate unique reference number (e.g., CVE20251109AB12CD34)
     const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14); // YYYYMMDDHHmmss
@@ -452,6 +455,19 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
     // Use authenticated user id when available to prevent spoofing
     const userId = req.user?.id || bodyUserId;
 
+    // If auto-send is enabled, we need FX rates up front to compute USDC amount.
+    // This keeps the send deterministic for this request.
+    let fx = null;
+    if (autoSendUsdc) {
+      fx = await computeCadVndRates();
+      if (!fx) {
+        return res.status(502).json({
+          ok: false,
+          message: 'Unable to fetch FX rates to compute USDC amount.'
+        });
+      }
+    }
+
     // Validate user points for requested perks (1 point each)
     try {
       const User = require('../models/User');
@@ -508,10 +524,67 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
 
     await newRequest.save();
 
+    // Optionally broadcast USDC transfer (Polygon Amoy) synchronously.
+    // We return once we have a txHash (broadcast), not confirmation.
+    let evmTransfer = null;
+    let evmTransferError = null;
+    if (autoSendUsdc) {
+      const evmDebug = String(process.env.EVM_DEBUG || '').toLowerCase() === 'true';
+      const cadAmount = Number(amountSent);
+      if (!Number.isFinite(cadAmount) || cadAmount <= 0) {
+        return res.status(400).json({ ok: false, message: 'Invalid amountSent' });
+      }
+
+      // fx.cadPerUsdc is CAD per 1 USDC.
+      const cadPerUsdc = Number(fx && fx.cadPerUsdc);
+      if (!Number.isFinite(cadPerUsdc) || cadPerUsdc <= 0) {
+        return res.status(502).json({ ok: false, message: 'Invalid USDC/CAD rate' });
+      }
+
+      const amountUsdcRaw = cadAmount / cadPerUsdc;
+      // Keep reasonable precision for USDC (6 decimals).
+      const amountUsdc = Number(amountUsdcRaw.toFixed(6));
+      if (!Number.isFinite(amountUsdc) || amountUsdc <= 0) {
+        return res.status(400).json({ ok: false, message: 'Computed USDC amount is invalid' });
+      }
+
+      if (evmDebug) {
+        try {
+          console.log(`[EVM] auto-send enabled referenceID=${referenceNumber} amountSentCAD=${cadAmount} cadPerUsdc=${cadPerUsdc} amountUsdc=${amountUsdc}`);
+        } catch (_) {
+          // ignore
+        }
+      }
+
+      try {
+        evmTransfer = await sendUsdcFromEnv({ amountUsdc });
+
+        if (evmDebug) {
+          try {
+            console.log(`[EVM] auto-send success referenceID=${referenceNumber} txHash=${evmTransfer && evmTransfer.txHash ? evmTransfer.txHash : ''}`);
+          } catch (_) {
+            // ignore
+          }
+        }
+      } catch (txErr) {
+        evmTransferError = txErr && txErr.message ? String(txErr.message) : 'Unknown EVM transfer error';
+        if (evmDebug) {
+          try {
+            console.error(`[EVM] auto-send failed referenceID=${referenceNumber} error=${evmTransferError}`);
+          } catch (_) {
+            // ignore
+          }
+        }
+        // IMPORTANT: Do not block user request creation on internal crypto rail failures.
+        // We'll capture the error in Bookkeeper.exchange and rely on logs/ops to retry.
+      }
+    }
+
     // Persist bookkeeper entry to database (best-effort, do not block request on failure)
     (async () => {
       try {
-        const fx = await computeCadVndRates();
+        // Reuse already-fetched FX when available (auto-send path)
+        const localFx = fx || (await computeCadVndRates());
         const Bookkeeper = require('../models/Bookkeepers');
         const now = new Date();
 
@@ -521,15 +594,17 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
           userEmail: userEmail || null,
           referenceID: referenceNumber,
           requestId: newRequest._id ? String(newRequest._id) : undefined,
-          exchange: fx ? {
-            rateAtTime: fx.rateWithMargin,
-            cadPerUsdc: fx.cadPerUsdc,
-            usdcUsdPeg: fx.usdcUsdPeg,
-            cadPerUsd: fx.cadPerUsd,
-            usdVnd: fx.usdVnd,
-            baseRate: fx.baseRate,
-            margin: fx.margin,
-            fetchedAt: fx.fetchedAt
+          exchange: localFx ? {
+            rateAtTime: localFx.rateWithMargin,
+            cadPerUsdc: localFx.cadPerUsdc,
+            usdcUsdPeg: localFx.usdcUsdPeg,
+            cadPerUsd: localFx.cadPerUsd,
+            usdVnd: localFx.usdVnd,
+            baseRate: localFx.baseRate,
+            margin: localFx.margin,
+            fetchedAt: localFx.fetchedAt,
+            evmTxHash: evmTransfer ? String(evmTransfer.txHash || '') : null,
+            evmTxError: evmTransferError ? String(evmTransferError) : null
           } : null,
           amountSentCAD: amountSent,
           amountToVND: amountReceived,
@@ -546,7 +621,8 @@ router.post('/', authMiddleware, transferLimiter, async (req, res) => {
       ok: true,
       message: 'Transfer request submitted successfully',
       request: newRequest,
-      receiptHash: receiptHash // Hash for receipt URL
+      receiptHash: receiptHash, // Hash for receipt URL
+      // Intentionally do not return internal crypto-rail details to end users.
     });
 
   } catch (err) {
