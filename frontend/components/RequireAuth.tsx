@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { parseJwt } from '../lib/auth';
+import { coordinateRedirect } from '../lib/routeValidation';
 import { useAuth } from '../context/AuthContext';
 import { CSpinner } from '@coreui/react';
 

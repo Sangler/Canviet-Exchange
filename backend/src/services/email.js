@@ -152,7 +152,7 @@ async function sendPasswordResetEmail(to, resetToken) {
   const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#1f2937;">` +
     `<div style="text-align:center;padding:20px 0;"><img src="https://canvietexchange.com/logo.png" alt="CanViet Exchange" style="height:50px;"/></div>` +
     `<div style="padding:20px;">` +
-    `<h1>Reset Your Password</h1><p>Click the button below to reset your password.</p>`
+    `<h1>Reset Your Password</h1><p>Click the button below to reset your password.</p>` +
     `<p style="text-align:center;"><a href="${resetUrl}" style="background:#1e3a8a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;">Reset My Password</a></p>` +
     `<p>If the button doesn't work, copy-paste this URL into your browser: ${escapeHtml(resetUrl)}</p>` +
     `</div>`;
@@ -169,4 +169,4 @@ async function sendPasswordResetEmail(to, resetToken) {
   return sendMail({ from, to, subject, text: fullText, html: fullHtml });
 }
 
-module.exports = { sendMail, notifyNewPendingRequest, sendOtpEmail, sendPasswordResetEmail, LOGO_DATA_URI };
+module.exports = { createTransport, sendMail, notifyNewPendingRequest, sendOtpEmail, sendPasswordResetEmail, LOGO_DATA_URI };

@@ -255,9 +255,13 @@ exports.forgotPassword = async (req, res) => {
       { expiresIn: '30m' }
     )
 
-    // Send email with reset link
+    // Send email with reset link. Do not fail the request if email delivery is misconfigured.
     const { sendPasswordResetEmail } = require('../services/email')
-    await sendPasswordResetEmail(user.email, resetToken)
+    try {
+      await sendPasswordResetEmail(user.email, resetToken)
+    } catch (emailError) {
+      console.error('Forgot password email send failure:', emailError)
+    }
 
     return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' })
   } catch (err) {

@@ -26,7 +26,12 @@ async function connectMongo(uri, opts = {}) {
 
   // Connection event logging
   const conn = mongoose.connection
-  conn.on('disconnected', () => {})
+  conn.on('connected', () => {
+    console.log('MongoDB connection established')
+  })
+  conn.on('error', (err) => {
+    console.error('MongoDB connection error:', err.message || err)
+  })
 
   let delay = retryDelayMs
   const totalAttempts = maxRetries + 1 // initial try + retries

@@ -121,6 +121,20 @@ const requestSchema = new mongoose.Schema({
     required: true
   },
   
+  // Admin assignment (P2P trade model)
+  assignedAdmin: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  
+  // Payment proof & chat tracking
+  paymentStatus: {
+    type: String,
+    enum: ['pending_payment', 'payment_received', 'processing', 'completed'],
+    default: 'pending_payment'
+  },
+  
   // Admin notes
   completedAt: Date,
   createdAt: Date,

@@ -216,7 +216,7 @@ export default function ReferralDashboard() {
             <li className="mb-2">Share your referral code or link with friends</li>
             <li className="mb-2">Your friends sign up using your code</li>
             <li className="mb-2">When they complete KYC verification and make a first transaction, you earn <strong>2 points</strong></li>
-            <li>Redeem points for <strong>NO transfer fee & higher exchange rate!</strong></li>
+            <li>Use points for <strong>NO transfer fee & higher exchange rate!</strong></li>
           </ol>
         </CCardBody>
       </CCard>

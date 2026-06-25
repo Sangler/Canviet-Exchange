@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [referralCode, setReferralCode] = useState<string>('');
   const [errors, setErrors] = useState<{
     email?: string;
@@ -87,6 +88,7 @@ export default function LoginPage() {
     if (!validate()) return;
     try {
       setLoading(true);
+      setLoginError(null); // Clear any previous login errors
       // Real API call to backend
   // Use same-origin proxy to avoid CORS issues across LAN IP
       const body: any = { password };
@@ -96,6 +98,7 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        credentials: 'include'
       });
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
@@ -104,7 +107,9 @@ export default function LoginPage() {
           setErrors({ email: data.message, password: '' });
           return;
         }
-        throw new Error(data?.message || "Login failed");
+        // Display generic user-friendly error message instead of backend details
+        setLoginError('Invalid login credential. Please try again.');
+        return;
       }
       const data = await resp.json();
       const token: string | undefined = data?.token;
@@ -234,6 +239,10 @@ export default function LoginPage() {
             <div className="oauth-error">{oauthError}</div>
           )}
 
+          {loginError && (
+            <div className="oauth-error">{loginError}</div>
+          )}
+
           <form
             className="login-form auth-form"
             id="loginForm"
@@ -250,7 +259,10 @@ export default function LoginPage() {
                 role="tab"
                 aria-selected={method === "email"}
                 className={`pill ${method === "email" ? "active" : ""}`}
-                onClick={() => setMethod("email")}
+                onClick={() => {
+                  setMethod("email");
+                  setLoginError(null);
+                }}
               >
                 {t('common.email')}
               </button>
@@ -259,7 +271,10 @@ export default function LoginPage() {
                 role="tab"
                 aria-selected={method === "phone"}
                 className={`pill ${method === "phone" ? "active" : ""}`}
-                onClick={() => setMethod("phone")}
+                onClick={() => {
+                  setMethod("phone");
+                  setLoginError(null);
+                }}
               >
                 {t('common.phone')}
               </button>
@@ -277,7 +292,10 @@ export default function LoginPage() {
                   autoComplete="email"
                   placeholder=" "
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setLoginError(null);
+                  }}
                   aria-invalid={!!errors.email}
                   aria-describedby="emailError"
                 />
@@ -299,7 +317,10 @@ export default function LoginPage() {
                   autoComplete="tel"
                   placeholder=" "
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    setLoginError(null);
+                  }}
                   aria-invalid={!!errors.phone}
                   aria-describedby="phoneError"
                 />
@@ -322,7 +343,10 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 placeholder=" "
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setLoginError(null);
+                }}
                 aria-invalid={!!errors.password}
                 aria-describedby="passwordError"
               />

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { setAuthToken } from '../lib/auth'
+import { coordinateRedirect } from '../lib/routeValidation'
 import { useLanguage } from '../context/LanguageContext'
 
 export default function OAuthCallback() {

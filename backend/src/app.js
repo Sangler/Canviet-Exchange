@@ -10,7 +10,8 @@ const REQUIRED_ENV_VARS = [
 ];
 
 const missing = REQUIRED_ENV_VARS.filter(v => !process.env[v]);
-if (missing.length > 0) {
+const missingMongo = !process.env.MONGODB_URI && !process.env.MONGODB_URL;
+if (missing.length > 0 || missingMongo) {
   process.exit(1);
 }
 
@@ -24,6 +25,7 @@ const cookieParser = require('cookie-parser')
 const cors = require('cors')
 const helmet = require('helmet')
 const mongoose = require('mongoose')
+const { connectMongo } = require('./db/mongoose')
 const passport = require('./config/passport')
 const authRoutes = require('./routes/auth')
 const usersRoutes = require('./routes/users')
@@ -35,8 +37,9 @@ const fxRoutes = require('./routes/fx')
 const kycRoutes = require('./routes/kyc')
 const paymentsRoutes = require('./routes/payments')
 const contributionsRoutes = require('./routes/contributions')
+const chatsRoutes = require('./routes/chats')
+const paymentProofsRoutes = require('./routes/payment-proofs')
 const User = require('./models/User')
-const { connectMongo } = require('./db/mongoose')
 
 
 const app = express()
@@ -108,6 +111,8 @@ app.use('/api/fx', fxRoutes)
 app.use('/api/kyc', kycRoutes)
 app.use('/api/payments', paymentsRoutes)
 app.use('/api/contributions', contributionsRoutes)
+app.use('/api/chats', chatsRoutes)
+app.use('/api/payment-proofs', paymentProofsRoutes)
 
 // Health check for /api root so requests to /api return a clear JSON response
 // Respond to both /api and /api/ so proxy redirects or trailing-slash rewrites work
@@ -154,13 +159,14 @@ if ((process.env.NODE_ENV || 'development') !== 'production') {
 };(async () => {
   try {
     const requireDb = (process.env.DB_REQUIRED || 'false').toLowerCase() === 'true'
-    const mongoUri = process.env.MONGODB_URI
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGODB_URL
     if (mongoUri) {
-      await connectMongo(mongoUri, {
+      const conn = await connectMongo(mongoUri, {
         maxRetries: Number(process.env.DB_MAX_RETRIES || 3),
         retryDelayMs: Number(process.env.DB_RETRY_DELAY_MS || 1000),
         serverSelectionTimeoutMS: Number(process.env.DB_SELECTION_TIMEOUT_MS || 5000),
       })
+      console.log(`MongoDB connected: ${conn.host || 'unknown host'}`)
       // Ensure indexes are in sync (creates if missing; drops extras)
       try {
         const idxRes = await User.syncIndexes()
