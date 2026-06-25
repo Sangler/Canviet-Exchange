@@ -1,3 +1,21 @@
+import type { NextRouter } from 'next/router';
+
+/**
+ * Navigate using Next.js router in a way that avoids throwing on bad redirects.
+ * @param router - Next.js router instance
+ * @param target - target path, including optional query string
+ */
+export async function coordinateRedirect(router: NextRouter, target: string) {
+  if (!router || typeof target !== 'string' || !target.startsWith('/')) {
+    await router.replace('/').catch(() => {});
+    return;
+  }
+
+  await router.replace(target).catch(() => {
+    router.replace('/').catch(() => {});
+  });
+}
+
 /**
  * List of valid routes in the application
  * Used to validate redirect targets to prevent 404 errors

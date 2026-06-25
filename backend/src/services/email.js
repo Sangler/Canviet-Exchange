@@ -169,4 +169,4 @@ async function sendPasswordResetEmail(to, resetToken) {
   return sendMail({ from, to, subject, text: fullText, html: fullHtml });
 }
 
-module.exports = { sendMail, notifyNewPendingRequest, sendOtpEmail, sendPasswordResetEmail, LOGO_DATA_URI };
+module.exports = { createTransport, sendMail, notifyNewPendingRequest, sendOtpEmail, sendPasswordResetEmail, LOGO_DATA_URI };

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { parseJwt } from '../lib/auth';
+import { coordinateRedirect } from '../lib/routeValidation';
 import { useAuth } from '../context/AuthContext';
 import { CSpinner } from '@coreui/react';
 
@@ -24,7 +26,7 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
 
     if (!token) {
       const next = encodeURIComponent(router.asPath);
-      void router.push(`/login?next=${next}`);
+      void coordinateRedirect(router, `/login?next=${next}`);
       return;
     }
 
@@ -69,14 +71,14 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
         const profileComplete: boolean = !!data?.complete;
         // Enforce profile completeness ONLY for regular users
           if (role === 'user' && !profileComplete && router.pathname !== '/personal-info') {
-            void router.push(`/personal-info`);
+            void coordinateRedirect(router, `/personal-info`);
             setCheckingEmail(false);
             return;
           }
           if (!emailVerified) {
             const next = encodeURIComponent(router.asPath);
             // Fire-and-forget to avoid AbortError console noise on in-flight navigations
-            void router.push(`/verify-email?next=${next}`);
+            void coordinateRedirect(router, `/verify-email?next=${next}`);
             setCheckingEmail(false);
             return;
           }

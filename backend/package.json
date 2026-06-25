@@ -12,6 +12,8 @@
     "referral:backfill": "node src/scripts/backfillReferralCodes.js"
   },
   "dependencies": {
+    "aws-sdk": "^2.1693.0",
+    "axios": "^1.16.1",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -22,9 +24,10 @@
     "express-validator": "^7.0.0",
     "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.0",
-    "mongodb": "^7.0.0",
+    "mongodb": "^7.3.0",
     "mongoose": "^7.6.1",
-    "nodemailer": "^7.0.11",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.10",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "redis": "^4.6.13",
